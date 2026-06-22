@@ -1,0 +1,46 @@
+{
+   "name": "02-api-rest-nodejs",
+   "version": "1.0.0",
+   "description": "API REST para gerenciamento de transações financeiras.",
+   "main": "index.js",
+   "engines": {
+      "node": ">= 18.0.0"
+   },
+   "scripts": {
+      "dev": "tsx watch src/server.ts",
+      "knex": "node --no-warnings --import tsx ./node_modules/knex/bin/cli.js",
+      "start": "node dist/server.js",
+      "lint": "eslint src --ext .ts",
+      "build": "tsup src",
+      "test": "vitest"
+   },
+   "keywords": [
+      "nodejs",
+      "fastify",
+      "typescript",
+      "knex",
+      "sqlite"
+   ],
+   "author": "",
+   "license": "ISC",
+   "type": "module",
+   "devDependencies": {
+      "@types/node": "^20.11.0",
+      "@types/supertest": "^6.0.2",
+      "supertest": "^6.3.4",
+      "tsup": "^8.5.1",
+      "tsx": "^4.22.4",
+      "typescript": "^5.4.0",
+      "vitest": "^1.4.0"
+   },
+   "dependencies": {
+      "@fastify/cookie": "^9.3.1",
+      "@fastify/cors": "^8.5.0",
+      "dotenv": "^16.4.5",
+      "fastify": "^4.26.2",
+      "knex": "^3.1.0",
+      "pg": "^8.22.0",
+      "sqlite3": "^5.1.7",
+      "zod": "^3.22.4"
+   }
+}

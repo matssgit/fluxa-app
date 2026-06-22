@@ -1,0 +1,29 @@
+{
+   "compilerOptions": {
+      // Pastas de entrada e saída
+      "rootDir": "./src",
+      "outDir": "./dist",
+
+      // Configurações do Node.js
+      "module": "NodeNext",
+      "target": "ESNext",
+      "esModuleInterop": true,
+      // "moduleResolution": "NodeNext",
+
+      // Geração de arquivos
+      "sourceMap": true,
+      "declaration": true,
+      "declarationMap": true,
+
+      // Regras de Tipagem (Strict Mode)
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "exactOptionalPropertyTypes": true,
+      "verbatimModuleSyntax": true,
+      "isolatedModules": true,
+      "noUncheckedSideEffectImports": true,
+      "moduleDetection": "force",
+      "skipLibCheck": true
+   },
+   "include": ["src/**/*.ts", "src/**/*.d.ts"]
+}
