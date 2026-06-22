@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-   baseURL: "http://localhost:3333",
+   baseURL: "https://finance-app-beta-2.onrender.com/",
    withCredentials: true, // ESSENCIAL para a API baseada em Cookies
 });
 
