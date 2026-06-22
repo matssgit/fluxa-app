@@ -8,8 +8,11 @@ export const app = fastify();
 
 // 2. Configuração do CORS (Sempre antes das rotas!)
 app.register(cors, {
-   origin: "http://localhost:5173", // Endereço do seu front-end Vite
-   credentials: true, // Permite que os cookies (sessionId) transitem entre as portas
+   origin: [
+      "http://localhost:5173",
+      "https://finance-app-beta-ijfg.vercel.app/", // <-- A URL do front na Vercel
+   ],
+   credentials: true,
 });
 
 app.register(cookie);
