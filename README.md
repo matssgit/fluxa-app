@@ -1,59 +1,235 @@
-# 💰 Finance App (Beta) — Sistema de Controle Financeiro
+# 💰 Finance App Beta
 
-Uma aplicação web completa de controle financeiro pessoal, desenvolvida no modelo **Monorepo**. O projeto conta com uma API REST robusta seguindo regras de imutabilidade arquitetural e um frontend moderno e responsivo, totalmente integrados em ambientes de produção na nuvem.
+Uma aplicação full stack para gerenciamento de finanças pessoais, permitindo registrar receitas e despesas, visualizar transações e acompanhar o saldo financeiro de forma simples e intuitiva.
 
-🚀 **Link do Frontend (Vercel):** [https://finance-app-beta-ijfg.vercel.app](https://finance-app-beta-ijfg.vercel.app)  
-⚙️ **Link do Backend (Render):** [https://finance-app-beta-2.onrender.com](https://finance-app-beta-2.onrender.com)
+## 🚀 Sobre o Projeto
+
+O **Finance App Beta** foi desenvolvido como um projeto de estudos para consolidar conhecimentos em desenvolvimento Full Stack utilizando tecnologias modernas do ecossistema JavaScript/TypeScript.
+
+A aplicação permite:
+
+* ✅ Registrar receitas
+* ✅ Registrar despesas
+* ✅ Listar transações
+* ✅ Calcular saldo total
+* ✅ Visualizar entradas e saídas
+* ✅ Persistência de dados com banco SQLite
+* ✅ Validação de dados
+* ✅ API REST com TypeScript
 
 ---
 
-## 🏗️ Arquitetura e Decisões de Projeto
+## 📸 Preview
 
-### 🛑 Regra de Ouro: Imutabilidade Financeira
-Uma das principais decisões arquiteturais deste projeto foi a **não implementação de rotas de edição (`PUT`) ou exclusão (`DELETE`)** no ledger de transações. Em sistemas financeiros e contábeis reais, a auditabilidade é crucial. Se uma transação foi registrada incorretamente, a correção deve ser feita através de um **estorno** (uma nova transação inversa de crédito ou débito), garantindo o histórico real e a consistência da conta.
-
-### 🔐 Autenticação Sem Estado (Stateful Cookies)
-A aplicação gerencia sessões de forma transparente utilizando cookies identificadores exclusivos (`sessionId`) gerados via UUID no primeiro acesso (`POST /transactions`). 
-- **Desafio de Produção Superado:** Como o frontend e o backend estão hospedados em domínios diferentes (Vercel e Render), a API foi configurada milimetricamente para lidar com políticas restritas de navegadores modernos, implementando `sameSite: "none"`, `secure: true` e comunicação Cross-Origin via Axios com `withCredentials: true`.
+> Em breve: adicionar screenshots ou GIF da aplicação em funcionamento.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-### **Backend (`/backend`)**
-- **Node.js** & **TypeScript**
-- **Fastify:** Framework focado em performance e baixo overhead.
-- **Knex.js:** Query builder para construção e controle de versão do banco de dados (Migrations e Seeds).
-- **PostgreSQL:** Banco de dados relacional robusto utilizado em produção.
-- **Zod:** Validação estrita de esquemas e tipos em tempo de execução.
-- **Tsup:** Compilação rápida de código TypeScript para CommonJS (`.cjs`).
+### Frontend
 
-### **Frontend (`/frontend`)**
-- **React.js** & **TypeScript**
-- **Vite:** Ferramenta de build ultra rápida.
-- **Axios:** Cliente HTTP configurado com interceptors globais para tratamento elegante de erros (400, 401, 404, 500).
-- **Tailwind CSS:** Estilização utilitária moderna e responsiva.
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* React Hooks
+* Axios
+* Zod
 
----
+### Backend
 
-## 🛣️ Rotas da API (Backend)
-
-| Método | Rota | Pré-requisito | Descrição |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/transactions` | Nenhum | Cria uma transação (gera o cookie de sessão se for o primeiro acesso). |
-| `GET` | `/transactions` | `sessionId` válido | Lista todas as transações pertencentes àquela sessão ativa. |
-| `GET` | `/transactions/:id` | `sessionId` válido | Busca os detalhes de uma transação específica por UUID. |
-| `GET` | `/transactions/summary` | `sessionId` válido | Retorna o resumo (saldo total acumulado) das transações da sessão. |
+* Node.js
+* Fastify
+* TypeScript
+* Knex.js
+* SQLite
+* Zod
+* Vitest
 
 ---
 
-## ⚙️ Como Executar o Projeto Localmente
+## 📂 Estrutura do Projeto
 
-### Pré-requisitos
-- Node.js (Versão v18 ou superior)
-- Um banco de dados PostgreSQL (ou altere o `client` no `knexfile` para `sqlite3` se quiser testar localmente em arquivo).
-
-### 1. Clonar o Repositório
 ```bash
-git clone [https://github.com/matssgit/finance-app-beta.git](https://github.com/matssgit/finance-app-beta.git)
+finance-app-beta/
+├── frontend/
+├── backend/
+└── render.yaml
+```
+
+### Frontend
+
+Responsável pela interface do usuário.
+
+Principais módulos:
+
+```bash
+src/
+├── components/
+├── hooks/
+├── pages/
+├── services/
+├── schemas/
+├── types/
+└── utils/
+```
+
+### Backend
+
+Responsável pelas regras de negócio e persistência de dados.
+
+Principais módulos:
+
+```bash
+src/
+├── routes/
+├── middlewares/
+├── env/
+├── test/
+└── database/
+```
+
+---
+
+## ⚙️ Como Executar Localmente
+
+### Clone o repositório
+
+```bash
+git clone https://github.com/seu-usuario/finance-app-beta.git
+```
+
+```bash
 cd finance-app-beta
+```
+
+---
+
+## Backend
+
+Entre na pasta:
+
+```bash
+cd backend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Configure as variáveis de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+Execute as migrations:
+
+```bash
+npm run knex migrate:latest
+```
+
+Inicie o servidor:
+
+```bash
+npm run dev
+```
+
+Servidor disponível em:
+
+```bash
+http://localhost:3333
+```
+
+---
+
+## Frontend
+
+Entre na pasta:
+
+```bash
+cd frontend
+```
+
+Instale as dependências:
+
+```bash
+npm install
+```
+
+Inicie o projeto:
+
+```bash
+npm run dev
+```
+
+Aplicação disponível em:
+
+```bash
+http://localhost:5173
+```
+
+---
+
+## 🧪 Testes
+
+Para executar os testes do backend:
+
+```bash
+npm test
+```
+
+ou
+
+```bash
+npm run test
+```
+
+---
+
+## 📚 Aprendizados
+
+Durante o desenvolvimento deste projeto foram praticados conceitos como:
+
+* Arquitetura Full Stack
+* Consumo de APIs REST
+* Gerenciamento de estado com React Hooks
+* Validação de dados com Zod
+* Persistência de dados com SQLite
+* Migrations com Knex
+* Tipagem estática com TypeScript
+* Testes automatizados
+* Organização de código em camadas
+
+---
+
+## 🔮 Próximas Funcionalidades
+
+* [ ] Autenticação de usuários
+* [ ] Dashboard com gráficos
+* [ ] Filtros por período
+* [ ] Categorias personalizadas
+* [ ] Exportação de relatórios
+* [ ] Banco de dados PostgreSQL
+* [ ] Deploy em produção
+
+---
+
+## 👨🏾‍💻 Autor
+
+**Matheus Santana**
+
+Desenvolvedor Full Stack em formação, focado em React, Node.js e TypeScript.
+
+LinkedIn: linkedin.com/in/matheussantanadev
+
+GitHub: github.com/matssgit
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins de estudo e portfólio.
