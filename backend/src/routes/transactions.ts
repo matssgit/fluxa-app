@@ -114,7 +114,9 @@ export async function transactionsRoutes(app: FastifyInstance) {
 
             reply.cookie("sessionId", sessionId, {
                path: "/",
-               maxAge: 60 * 60 * 24 * 7, // 7 days
+               maxAge: 1000 * 60 * 60 * 24 * 7, // 7 dias em milissegundos
+               sameSite: "none", // Permite envio entre domínios diferentes (Localhost <-> Render)
+               secure: true, // Obrigatório para sameSite: "none" (Funciona em HTTPS)
             });
          }
 
