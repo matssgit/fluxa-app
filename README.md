@@ -8,20 +8,20 @@ O **Finance App Beta** foi desenvolvido como um projeto de estudos para consolid
 
 A aplicação permite:
 
-* ✅ Registrar receitas
-* ✅ Registrar despesas
-* ✅ Listar transações
-* ✅ Calcular saldo total
-* ✅ Visualizar entradas e saídas
-* ✅ Persistência de dados com banco SQLite
-* ✅ Validação de dados
-* ✅ API REST com TypeScript
+- ✅ Registrar receitas
+- ✅ Registrar despesas
+- ✅ Listar transações
+- ✅ Calcular saldo total
+- ✅ Visualizar entradas e saídas
+- ✅ Persistência de dados com banco SQLite
+- ✅ Validação de dados
+- ✅ API REST com TypeScript
 
 ---
 
 ## 📸 Preview
 
-> Em breve: adicionar screenshots ou GIF da aplicação em funcionamento.
+> ![Preview do Dashboard](./frontend/src/img/print.png)
 
 ---
 
@@ -29,23 +29,23 @@ A aplicação permite:
 
 ### Frontend
 
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* React Hooks
-* Axios
-* Zod
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Hooks
+- Axios
+- Zod
 
 ### Backend
 
-* Node.js
-* Fastify
-* TypeScript
-* Knex.js
-* SQLite
-* Zod
-* Vitest
+- Node.js
+- Fastify
+- TypeScript
+- Knex.js
+- SQLite
+- Zod
+- Vitest
 
 ---
 
@@ -194,27 +194,27 @@ npm run test
 
 Durante o desenvolvimento deste projeto foram praticados conceitos como:
 
-* Arquitetura Full Stack
-* Consumo de APIs REST
-* Gerenciamento de estado com React Hooks
-* Validação de dados com Zod
-* Persistência de dados com SQLite
-* Migrations com Knex
-* Tipagem estática com TypeScript
-* Testes automatizados
-* Organização de código em camadas
+- Arquitetura Full Stack
+- Consumo de APIs REST
+- Gerenciamento de estado com React Hooks
+- Validação de dados com Zod
+- Persistência de dados com SQLite
+- Migrations com Knex
+- Tipagem estática com TypeScript
+- Testes automatizados
+- Organização de código em camadas
 
 ---
 
 ## 🔮 Próximas Funcionalidades
 
-* [ ] Autenticação de usuários
-* [ ] Dashboard com gráficos
-* [ ] Filtros por período
-* [ ] Categorias personalizadas
-* [ ] Exportação de relatórios
-* [ ] Banco de dados PostgreSQL
-* [ ] Deploy em produção
+- [ ] Autenticação de usuários
+- [ ] Dashboard com gráficos
+- [ ] Filtros por período
+- [ ] Categorias personalizadas
+- [ ] Exportação de relatórios
+- [ ] Banco de dados PostgreSQL
+- [ ] Deploy em produção
 
 ---
 
