@@ -1,137 +1,124 @@
 import type { FastifyInstance } from "fastify";
-import { db } from "../database.js";
-import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { checkSessionIdExists } from "../middlewares/check-session-id-exists.js";
-
-// Cookies <--> Formas da gente manter contexto entre requisições
+import { randomUUID } from "node:crypto";
+import { db } from "../database.js";
+import { checkAuth } from "../middlewares/check-auto.js";
 
 export async function transactionsRoutes(app: FastifyInstance) {
-   /**
-    * NOTA ARQUITETURAL:
-    * Optei por não implementar rotas de edição (PUT) ou exclusão (DELETE).
-    * Em sistemas financeiros e ledgers de transações, a regra de ouro é a imutabilidade.
-    * Se uma transação foi registrada errada, a correção deve ser feita através de um
-    * estorno (uma nova transação inversa), garantindo a auditoria e o histórico da conta.
-    */
+   // Protege todas as rotas
+   app.addHook("preHandler", checkAuth);
 
-   // ****** GET: Listar todas as transações  ******
-   app.get(
-      "/",
-      {
-         preHandler: [checkSessionIdExists],
-      },
-      async (request, reply) => {
-         // Recupero o cookie do usuário para garantir que ele só veja os próprios dados
-         const { sessionId } = request.cookies;
-
-         const transactions = await db("transactions")
-            .where("session_id", sessionId)
-            .select();
-
-         return { transactions };
-      },
-   );
-
-   // ****** GET: Buscar uma transação específica  ******
-   app.get(
-      "/:id",
-      {
-         preHandler: [checkSessionIdExists],
-      },
-      async (request, reply) => {
-         const getTransactionsParamsSchema = z.object({
-            id: z.string().uuid(),
-         });
-
-         try {
-            // Valido se o ID passado na rota é realmente um UUID válido
-            const { id } = getTransactionsParamsSchema.parse(request.params);
-            const { sessionId } = request.cookies;
-
-            const transaction = await db("transactions")
-               .where({
-                  session_id: sessionId,
-                  id,
-               })
-               .first();
-
-            if (!transaction) {
-               return reply
-                  .status(404)
-                  .send({ error: "Transaction not found." });
-            }
-
-            return { transaction };
-         } catch (error) {
-            return reply
-               .status(400)
-               .send({ error: "Invalid transaction ID format." });
-         }
-      },
-   );
-
-   // ****** GET: Resumo (Saldo) da conta  ******
-   app.get(
-      "/summary",
-      {
-         preHandler: [checkSessionIdExists],
-      },
-      async (request) => {
-         const { sessionId } = request.cookies;
-
-         const summary = await db("transactions")
-            .where("session_id", sessionId)
-            .sum("amount", {
-               as: "amount",
-            })
-            .first();
-
-         return { summary };
-      },
-   );
-
-   // ****** POST: Criar nova transação  ******
+   // ****** 1. CRIAR TRANSAÇÃO (O que tinha sumido) ******
    app.post("/", async (request, reply) => {
-      const createTransactionBodySchema = z.object({
+      const createTransactionSchema = z.object({
          title: z.string(),
          amount: z.number(),
-         type: z.enum(["credit", "debit"]),
+         account_id: z.string().uuid("Conta é obrigatória"),
+         category_id: z.string().uuid("Categoria é obrigatória").optional(),
+         description: z.string().optional(),
+         observation: z.string().optional(),
+         status: z.enum(["pending", "completed"]).default("completed"),
+         expected_date: z.string().optional(),
+         completed_date: z.string().optional(),
       });
 
-      try {
-         // Valido o corpo da requisição. Se falhar, cai no catch retornando 400
-         const { title, amount, type } = createTransactionBodySchema.parse(
-            request.body,
-         );
+      const body = createTransactionSchema.parse(request.body);
+      const userId = (request.user as any).sub;
 
-         // Verifico se o usuário já tem um cookie de sessão
-         let sessionId = request.cookies.sessionId;
+      await db("transactions").insert({
+         id: randomUUID(),
+         user_id: userId,
+         title: body.title,
+         amount: body.amount,
+         account_id: body.account_id,
+         category_id: body.category_id,
+         description: body.description,
+         observation: body.observation,
+         status: body.status,
+         expected_date: body.expected_date,
+         completed_date: body.completed_date,
+      });
 
-         // Se não tiver, crio um novo cookie que vai durar 7 dias
-         if (!sessionId) {
-            sessionId = randomUUID();
+      return reply.status(201).send();
+   });
 
-            reply.cookie("sessionId", sessionId, {
-               path: "/",
-               maxAge: 1000 * 60 * 60 * 24 * 7, // 7 dias em milissegundos
-               sameSite: "none", // Permite envio entre domínios diferentes (Localhost <-> Render)
-               secure: true, // Obrigatório para sameSite: "none" (Funciona em HTTPS)
-            });
-         }
+   // ****** 2. LISTAR TRANSAÇÕES (Com o Join da Conta e Categoria) ******
+   app.get("/", async (request) => {
+      const userId = (request.user as any).sub;
 
-         // Insiro a transação. Se for débito, salvo como valor negativo para facilitar a soma no summary
-         await db("transactions").insert({
-            id: randomUUID(),
-            title,
-            amount: type === "credit" ? amount : amount * -1,
-            session_id: sessionId,
-         });
+      const transactions = await db("transactions")
+         .leftJoin("accounts", "transactions.account_id", "accounts.id")
+         .leftJoin("categories", "transactions.category_id", "categories.id")
+         .where("transactions.user_id", userId)
+         .select(
+            "transactions.*",
+            "accounts.name as account_name",
+            "categories.name as category_name",
+         )
+         .orderBy("transactions.created_at", "desc");
 
-         return reply.status(201).send();
-      } catch (error) {
-         // Tratamento amigável para o front-end consumir
-         return reply.status(400).send({ error: "Invalid request body." });
+      return { transactions };
+   });
+
+   // ****** 3. RESUMO / SUMMARY (Soma apenas as concluídas) ******
+   app.get("/summary", async (request) => {
+      const userId = (request.user as any).sub;
+
+      // Arquitetura: O saldo real soma apenas transações 'completed'
+      const transactions = await db("transactions")
+         .where({
+            user_id: userId,
+            status: "completed",
+         })
+         .select("amount");
+
+      const summary = transactions.reduce(
+         (acc, transaction) => {
+            // Converte a string do Postgres para Número Decimal
+            const amount = Number(transaction.amount);
+
+            if (amount > 0) {
+               acc.income += amount;
+            } else {
+               acc.expense += amount;
+            }
+            acc.amount += amount;
+            return acc;
+         },
+         { amount: 0, income: 0, expense: 0 },
+      );
+
+      return { summary };
+   });
+
+   // ****** 4. DAR BAIXA EM UMA PENDÊNCIA ******
+   app.patch("/:id/complete", async (request, reply) => {
+      const updateParamsSchema = z.object({
+         id: z.string().uuid("ID inválido"),
+      });
+
+      const { id } = updateParamsSchema.parse(request.params);
+      const userId = (request.user as any).sub;
+
+      // Garante que a transação pertence ao usuário logado
+      const transaction = await db("transactions")
+         .where({ id, user_id: userId })
+         .first();
+
+      if (!transaction) {
+         return reply
+            .status(404)
+            .send({ message: "Lançamento não encontrado." });
       }
+
+      const today = new Date().toISOString().split("T")[0];
+
+      // Atualiza o status e a data de conclusão
+      await db("transactions").where({ id }).update({
+         status: "completed",
+         completed_date: today,
+      });
+
+      return reply.status(204).send();
    });
 }

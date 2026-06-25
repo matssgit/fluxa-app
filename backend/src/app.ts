@@ -1,26 +1,42 @@
 import fastify from "fastify";
-import cookie from "@fastify/cookie";
 import cors from "@fastify/cors"; // 1. Importação adicionada
 import { env } from "./env/index.js";
+import cookie from "@fastify/cookie";
+import fastifyJwt from "@fastify/jwt";
+import { usersRoutes } from "./routes/users.js";
+import { creditRoutes } from "./routes/credit.js";
+import { accountsRoutes } from "./routes/accounts.js";
+import { categoriesRoutes } from "./routes/categories.js";
 import { transactionsRoutes } from "./routes/transactions.js";
 
 export const app = fastify();
 
 // 2. Configuração do CORS (Sempre antes das rotas!)
 app.register(cors, {
-   origin: [
-      "http://localhost:5173",
-      "https://finance-app-beta-ijfg.vercel.app",
-   ],
+   origin: ["http://localhost:5173"],
    credentials: true,
-   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
 });
 
 app.register(cookie);
 
-// GET, POST, PUT, PATCH, DELETE
-
 app.register(transactionsRoutes, {
    prefix: "transactions",
 });
+
+app.register(fastifyJwt, {
+   secret: process.env.JWT_SECRET || "supersecret",
+});
+
+app.register(usersRoutes, {
+   prefix: "users",
+});
+
+app.register(creditRoutes, {
+   prefix: "credit",
+});
+
+app.register(accountsRoutes, { prefix: "accounts" });
+
+app.register(categoriesRoutes, { prefix: "categories" });

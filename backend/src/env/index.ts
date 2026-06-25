@@ -11,9 +11,11 @@ const envSchema = z.object({
    NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("production"),
-   DATABASE_CLIENT: z.enum(["sqlite", "pg"]),
+   // Procure por essa linha e deixe assim:
+   DATABASE_CLIENT: z.enum(["sqlite", "pg"]).default("pg"),
    DATABASE_URL: z.string(),
    PORT: z.coerce.number().default(3333),
+   JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
 });
 
 const _env = envSchema.safeParse(process.env);

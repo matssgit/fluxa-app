@@ -1,18 +1,16 @@
 {
-   "name": "02-api-rest-nodejs",
+   "name": "finance-app-v2",
    "version": "1.0.0",
    "description": "API REST para gerenciamento de transações financeiras.",
    "main": "index.js",
+   "type": "module",
    "engines": {
       "node": ">= 18.0.0"
    },
    "scripts": {
       "dev": "tsx watch src/server.ts",
-      "knex": "node --no-warnings --import tsx ./node_modules/knex/bin/cli.js",
-      "start": "node dist/server.js",
-      "lint": "eslint src --ext .ts",
-      "build": "tsup src",
-      "test": "vitest"
+      "knex": "knex",
+      "build": "tsup src"
    },
    "keywords": [
       "nodejs",
@@ -23,8 +21,8 @@
    ],
    "author": "",
    "license": "ISC",
-   "type": "module",
    "devDependencies": {
+      "@types/bcrypt": "^6.0.0",
       "@types/node": "^20.11.0",
       "@types/supertest": "^6.0.2",
       "supertest": "^6.3.4",
@@ -36,11 +34,12 @@
    "dependencies": {
       "@fastify/cookie": "^9.3.1",
       "@fastify/cors": "^8.5.0",
+      "@fastify/jwt": "^8.0.1",
+      "bcrypt": "^6.0.0",
       "dotenv": "^16.4.5",
       "fastify": "^4.26.2",
       "knex": "^3.1.0",
       "pg": "^8.22.0",
-      "sqlite3": "^5.1.7",
       "zod": "^3.22.4"
    }
 }

@@ -1,11 +1,11 @@
 import axios from "axios";
 
 export const api = axios.create({
-   baseURL: "https://finance-app-beta-2.onrender.com/",
-   withCredentials: true, // ESSENCIAL para a API baseada em Cookies
+   baseURL: "http://localhost:3333",
+   withCredentials: true, // Mantém o cookie funcionando
 });
 
-// Tratamento de erros global elegante
+// Tratamento de erros global 
 api.interceptors.response.use(
    (response) => response,
    (error) => {
@@ -22,3 +22,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
    },
 );
+
+// Interceptor para injetar o Token em todas as requisições
+api.interceptors.request.use((config) => {
+   const token = localStorage.getItem("@FinanceApp:token");
+
+   if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+   }
+
+   return config;
+});

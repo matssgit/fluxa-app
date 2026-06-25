@@ -1,235 +1,816 @@
-# 💰 Finance App Beta
+# 💰 Finance App - Arquitetura Oficial do Projeto
 
-Uma aplicação full stack para gerenciamento de finanças pessoais, permitindo registrar receitas e despesas, visualizar transações e acompanhar o saldo financeiro de forma simples e intuitiva.
+## Objetivo do Projeto
 
-## 🚀 Sobre o Projeto
+Construir um aplicativo financeiro moderno para uso pessoal e familiar inspirado em Mobills, Organizze e similares.
 
-O **Finance App Beta** foi desenvolvido como um projeto de estudos para consolidar conhecimentos em desenvolvimento Full Stack utilizando tecnologias modernas do ecossistema JavaScript/TypeScript.
+O sistema deverá permitir:
 
-A aplicação permite:
+- Controle de receitas e despesas
+- Gestão de contas financeiras
+- Controle de cartões de crédito
+- Compras parceladas
+- Lançamentos futuros
+- Central de pendências
+- Recorrências
+- Dashboard financeiro
+- Backup e restauração
 
-- ✅ Registrar receitas
-- ✅ Registrar despesas
-- ✅ Listar transações
-- ✅ Calcular saldo total
-- ✅ Visualizar entradas e saídas
-- ✅ Persistência de dados com banco SQLite
-- ✅ Validação de dados
-- ✅ API REST com TypeScript
+O projeto também servirá como portfólio Full Stack.
 
----
-
-## 📸 Preview
-
-> ![Preview do Dashboard](./frontend/src/img/print.png)
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-### Frontend
-
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Hooks
-- Axios
-- Zod
+Stack principal:
 
 ### Backend
 
 - Node.js
 - Fastify
 - TypeScript
-- Knex.js
-- SQLite
+- Knex
+- MySQL
+- JWT
 - Zod
-- Vitest
-
----
-
-## 📂 Estrutura do Projeto
-
-```bash
-finance-app-beta/
-├── frontend/
-├── backend/
-└── render.yaml
-```
 
 ### Frontend
 
-Responsável pela interface do usuário.
+- React
+- TypeScript
+- React Query
+- React Hook Form
+- Zod
+- TailwindCSS
 
-Principais módulos:
+---
 
-```bash
-src/
-├── components/
-├── hooks/
-├── pages/
-├── services/
-├── schemas/
-├── types/
-└── utils/
+# PRINCÍPIO ARQUITETURAL
+
+O sistema é dividido em dois domínios completamente separados.
+
+## Domínio 1 - Fluxo de Caixa
+
+Responsável pelo dinheiro real.
+
+Exemplos:
+
+- Salário
+- PIX
+- Dinheiro
+- Conta Corrente
+- Poupança
+- Investimentos
+- Pagamento de contas
+- Transferências
+
+Tudo que altera saldo de contas pertence ao domínio de fluxo de caixa.
+
+---
+
+## Domínio 2 - Cartões de Crédito
+
+Responsável por compromissos futuros.
+
+Exemplos:
+
+- Compras parceladas
+- Compras à vista no crédito
+- Controle de limite
+- Parcelas futuras
+
+Uma compra no cartão NÃO altera imediatamente o saldo da conta.
+
+Ela gera compromissos futuros.
+
+---
+
+# MODELAGEM DE DADOS
+
+## users
+
+Responsável pelos usuários do sistema.
+
+Campos:
+
+```text
+id
+name
+email
+password_hash
+created_at
 ```
 
-### Backend
+Relacionamentos:
 
-Responsável pelas regras de negócio e persistência de dados.
-
-Principais módulos:
-
-```bash
-src/
-├── routes/
-├── middlewares/
-├── env/
-├── test/
-└── database/
+```text
+1 usuário
+├─ N contas
+├─ N categorias
+├─ N transações
+├─ N cartões
+└─ N compras de cartão
 ```
 
 ---
 
-## ⚙️ Como Executar Localmente
+# accounts
 
-### Clone o repositório
+Representa contas financeiras.
 
-```bash
-git clone https://github.com/seu-usuario/finance-app-beta.git
+Exemplos:
+
+- Carteira
+- Nubank
+- Inter
+- Santander
+- Poupança
+
+Campos:
+
+```text
+id
+user_id
+name
+type
+created_at
 ```
 
-```bash
-cd finance-app-beta
-```
+Tipos:
 
----
-
-## Backend
-
-Entre na pasta:
-
-```bash
-cd backend
-```
-
-Instale as dependências:
-
-```bash
-npm install
-```
-
-Configure as variáveis de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-Execute as migrations:
-
-```bash
-npm run knex migrate:latest
-```
-
-Inicie o servidor:
-
-```bash
-npm run dev
-```
-
-Servidor disponível em:
-
-```bash
-http://localhost:3333
+```text
+wallet
+checking
+savings
+investment
 ```
 
 ---
 
-## Frontend
+# categories
 
-Entre na pasta:
+Categorias utilizadas em transações e compras.
 
-```bash
-cd frontend
+Campos:
+
+```text
+id
+user_id
+name
+type
+color
+icon
+is_default
+created_at
 ```
 
-Instale as dependências:
+Tipos:
 
-```bash
-npm install
+```text
+income
+expense
 ```
 
-Inicie o projeto:
+Exemplo:
 
-```bash
-npm run dev
-```
-
-Aplicação disponível em:
-
-```bash
-http://localhost:5173
-```
-
----
-
-## 🧪 Testes
-
-Para executar os testes do backend:
-
-```bash
-npm test
-```
-
-ou
-
-```bash
-npm run test
+```text
+Mercado
+🛒
+#16a34a
 ```
 
 ---
 
-## 📚 Aprendizados
+# transactions
 
-Durante o desenvolvimento deste projeto foram praticados conceitos como:
+Representa movimentações reais de dinheiro.
 
-- Arquitetura Full Stack
-- Consumo de APIs REST
-- Gerenciamento de estado com React Hooks
-- Validação de dados com Zod
-- Persistência de dados com SQLite
-- Migrations com Knex
-- Tipagem estática com TypeScript
-- Testes automatizados
-- Organização de código em camadas
+Esta é a tabela mais importante do sistema.
+
+Campos:
+
+```text
+id
+user_id
+account_id
+category_id
+
+title
+description
+observation
+
+amount
+
+status
+
+expected_date
+completed_date
+
+created_at
+```
+
+Status:
+
+```text
+pending
+completed
+ignored
+```
+
+Exemplos:
+
+```text
+Salário
+PIX recebido
+Conta de água
+Aluguel
+Pagamento de fatura
+```
+
+IMPORTANTE:
+
+transactions NÃO possui card_id.
+
+Cartões são tratados em outro domínio.
 
 ---
 
-## 🔮 Próximas Funcionalidades
+# cards
 
-- [ ] Autenticação de usuários
-- [ ] Dashboard com gráficos
-- [ ] Filtros por período
-- [ ] Categorias personalizadas
-- [ ] Exportação de relatórios
-- [ ] Banco de dados PostgreSQL
-- [ ] Deploy em produção
+Representa cartões de crédito.
+
+Campos:
+
+```text
+id
+user_id
+
+name
+brand
+
+credit_limit
+
+created_at
+```
+
+Exemplos:
+
+```text
+Mercado Pago
+Nubank
+Inter
+```
 
 ---
 
-## 👨🏾‍💻 Autor
+# credit_purchases
 
-**Matheus Santana**
+Compra principal realizada no cartão.
 
-Desenvolvedor Full Stack em formação, focado em React, Node.js e TypeScript.
+Campos:
 
-LinkedIn: linkedin.com/in/matheussantanadev
+```text
+id
 
-GitHub: github.com/matssgit
+user_id
+card_id
+category_id
+
+title
+store
+
+total_amount
+total_installments
+
+purchase_date
+
+observation
+
+created_at
+```
+
+Exemplo:
+
+```text
+Título:
+iPhone 17 Pro
+
+Loja:
+Apple
+
+Valor:
+7200
+
+Parcelas:
+24
+```
+
+Esta tabela representa a compra mãe.
 
 ---
 
-## 📄 Licença
+# installments
 
-Este projeto foi desenvolvido para fins de estudo e portfólio.
+Parcelas geradas automaticamente.
+
+Campos:
+
+```text
+id
+
+purchase_id
+
+installment_number
+total_installments
+
+amount
+
+expected_date
+
+status
+```
+
+Status:
+
+```text
+pending
+paid
+```
+
+Exemplo:
+
+```text
+1/24
+2/24
+3/24
+...
+24/24
+```
+
+A representação visual 1/24 é montada pelo frontend.
+
+Não armazenar strings como:
+
+```text
+"1/24"
+```
+
+---
+
+# RECURRENCES (VERSÃO FUTURA)
+
+Tabela reservada para recorrências.
+
+Não implementar agora.
+
+Campos previstos:
+
+```text
+id
+user_id
+account_id
+category_id
+
+title
+amount
+
+frequency
+
+start_date
+end_date
+
+active
+```
+
+Exemplos:
+
+```text
+Netflix
+Academia
+Internet
+Aluguel
+```
+
+---
+
+# REGRAS DE NEGÓCIO
+
+## Fluxo de Caixa
+
+Saldo de uma conta:
+
+```text
+Entradas completed
+-
+Saídas completed
+```
+
+Pendências não afetam saldo.
+
+---
+
+## Cartões
+
+Ao criar:
+
+```text
+iPhone
+7200
+24x
+```
+
+Sistema:
+
+1. cria credit_purchase
+
+2. calcula:
+
+7200 / 24 = 300
+
+3. gera:
+
+24 registros em installments
+
+---
+
+# CENTRAL DE PENDÊNCIAS
+
+Objetivo:
+
+Mostrar tudo que ainda não foi concluído.
+
+Fontes:
+
+### transactions
+
+status = pending
+
+### installments
+
+status = pending
+
+Ordenação:
+
+```text
+expected_date ASC
+```
+
+---
+
+# DASHBOARD
+
+Objetivo:
+
+Mostrar visão consolidada.
+
+Indicadores:
+
+## Saldo Total
+
+Somatório de todas as contas.
+
+---
+
+## Saldo por Conta
+
+Exemplo:
+
+```text
+Nubank
+R$ 2.500
+
+Carteira
+R$ 300
+
+Inter
+R$ 1.200
+```
+
+---
+
+## Receitas do Mês
+
+Somatório de entradas completed.
+
+---
+
+## Despesas do Mês
+
+Somatório de saídas completed.
+
+---
+
+## Gastos por Categoria
+
+Exemplo:
+
+```text
+Mercado
+Transporte
+Tecnologia
+Moradia
+```
+
+---
+
+# TRANSFERÊNCIAS (FASE FUTURA)
+
+Exemplo:
+
+```text
+Carteira
+→
+Nubank
+```
+
+A transferência:
+
+não gera receita
+
+não gera despesa
+
+apenas movimentação interna.
+
+---
+
+# BACKUP
+
+Endpoint:
+
+```http
+GET /backup
+```
+
+Retorna:
+
+```json
+{
+   "accounts": [],
+   "categories": [],
+   "transactions": [],
+   "cards": [],
+   "creditPurchases": [],
+   "installments": []
+}
+```
+
+---
+
+# RESTORE
+
+Endpoint:
+
+```http
+POST /restore
+```
+
+Recebe:
+
+```json
+{
+  ...
+}
+```
+
+Utilizar estratégia de UPSERT.
+
+---
+
+# ROADMAP OFICIAL
+
+## Fase 1
+
+Autenticação
+
+- Users
+- JWT
+- Login
+- Cadastro
+- Proteção de rotas
+
+STATUS: CONCLUÍDA
+
+---
+
+## Fase 2
+
+Contas e Categorias
+
+- Accounts
+- Categories
+- CRUDs
+
+STATUS: CONCLUÍDA
+
+---
+
+## Fase 3
+
+Fluxo de Caixa
+
+- Transactions
+- Summary
+- Pendências
+
+STATUS: CONCLUÍDA
+
+---
+
+## Fase 4
+
+Cartões e Parcelamentos
+
+Implementar:
+
+- Cards
+- Credit Purchases
+- Installments
+
+Objetivo:
+
+Cadastrar uma compra e gerar parcelas automaticamente.
+
+STATUS: EM DESENVOLVIMENTO
+
+---
+
+## Fase 5
+
+Recorrências
+
+- Netflix
+- Academia
+- Internet
+- Aluguel
+
+STATUS: FUTURO
+
+---
+
+## Fase 6
+
+Dashboard Avançado
+
+- Gráficos
+- Indicadores
+- Relatórios
+
+STATUS: FUTURO
+
+---
+
+## Fase 7
+
+Transferências
+
+STATUS: FUTURO
+
+---
+
+## Fase 8
+
+Backup e Restore
+
+STATUS: FUTURO
+
+---
+
+# REGRA DE OURO DO PROJETO
+
+Antes de implementar qualquer funcionalidade nova:
+
+1. Verificar se ela pertence ao domínio de Fluxo de Caixa ou Cartões.
+2. Não misturar transactions com compras de cartão.
+3. Não criar atalhos que gerem dívida técnica.
+4. Priorizar simplicidade do MVP.
+5. Não implementar funcionalidades de V2 sem necessidade.
+6. Sempre atualizar este documento quando houver mudanças arquiteturais.
+
+Este documento é a fonte oficial da arquitetura do projeto.
+
+```
+finance-app-beta - v2
+├─ backend
+│  ├─ .env
+│  ├─ .env.example
+│  ├─ .env.test
+│  ├─ .env.test.example
+│  ├─ .eslintignore
+│  ├─ .eslintrc.json
+│  ├─ db
+│  │  └─ migrations
+│  │     ├─ 20260616175526_create-transactions.ts
+│  │     ├─ 20260616185406_add-session-id-to-transactions.ts
+│  │     ├─ 20260622233134_create_users.ts
+│  │     ├─ 20260622233138_add_user_id_to_transactions.ts
+│  │     ├─ 20260623163630_create_accounts.ts
+│  │     ├─ 20260623163747_create_categories.ts
+│  │     ├─ 20260623175309_add_account_and_category_to_transactions.ts
+│  │     ├─ 20260623185742_apply_v1_architecture.ts
+│  │     ├─ 20260624012148_add_is_default_to_categories.ts
+│  │     ├─ 20260624012149_create_cards.ts
+│  │     ├─ 20260624012150_create_credit_purchases.ts
+│  │     ├─ 20260624012151_create_installments.ts
+│  │     └─ 20260625005711_optimize_database_indexes.ts
+│  ├─ dist
+│  │  ├─ @types
+│  │  │  └─ knex.d.cjs
+│  │  ├─ app.cjs
+│  │  ├─ database.cjs
+│  │  ├─ env
+│  │  │  └─ index.cjs
+│  │  ├─ middlewares
+│  │  │  └─ check-session-id-exists.cjs
+│  │  ├─ routes
+│  │  │  └─ transactions.cjs
+│  │  ├─ server.cjs
+│  │  └─ test
+│  │     └─ transactions.spec.cjs
+│  ├─ docker-compose.yml
+│  ├─ knexfile.ts
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ README_PROJECT.md
+│  ├─ seeds
+│  │  └─ seed-initial-transactions.ts
+│  ├─ src
+│  │  ├─ @types
+│  │  │  ├─ credit.ts
+│  │  │  ├─ fastify-jwt.d.ts
+│  │  │  └─ knex.d.ts
+│  │  ├─ app.ts
+│  │  ├─ database.ts
+│  │  ├─ env
+│  │  │  └─ index.ts
+│  │  ├─ middlewares
+│  │  │  ├─ check-auto.ts
+│  │  │  └─ check-session-id-exists.ts
+│  │  ├─ routes
+│  │  │  ├─ accounts.ts
+│  │  │  ├─ categories.ts
+│  │  │  ├─ credit.ts
+│  │  │  ├─ transactions.ts
+│  │  │  └─ users.ts
+│  │  ├─ server.ts
+│  │  └─ test
+│  │     ├─ transactions.spec.ts
+│  │     ├─ validate-payment.ts
+│  │     ├─ validate-phase1.ts
+│  │     ├─ validate-phase2.ts
+│  │     ├─ validate-phase3.ts
+│  │     └─ validate-phase4.ts
+│  └─ tsconfig.json
+├─ frontend
+│  ├─ eslint.config.js
+│  ├─ index.html
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ postcss.config.js
+│  ├─ src
+│  │  ├─ api
+│  │  │  └─ client.ts
+│  │  ├─ App.tsx
+│  │  ├─ components
+│  │  │  ├─ AccountModal.tsx
+│  │  │  ├─ CategoryModal.tsx
+│  │  │  ├─ Header.tsx
+│  │  │  ├─ NewTransactionModal.tsx
+│  │  │  ├─ SummaryCard.tsx
+│  │  │  ├─ TransactionForm.tsx
+│  │  │  └─ TransactionTable.tsx
+│  │  ├─ contexts
+│  │  │  ├─ AuthContext.tsx
+│  │  │  └─ AuthProvider.tsx
+│  │  ├─ hooks
+│  │  │  ├─ useAccounts.ts
+│  │  │  ├─ useAuth.ts
+│  │  │  ├─ useCategories.ts
+│  │  │  ├─ useCredit.ts
+│  │  │  └─ useTransactions.ts
+│  │  ├─ index.css
+│  │  ├─ main.tsx
+│  │  ├─ pages
+│  │  │  ├─ CreditCards.tsx
+│  │  │  ├─ Dashboard
+│  │  │  │  └─ index.tsx
+│  │  │  ├─ Login.tsx
+│  │  │  ├─ Register.tsx
+│  │  │  └─ Settings.tsx
+│  │  ├─ schemas
+│  │  │  └─ transactionSchema.ts
+│  │  ├─ services
+│  │  │  ├─ accounts.ts
+│  │  │  ├─ auth.ts
+│  │  │  ├─ categories.ts
+│  │  │  └─ transactions.ts
+│  │  ├─ types
+│  │  │  └─ transaction.ts
+│  │  └─ utils
+│  │     ├─ currency.ts
+│  │     └─ date.ts
+│  ├─ tailwind.config.js
+│  ├─ tsconfig.app.json
+│  ├─ tsconfig.json
+│  ├─ tsconfig.node.json
+│  └─ vite.config.ts
+├─ PROJECT_ROADMAP.md
+├─ README.md
+└─ render.yaml
+
+```
