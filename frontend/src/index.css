@@ -1,7 +1,77 @@
 @import "tailwindcss";
 
+:root {
+   /* Paleta Semântica */
+   --bg-primary: #f6e9ca;
+   --text-primary: #13312a;
+   --accent-primary: #155446;
+   --accent-secondary: #13312a;
+   --accent-bronze: #c69a72;
+
+   /* Superfícies */
+   --card-bg: #ffffff; /* Branco quente (off-white) */
+   --scrollbar-track: #f6e9ca;
+   --scrollbar-thumb: #155446;
+
+   /* Efeitos Semânticos */
+   --shadow-subtle: 0 2px 4px rgba(19, 49, 42, 0.05);
+   --transition-default: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Global */
 body {
+   background-color: var(--bg-primary) !important;
+   color: var(--text-primary) !important;
    -webkit-font-smoothing: antialiased;
-   -moz-osx-font-smoothing: grayscale;
-   background-color: #f8fafc;
+}
+
+::selection {
+   background: var(--accent-bronze);
+   color: white;
+}
+
+:focus {
+   outline: 2px solid var(--accent-bronze);
+   outline-offset: 2px;
+}
+
+/* Classes Customizadas Semânticas */
+.bg-premium-card {
+   background-color: var(--card-bg) !important;
+   border: 1px solid rgba(19, 49, 42, 0.08) !important;
+   box-shadow: var(--shadow-subtle) !important;
+}
+
+.btn-premium-primary {
+   background: linear-gradient(
+      180deg,
+      var(--accent-primary),
+      var(--accent-secondary)
+   ) !important;
+   color: #ffffff !important;
+   transition: var(--transition-default) !important;
+   border: none !important;
+}
+
+.btn-premium-primary:hover {
+   filter: brightness(1.1);
+   transform: translateY(-1px);
+}
+
+.btn-premium-primary:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+   width: 6px;
+   height: 6px;
+}
+::-webkit-scrollbar-track {
+   background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+   background: var(--scrollbar-thumb);
+   border-radius: 3px;
 }

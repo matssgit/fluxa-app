@@ -5,9 +5,11 @@ import cookie from "@fastify/cookie";
 import fastifyJwt from "@fastify/jwt";
 import { usersRoutes } from "./routes/users.js";
 import { creditRoutes } from "./routes/credit.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 import { accountsRoutes } from "./routes/accounts.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { transactionsRoutes } from "./routes/transactions.js";
+import { subscriptionsRoutes } from "./routes/subscriptions.js";
 
 export const app = fastify();
 
@@ -37,6 +39,18 @@ app.register(creditRoutes, {
    prefix: "credit",
 });
 
-app.register(accountsRoutes, { prefix: "accounts" });
+app.register(accountsRoutes, {
+   prefix: "accounts",
+});
 
-app.register(categoriesRoutes, { prefix: "categories" });
+app.register(categoriesRoutes, {
+   prefix: "categories",
+});
+
+app.register(dashboardRoutes, {
+   prefix: "/dashboard",
+});
+
+app.register(subscriptionsRoutes, {
+   prefix: "/subscriptions",
+});

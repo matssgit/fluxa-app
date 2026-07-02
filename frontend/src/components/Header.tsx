@@ -4,17 +4,17 @@ import {
    Settings,
    LayoutDashboard,
    CreditCard,
+   Repeat, // <--- Import consolidado aqui!
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 
 export function Header() {
    const { user, signOut } = useAuth();
-   const location = useLocation(); // Ajuda a saber qual página está ativa
+   const location = useLocation();
 
    return (
       <header className="bg-slate-900 pt-8 pb-32 px-6">
-         {/* Transformei em flex-col no mobile e flex-row no desktop para o menu não espremer */}
          <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-0">
             {/* BLOCO ESQUERDO: Logo, Textos e Navegação */}
             <div className="flex flex-col md:flex-row md:items-center gap-6">
@@ -36,13 +36,13 @@ export function Header() {
                {/* Separador visual (visível apenas em telas maiores) */}
                <div className="hidden md:block h-8 w-px bg-slate-700 mx-2"></div>
 
-               {/* Menu de Navegação */}
-               <nav className="flex items-center gap-2">
+               {/* Menu de Navegação ÚNICO */}
+               <nav className="flex flex-wrap items-center gap-2">
                   <Link
                      to="/"
                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
                         location.pathname === "/"
-                           ? "text-white bg-slate-800" // Acende se estiver na Home
+                           ? "text-white bg-slate-800"
                            : "text-slate-400 hover:text-white"
                      }`}
                   >
@@ -54,12 +54,24 @@ export function Header() {
                      to="/cards"
                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
                         location.pathname === "/cards"
-                           ? "text-white bg-slate-800" // Acende se estiver nos Cartões
+                           ? "text-white bg-slate-800"
                            : "text-slate-400 hover:text-white"
                      }`}
                   >
                      <CreditCard size={18} />
                      Cartões
+                  </Link>
+
+                  <Link
+                     to="/subscriptions"
+                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+                        location.pathname === "/subscriptions"
+                           ? "text-white bg-slate-800"
+                           : "text-slate-400 hover:text-white"
+                     }`}
+                  >
+                     <Repeat size={18} />
+                     Assinaturas
                   </Link>
                </nav>
             </div>
@@ -71,7 +83,6 @@ export function Header() {
                </span>
 
                <div className="flex items-center gap-2">
-                  {/* Botão de Configurações */}
                   <Link
                      to="/settings"
                      className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"

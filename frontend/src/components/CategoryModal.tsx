@@ -7,8 +7,6 @@ import { useCategories } from "../hooks/useCategories";
 const categorySchema = z.object({
    name: z.string().min(2, "O nome da categoria é obrigatório"),
    type: z.enum(["income", "expense"]),
-   // Os campos de color e icon nós podemos adicionar na V2 se quiser,
-   // por enquanto o zod os aceita vazio ou ignoramos no form.
 });
 
 type CategoryForm = z.infer<typeof categorySchema>;

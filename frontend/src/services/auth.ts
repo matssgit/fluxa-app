@@ -28,6 +28,3 @@ export async function register(data: RegisterCredentials): Promise<void> {
    await api.post("/users/register", data);
 }
 
-export async function syncData(): Promise<void> {
-   await api.post("/transactions/sync");
-}

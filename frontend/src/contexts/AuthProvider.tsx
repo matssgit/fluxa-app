@@ -3,7 +3,6 @@ import { AuthContext } from "./AuthContext";
 import {
    login as apiLogin,
    register as apiRegister,
-   syncData,
    type User,
    type LoginCredentials,
    type RegisterCredentials,
@@ -29,7 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(loggedUser);
 
       try {
-         await syncData();
          console.log("Dados antigos sincronizados com sucesso!");
       } catch {
          console.log(

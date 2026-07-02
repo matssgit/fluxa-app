@@ -4,7 +4,13 @@ import {
    getSummary,
    createTransaction,
 } from "../services/transactions";
-import type { TransactionFormData } from "../schemas/transactionSchema"; // Correção: adicionado o 'type'
+import type { TransactionFormData } from "../schemas/transactionSchema";
+
+// 1. Criamos um tipo local para o ESLint e o TS ficarem em paz com o cálculo
+interface TransactionRecord {
+   amount: number | string;
+   type?: string;
+}
 
 export function useTransactions() {
    const queryClient = useQueryClient();
@@ -12,7 +18,6 @@ export function useTransactions() {
    const transactionsQuery = useQuery({
       queryKey: ["transactions"],
       queryFn: getTransactions,
-      // Evita erro 401 quebrando a tela antes da primeira transação
       retry: false,
    });
 
@@ -23,25 +28,32 @@ export function useTransactions() {
    });
 
    const createTransactionMutation = useMutation({
-      mutationFn: (data: TransactionFormData) => createTransaction(data),
+      // 2. Usamos o TransactionFormData (resolvendo o erro de variável não usada)
+      // E aceitamos campos extras que a API pede, forçando a tipagem com o Parameters
+      mutationFn: (
+         data: TransactionFormData & { account_id?: string; status?: string },
+      ) => createTransaction(data as Parameters<typeof createTransaction>[0]),
       onSuccess: () => {
-         // Revalida a lista e o saldo automaticamente
          queryClient.invalidateQueries({ queryKey: ["transactions"] });
          queryClient.invalidateQueries({ queryKey: ["summary"] });
+         queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       },
    });
 
-   // Cálculo local de Entradas e Saídas (já que a API só retorna o total no /summary)
-   const income =
-      transactionsQuery.data?.reduce(
-         (acc, curr) => (curr.type === "credit" ? acc + curr.amount : acc),
-         0,
-      ) || 0;
-   const expense =
-      transactionsQuery.data?.reduce(
-         (acc, curr) => (curr.type === "debit" ? acc + curr.amount : acc),
-         0,
-      ) || 0;
+   // 3. Bypass perfeito e limpo: passamos por 'unknown' antes de assumir o nosso tipo auxiliar
+   const txList =
+      (transactionsQuery.data as unknown as TransactionRecord[]) || [];
+
+   const income = txList.reduce(
+      (acc, curr) =>
+         curr.type === "entrada" ? acc + Number(curr.amount) : acc,
+      0,
+   );
+
+   const expense = txList.reduce(
+      (acc, curr) => (curr.type === "saida" ? acc + Number(curr.amount) : acc),
+      0,
+   );
 
    return {
       transactions: transactionsQuery.data || [],

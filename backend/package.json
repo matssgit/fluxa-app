@@ -9,8 +9,9 @@
    },
    "scripts": {
       "dev": "tsx watch src/server.ts",
-      "knex": "knex",
-      "build": "tsup src"
+      "build": "tsup src",
+      "start": "node build/server.js",
+      "knex": "npx tsx ./node_modules/knex/bin/cli.js"
    },
    "keywords": [
       "nodejs",
@@ -25,17 +26,19 @@
       "@types/bcrypt": "^6.0.0",
       "@types/node": "^20.11.0",
       "@types/supertest": "^6.0.2",
+      "dotenv-cli": "^11.0.0",
       "supertest": "^6.3.4",
       "tsup": "^8.5.1",
       "tsx": "^4.22.4",
       "typescript": "^5.4.0",
-      "vitest": "^1.4.0"
+      "vitest": "^1.6.1"
    },
    "dependencies": {
       "@fastify/cookie": "^9.3.1",
       "@fastify/cors": "^8.5.0",
       "@fastify/jwt": "^8.0.1",
       "bcrypt": "^6.0.0",
+      "date-fns": "^4.4.0",
       "dotenv": "^16.4.5",
       "fastify": "^4.26.2",
       "knex": "^3.1.0",

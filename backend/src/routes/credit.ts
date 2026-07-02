@@ -2,10 +2,12 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db } from "../database.js";
-import { checkAuth } from "../middlewares/check-auto.js";
+import { checkAuth } from "../middlewares/check-auth.js";
 
 export async function creditRoutes(app: FastifyInstance) {
-   // Protege todas as rotas deste domínio
+   // 🔒 Middleware de Autenticação
+   // Nenhuma rota de crédito confia em user_id enviado pelo body.
+   // A identidade é sempre extraída do token JWT validado.
    app.addHook("preHandler", checkAuth);
 
    // ==========================================
@@ -17,29 +19,38 @@ export async function creditRoutes(app: FastifyInstance) {
          brand: z.string().min(2),
          limit_amount: z.number().positive(),
          due_day: z.number().int().min(1).max(31),
+         color: z.string().optional().default("slate"),
       });
 
-      const body = createCardSchema.parse(request.body);
-      const userId = (request.user as any)?.sub;
+      try {
+         const body = createCardSchema.parse(request.body);
+         const userId = (request.user as any)?.sub;
 
-      if (!userId) {
-         return reply.status(401).send({ message: "Usuário não autenticado." });
+         if (!userId)
+            return reply
+               .status(401)
+               .send({ message: "Usuário não autenticado." });
+
+         // O cartão nasce com o limite disponível idêntico ao limite total.
+         // As duas colunas são separadas para mantermos o histórico do limite concedido.
+         const [novoCartao] = await db("cards")
+            .insert({
+               id: randomUUID(),
+               user_id: userId,
+               name: body.name,
+               brand: body.brand,
+               total_limit: body.limit_amount,
+               available_limit: body.limit_amount,
+               due_day: body.due_day,
+               color: body.color,
+            })
+            .returning("*");
+
+         return reply.status(201).send(novoCartao);
+      } catch (error) {
+         console.error("🔥 Erro ao cadastrar cartão:", error);
+         return reply.status(500).send({ message: "Erro interno", error });
       }
-
-      // ATENÇÃO PARA ESTA PARTE: Adicionando o returning e salvando em uma variável
-      const [novoCartao] = await db("cards")
-         .insert({
-            id: randomUUID(),
-            user_id: userId,
-            name: body.name,
-            brand: body.brand,
-            limit_amount: body.limit_amount,
-            due_day: body.due_day,
-         })
-         .returning("*"); // O Knex manda o Postgres devolver a linha criada
-
-      // Agora, em vez de enviar () vazio, enviamos o objeto que o banco devolveu!
-      return reply.status(201).send(novoCartao);
    });
 
    // ==========================================
@@ -47,19 +58,77 @@ export async function creditRoutes(app: FastifyInstance) {
    // ==========================================
    app.get("/cards", async (request, reply) => {
       const userId = (request.user as any)?.sub;
-
-      if (!userId) {
+      if (!userId)
          return reply.status(401).send({ message: "Usuário não autenticado." });
-      }
 
       const cards = await db("cards")
+         .select("*")
          .where("user_id", userId)
          .orderBy("created_at", "desc");
+
       return { cards };
    });
 
    // ==========================================
-   // 3. CRIAR COMPRA E GERAR PARCELAS (O CÉREBRO)
+   // 2.5 EDITAR CARTÃO
+   // ==========================================
+   app.put("/cards/:id", async (request, reply) => {
+      const paramsSchema = z.object({ id: z.string().uuid() });
+      const updateCardSchema = z.object({
+         name: z.string().min(2),
+         brand: z.string().min(2),
+         total_limit: z.number().positive(),
+         due_day: z.number().int().min(1).max(31),
+         color: z.string().optional().default("slate"),
+      });
+
+      try {
+         const { id } = paramsSchema.parse(request.params);
+         const body = updateCardSchema.parse(request.body);
+         const userId = (request.user as any)?.sub;
+
+         // Busca o cartão garantindo o isolamento do tenant (user_id)
+         const card = await db("cards").where({ id, user_id: userId }).first();
+
+         if (!card) {
+            return reply
+               .status(404)
+               .send({ message: "Cartão não encontrado." });
+         }
+
+         // Lógica core da arquitetura: Preservação do limite consumido!
+         // Se o usuário já gastou X, o novo limite total não pode ser menor que X.
+         const consumedLimit =
+            Number(card.total_limit) - Number(card.available_limit);
+         const newAvailableLimit = body.total_limit - consumedLimit;
+
+         if (newAvailableLimit < 0) {
+            return reply.status(400).send({
+               message:
+                  "O novo limite não pode ser menor que o valor já consumido nas faturas.",
+            });
+         }
+
+         await db("cards").where({ id }).update({
+            name: body.name,
+            brand: body.brand,
+            due_day: body.due_day,
+            total_limit: body.total_limit,
+            available_limit: newAvailableLimit,
+            color: body.color,
+         });
+
+         return reply.status(204).send();
+      } catch (error) {
+         console.error("🚨 Erro ao editar cartão:", error);
+         return reply
+            .status(500)
+            .send({ message: "Erro ao editar cartão", error });
+      }
+   });
+
+   // ==========================================
+   // 3. CRIAR COMPRA E GERAR PARCELAS
    // ==========================================
    app.post("/purchases", async (request, reply) => {
       const createPurchaseSchema = z.object({
@@ -67,127 +136,145 @@ export async function creditRoutes(app: FastifyInstance) {
          category_id: z.string().uuid(),
          title: z.string().min(2),
          store: z.string().min(2),
-         observation: z.string().optional(),
+         observation: z.string().optional().nullable(),
          total_amount: z.number().positive(),
          total_installments: z.number().int().positive(),
-         purchase_date: z
-            .string()
-            .regex(/^\d{4}-\d{2}-\d{2}$/, "Use o formato YYYY-MM-DD"),
+         purchase_date: z.string(),
       });
 
-      const body = createPurchaseSchema.parse(request.body);
-      const userId = (request.user as any)?.sub;
+      try {
+         const body = createPurchaseSchema.parse(request.body);
+         const userId = (request.user as any)?.sub;
 
-      if (!userId) {
-         return reply.status(401).send({ message: "Usuário não autenticado." });
-      }
+         if (!userId)
+            return reply.status(401).send({ message: "Não autenticado." });
 
-      // 1. Pega o cartão para descobrir o due_day (Dia de Vencimento)
-      const card = await db("cards")
-         .where({ id: body.card_id, user_id: userId })
-         .first();
-      if (!card) {
-         return reply.status(404).send({ message: "Cartão não encontrado." });
-      }
+         const card = await db("cards")
+            .where({ id: body.card_id, user_id: userId })
+            .first();
 
-      // 2. Abre a Transação ACID (Se falhar no meio, desfaz tudo)
-      await db.transaction(async (trx) => {
-         const purchaseId = randomUUID();
+         if (!card)
+            return reply
+               .status(404)
+               .send({ message: "Cartão não encontrado." });
 
-         // Salva a compra macro
-         await trx("credit_purchases").insert({
-            id: purchaseId,
-            user_id: userId,
-            card_id: body.card_id,
-            category_id: body.category_id,
-            title: body.title,
-            store: body.store,
-            observation: body.observation,
-            total_amount: body.total_amount,
-            total_installments: body.total_installments,
-            purchase_date: body.purchase_date,
-         });
+         // Transação ACID: Garante que a compra, o abatimento do limite e a
+         // geração das parcelas aconteçam juntos. Se uma falhar, o banco faz rollback.
+         await db.transaction(async (trx) => {
+            const purchaseId = randomUUID();
 
-         // 3. Matemática Financeira (Evitando dízimas infinitas e erros de centavos)
-         // Ex: 100 / 3 = 33.33333... -> Transforma em 33.33 fixos.
-         const baseInstallmentAmount =
-            Math.floor((body.total_amount / body.total_installments) * 100) /
-            100;
+            // Passo A: Insere a compra com o valor total
+            await trx("credit_purchases").insert({
+               id: purchaseId,
+               user_id: userId,
+               card_id: body.card_id,
+               category_id: body.category_id,
+               title: body.title,
+               store: body.store,
+               observation: body.observation,
+               total_amount: body.total_amount,
+               total_installments: body.total_installments,
+               purchase_date: body.purchase_date.split("T")[0],
+            });
 
-         // Calcula o que sobrou de centavos. Ex: 100 - (33.33 * 3) = 0.01
-         const remainder =
-            Math.round(
-               (body.total_amount -
-                  baseInstallmentAmount * body.total_installments) *
-                  100,
-            ) / 100;
+            // Passo B: Subtrai o valor da compra EXCLUSIVAMENTE do limite disponível do cartão
+            await trx("cards")
+               .where({ id: body.card_id })
+               .decrement("available_limit", body.total_amount);
 
-         // Array que vai guardar todas as parcelas para o Batch Insert
-         const installmentsToInsert = [];
+            // Passo C: Motor matemático de parcelamento
+            // Isola os centavos e dízimas para jogar o resto na última parcela
+            const baseInstallmentAmount =
+               Math.floor((body.total_amount / body.total_installments) * 100) /
+               100;
+            const remainder =
+               Math.round(
+                  (body.total_amount -
+                     baseInstallmentAmount * body.total_installments) *
+                     100,
+               ) / 100;
 
-         // 4. O Loop de Geração das Parcelas
-         for (let i = 1; i <= body.total_installments; i++) {
-            // Se for a última parcela, adiciona os centavos de sobra para a conta fechar perfeita
-            let currentAmount = baseInstallmentAmount;
-            if (i === body.total_installments) {
-               currentAmount = Number(
-                  (baseInstallmentAmount + remainder).toFixed(2),
-               );
+            const installmentsToInsert = [];
+
+            for (let i = 1; i <= body.total_installments; i++) {
+               let currentAmount = baseInstallmentAmount;
+
+               if (i === body.total_installments) {
+                  currentAmount = Number(
+                     (baseInstallmentAmount + remainder).toFixed(2),
+                  );
+               }
+
+               // Projeta os meses mantendo o dia de vencimento fixo do cartão
+               const dateObj = new Date(body.purchase_date);
+               dateObj.setUTCMonth(dateObj.getUTCMonth() + i);
+               dateObj.setUTCDate(card.due_day);
+
+               installmentsToInsert.push({
+                  id: randomUUID(),
+                  user_id: userId,
+                  purchase_id: purchaseId,
+                  installment_number: i,
+                  total_installments: body.total_installments,
+                  amount: currentAmount,
+                  expected_date: dateObj.toISOString().split("T")[0],
+                  status: "pending",
+               });
             }
 
-            // Lógica de Data: Adiciona 'i' meses à data da compra e trava no due_day
-            const dateObj = new Date(body.purchase_date);
-            dateObj.setUTCMonth(dateObj.getUTCMonth() + i); // Joga pro próximo mês (Ignorando Fuso)
-            dateObj.setUTCDate(card.due_day); // Crava o dia de vencimento (Ignorando Fuso)
+            // Passo D: Bulk insert para performance
+            await trx("installments").insert(installmentsToInsert);
+         });
 
-            const expectedDateStr = dateObj.toISOString().split("T")[0];
-
-            installmentsToInsert.push({
-               id: randomUUID(),
-               user_id: userId,
-               purchase_id: purchaseId,
-               installment_number: i,
-               total_installments: body.total_installments,
-               amount: currentAmount,
-               expected_date: expectedDateStr,
-               status: "pending",
-            });
-         }
-
-         // 5. Salva todas as parcelas de uma vezada só (Performance)
-         await trx("installments").insert(installmentsToInsert);
-      });
-
-      return reply.status(201).send();
+         return reply.status(201).send();
+      } catch (error) {
+         console.error("🚨 ERRO AO LANÇAR COMPRA:", error);
+         return reply
+            .status(500)
+            .send({ message: "Erro ao processar compra", error });
+      }
    });
 
    // ==========================================
-   // 4. LISTAR PARCELAS (Filtro por status opcional)
+   // 3.5 LISTAR COMPRAS
+   // ==========================================
+   app.get("/purchases", async (request, reply) => {
+      const userId = (request.user as any)?.sub;
+      if (!userId)
+         return reply.status(401).send({ message: "Não autenticado." });
+
+      const purchases = await db("credit_purchases")
+         .select("*")
+         .where("user_id", userId)
+         .orderBy("purchase_date", "desc");
+
+      return { purchases };
+   });
+
+   // ==========================================
+   // 4. LISTAR PARCELAS
    // ==========================================
    app.get("/installments", async (request, reply) => {
-      const getInstallmentsSchema = z.object({
-         status: z.enum(["pending", "paid"]).optional(),
-      });
-
-      const { status } = getInstallmentsSchema.parse(request.query);
       const userId = (request.user as any)?.sub;
+      if (!userId)
+         return reply.status(401).send({ message: "Não autenticado." });
 
-      if (!userId) {
-         return reply.status(401).send({ message: "Usuário não autenticado." });
-      }
+      // Join necessário para o frontend saber de qual compra é esta parcela
+      const installments = await db("installments")
+         .join(
+            "credit_purchases",
+            "installments.purchase_id",
+            "credit_purchases.id",
+         )
+         .where("credit_purchases.user_id", userId)
+         .select("installments.*", "credit_purchases.title as purchase_title")
+         .orderBy("installments.expected_date", "asc");
 
-      const query = db("installments").where("user_id", userId);
-
-      if (status) {
-         query.where({ status });
-      }
-
-      const installments = await query.orderBy("expected_date", "asc");
       return { installments };
    });
 
    // ==========================================
-   // 5. PAGAR PARCELA (Gera transação real)
+   // 5. PAGAR PARCELA (Ponte entre Crédito e Caixa)
    // ==========================================
    app.post("/installments/:id/pay", async (request, reply) => {
       const paramsSchema = z.object({ id: z.string().uuid() });
@@ -197,61 +284,153 @@ export async function creditRoutes(app: FastifyInstance) {
       const { account_id } = bodySchema.parse(request.body);
       const userId = (request.user as any)?.sub;
 
-      if (!userId) {
-         return reply.status(401).send({ message: "Usuário não autenticado." });
-      }
-
       await db.transaction(async (trx) => {
-         // 1. Verifica se a parcela existe e pertence ao usuário
          const installment = await trx("installments")
-            .where({ id, user_id: userId })
+            .join(
+               "credit_purchases",
+               "installments.purchase_id",
+               "credit_purchases.id",
+            )
+            .where("installments.id", id)
+            .where("credit_purchases.user_id", userId)
+            .select(
+               "installments.*",
+               "credit_purchases.category_id",
+               "credit_purchases.title",
+               "credit_purchases.card_id",
+            )
             .first();
 
-         if (!installment) {
+         if (!installment)
             return reply
                .status(404)
                .send({ message: "Parcela não encontrada." });
-         }
-
-         if (installment.status === "paid") {
-            return reply
-               .status(400)
-               .send({ message: "Esta parcela já foi paga." });
-         }
-
-         // 2. Busca detalhes da compra original para herdar a categoria e o título
-         const purchase = await trx("credit_purchases")
-            .where({ id: installment.purchase_id })
-            .first();
-
-         if (!purchase) {
-            throw new Error(
-               "Erro de integridade: Compra original não encontrada.",
-            );
-         }
+         if (installment.status === "paid")
+            return reply.status(400).send({ message: "Já paga." });
 
          const today = new Date().toISOString().split("T")[0];
 
-         // 3. Altera o status da parcela para 'paid'
+         // 1. Marca a parcela como paga
          await trx("installments").where({ id }).update({
             status: "paid",
             completed_date: today,
          });
 
-         // 4. Gera o evento financeiro (A saída de dinheiro real da conta)
-         await trx("transactions").insert({
-            id: randomUUID(),
-            user_id: userId,
-            account_id: account_id,
-            category_id: purchase.category_id,
-            // Exemplo de título gerado: "Pgto Parcela: Amazon (1/3)"
-            title: `Pgto Parcela: ${purchase.title} (${installment.installment_number}/${installment.total_installments})`,
-            amount: -Math.abs(installment.amount), // Força a ser negativo para o cálculo dinâmico da summary
-            // status: "completed", // Descomente se sua tabela transactions tiver uma coluna de status
-            // completed_date: today, // Descomente se tiver coluna completed_date específica em transactions
-         });
+         // 2. Regra Imutável: O pagamento afeta o saldo (transactions) da conta selecionada
+         if (account_id) {
+            await trx("transactions").insert({
+               id: randomUUID(),
+               user_id: userId,
+               account_id: account_id,
+               category_id: installment.category_id,
+               title: `Fatura: ${installment.title} (${installment.installment_number}/${installment.total_installments})`,
+               amount: -Math.abs(installment.amount),
+               status: "completed",
+            });
+         }
+
+         // 3. O limite da parcela paga é liberado de volta para o cartão
+         await trx("cards")
+            .where({ id: installment.card_id })
+            .increment("available_limit", Number(installment.amount));
       });
 
       return reply.status(204).send();
+   });
+
+   // ==========================================
+   // 6. EXCLUIR CARTÃO
+   // ==========================================
+   app.delete("/cards/:id", async (request, reply) => {
+      const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+      const userId = (request.user as any)?.sub;
+
+      // Impede a exclusão se o cartão tiver obrigações pendentes.
+      // Se tiver apenas compras canceladas ou pagas, o delete é permitido.
+      const pendingObligations = await db("installments")
+         .join(
+            "credit_purchases",
+            "installments.purchase_id",
+            "credit_purchases.id",
+         )
+         .where("credit_purchases.card_id", id)
+         .where("installments.status", "pending")
+         .first();
+
+      if (pendingObligations) {
+         return reply.status(409).send({
+            message:
+               "Não é possível excluir este cartão. Existem faturas pendentes vinculadas a ele.",
+         });
+      }
+
+      await db("cards").where({ id, user_id: userId }).delete();
+      return reply.status(204).send();
+   });
+
+   // ==========================================
+   // 7. CANCELAMENTO LÓGICO DE COMPRA (Soft Delete)
+   // ==========================================
+   app.patch("/purchases/:id/cancel", async (request, reply) => {
+      const paramsSchema = z.object({ id: z.string().uuid() });
+
+      try {
+         const { id } = paramsSchema.parse(request.params);
+         const userId = (request.user as any)?.sub;
+
+         // A regra de ouro: O sistema não reescreve o passado.
+         await db.transaction(async (trx) => {
+            const purchase = await trx("credit_purchases")
+               .where({ id, user_id: userId })
+               .first();
+
+            if (!purchase) {
+               return reply
+                  .status(404)
+                  .send({ message: "Compra não encontrada." });
+            }
+
+            if (purchase.status === "cancelled") {
+               return reply
+                  .status(400)
+                  .send({ message: "Esta compra já está cancelada." });
+            }
+
+            const installments = await trx("installments").where({
+               purchase_id: id,
+            });
+
+            // Identifica as parcelas que ainda não foram pagas
+            const pendingInstallments = installments.filter(
+               (inst) => inst.status === "pending",
+            );
+
+            // Só restauramos o limite daquilo que ainda estava bloqueado (pendente)
+            const amountToRestore = pendingInstallments.reduce(
+               (acc, inst) => acc + Number(inst.amount),
+               0,
+            );
+
+            await trx("cards")
+               .where({ id: purchase.card_id })
+               .increment("available_limit", amountToRestore);
+
+            await trx("credit_purchases")
+               .where({ id })
+               .update({ status: "cancelled" });
+
+            // Cancela apenas as parcelas em aberto, preservando o histórico das já pagas.
+            await trx("installments")
+               .where({ purchase_id: id, status: "pending" })
+               .update({ status: "cancelled" });
+         });
+
+         return reply.status(204).send();
+      } catch (error) {
+         console.error("🚨 Erro ao cancelar compra:", error);
+         return reply
+            .status(500)
+            .send({ message: "Erro interno ao processar cancelamento." });
+      }
    });
 }

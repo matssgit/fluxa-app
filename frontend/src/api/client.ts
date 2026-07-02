@@ -5,7 +5,7 @@ export const api = axios.create({
    withCredentials: true, // Mantém o cookie funcionando
 });
 
-// Tratamento de erros global 
+// Tratamento de erros global
 api.interceptors.response.use(
    (response) => response,
    (error) => {
@@ -26,6 +26,11 @@ api.interceptors.response.use(
 // Interceptor para injetar o Token em todas as requisições
 api.interceptors.request.use((config) => {
    const token = localStorage.getItem("@FinanceApp:token");
+
+   console.log(
+      "DEBUG: Token enviado na requisição:",
+      token ? "EXISTE" : "NÃO EXISTE",
+   );
 
    if (token) {
       config.headers.Authorization = `Bearer ${token}`;

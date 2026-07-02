@@ -1,237 +1,290 @@
+---
+
 # PROJECT_ROADMAP.md
 
-# Sistema Financeiro Familiar
+**Finance App Beta V2**
+**Roadmap Geral do Projeto**
+Versão: **2.0**
 
-## Roadmap Oficial de Arquitetura e Desenvolvimento
+Este documento representa a visão macro do projeto.
 
-Versão: 1.1
+Os detalhes técnicos encontram-se em:
 
-Este documento é a fonte oficial da verdade do projeto.
-Nenhuma funcionalidade deve ser implementada sem respeitar este roadmap e as regras imutáveis.
+- `SYSTEM_ARCHITECTURE.md`
+- `BACKEND_ROADMAP.md`
+- `FRONTEND_ROADMAP.md`
 
----
-
-# REGRAS ARQUITETURAIS IMUTÁVEIS
-
-1. `transactions` representa apenas dinheiro real.
-2. Compras de cartão jamais entram em `transactions`.
-3. Compras parceladas vivem exclusivamente em:
-   - `credit_purchases`
-   - `installments`
-4. O pagamento de uma parcela gera movimentação de saída (despesa) em `transactions`.
-5. `account_id` nunca deve existir em `installments`.
-6. `card_id` nunca deve existir em `transactions`.
-7. Nenhuma funcionalidade pode quebrar a separação estrita Caixa x Crédito.
-8. Faturas (Invoices) e seu fechamento pertencem exclusivamente à V2.
+Nenhuma funcionalidade deve contrariar as regras definidas na arquitetura do sistema.
 
 ---
 
-# STATUS ATUAL
+# VISÃO DO PRODUTO
 
-## Fase 1 - Autenticação
+O Finance App é um sistema de gestão financeira pessoal.
 
-Status: ✅ CONCLUÍDO
+Seu objetivo é fornecer ao usuário uma visão clara da sua vida financeira através de quatro pilares principais:
 
-### Checklist
+- Controle do Fluxo de Caixa
+- Gestão de Cartões de Crédito
+- Planejamento Financeiro
+- Inteligência Financeira
 
-- [x] JWT
-- [x] Cadastro de usuário
-- [x] Login
-- [x] Middleware de autenticação
-- [x] Migração gradual do session_id
-- [x] Isolamento por user_id
+O Backend é responsável por toda regra de negócio.
 
----
-
-## Fase 2 - Contas e Categorias
-
-Status: ✅ CONCLUÍDO
-
-### Accounts
-
-- [x] Migration
-- [x] CRUD Backend
-- [x] Serviços Frontend
-- [x] React Query
-- [x] Modal de cadastro
-
-### Categories
-
-- [x] Migration
-- [x] CRUD Backend
-- [x] color
-- [x] icon
-- [x] is_default
-- [ ] Categorias padrão do sistema
+O Frontend é responsável pela experiência do usuário.
 
 ---
 
-## Fase 3 - Fluxo de Caixa
+# STATUS GERAL
 
-Status: ✅ CONCLUÍDO
-
-### Transactions
-
-- [x] account_id
-- [x] category_id
-- [x] status
-- [x] expected_date
-- [x] completed_date
-
-### Pendências
-
-- [x] Listagem
-- [x] Marcar como concluído
-
-### Dashboard
-
-- [x] Entradas
-- [x] Saídas
-- [x] Saldo
+| Fase                    | Status          |
+| ----------------------- | --------------- |
+| Autenticação            | ✅ Concluída    |
+| Contas                  | ✅ Concluída    |
+| Categorias              | 🚧 Em andamento |
+| Fluxo de Caixa          | ✅ Concluído    |
+| Dashboard               | ✅ Concluído    |
+| Ecossistema de Crédito  | ✅ Concluído    |
+| Polimento da Interface  | 🚧 Em andamento |
+| Assinaturas             | ⏳ Planejado    |
+| Wallets (Caixinhas)     | ⏳ Planejado    |
+| Inteligência Financeira | ⏳ Planejado    |
+| Pesquisa Global         | ⏳ Planejado    |
+| Relatórios              | ⏳ Planejado    |
 
 ---
 
-# FASE 4 - ECOSSISTEMA DE CRÉDITO
+# MÓDULOS DO SISTEMA
 
-Status: ⏳ EM DESENVOLVIMENTO
+## ✅ Autenticação
 
-Objetivo: Separar completamente Caixa real (transactions) de Crédito (cartões).
+Concluído.
 
-## Critério de Conclusão da Fase 4
-
-A Fase 4 somente será considerada concluída quando:
-
-- [ ] Criar cartão
-- [ ] Listar cartões
-- [ ] Criar compra parcelada
-- [ ] Gerar parcelas automaticamente
-- [ ] Listar parcelas
-- [ ] Marcar parcela como paga
-- [ ] Registrar saída em transactions
-- [ ] Atualizar dashboard corretamente
-- [ ] Testar parcelamento 3x
-- [ ] Testar parcelamento 12x
-- [ ] Testar parcelamento 24x
-- [ ] Validar multiusuário
+- Login
+- Cadastro
+- JWT
+- Proteção de rotas
+- Multiusuário
 
 ---
 
-## 4.1 Migration Cards
+## ✅ Fluxo de Caixa
 
-Status: ✅ CONCLUÍDO
+Concluído.
 
-### Checklist
+Permite:
 
-- [x] Migration criada
-- [x] Migration executada
-- [x] Tipagem Knex atualizada
-
----
-
-## 4.2 Migration Credit Purchases
-
-Status: ✅ CONCLUÍDO
-
-### Regras
-
-- category_id: ON DELETE RESTRICT
-
-### Checklist
-
-- [x] Migration criada
-- [x] Migration executada
-- [x] Tipagem atualizada
+- Entradas
+- Saídas
+- Histórico
+- Categorias
+- Contas
 
 ---
 
-## 4.3 Migration Installments
+## ✅ Dashboard
 
-Status: ✅ CONCLUÍDO
+Concluído.
 
-### Status
+A Central de Comando apresenta:
 
-- pending
-- paid
-
-### Checklist
-
-- [x] Migration criada
-- [x] Migration executada
-- [x] Tipagem atualizada
+- Saldo Atual
+- Entradas
+- Saídas
+- Projeção do mês
+- Timeline financeira
+- Pendências
 
 ---
 
-## 4.4 Backend Cards
+## ✅ Cartões de Crédito
 
-Status: ⏳ EM DESENVOLVIMENTO
+Concluído.
 
-### Rotas
+Permite:
 
-- GET /cards
-- POST /cards
-
-### Validação Obrigatória
-
-- [x] Schema Zod
-- [x] Controller
-- [x] Validação JWT
-- [ ] Teste Backend (Insomnia/Postman)
-- [ ] Teste Persistência Banco
-
----
-
-## 4.5 Backend Credit Purchases
-
-Status: ⏳ EM DESENVOLVIMENTO
-
-### Rotas
-
-- GET /credit-purchases
-- POST /credit-purchases
-
-### Regras obrigatórias
-
-- Transaction ACID
-- Rollback automático
-- Tratamento de centavos
-
-### Validação Obrigatória
-
-- [x] Controller
-- [x] Service
-- [x] Transaction DB
-- [ ] Teste Backend (Insomnia/Postman)
+- Criar cartões
+- Personalizar cartões
+- Editar cartões
+- Excluir cartões
+- Compras parceladas
+- Parcelas
+- Pagamento de parcelas
+- Cancelamento de compras
+- Atualização automática dos limites
 
 ---
 
-## 4.6 Motor de Parcelamento
+## 🚧 Interface
 
-Status: ⏳ EM DESENVOLVIMENTO
+Em evolução.
 
-### Checklist
+Já implementado:
 
-- [x] Cálculo do vencimento
-- [x] Geração de parcelas
-- [x] Ajuste de centavos
-- [ ] Teste com 3x
-- [ ] Teste com 12x
-- [ ] Teste com 24x
+- Toasts
+- Skeletons
+- Personalização dos cartões
+- Navegação inicial
+- Dashboard consolidado
+
+Pendências:
+
+- Pesquisa Global
+- Melhorias de responsividade
+- Tema Claro/Escuro
+- Navegação definitiva
+- Melhorias de acessibilidade
 
 ---
 
-## 4.7 Backend Installments
+## ⏳ Assinaturas
 
-Status: ⏳ PENDENTE
+Planejado.
 
-### Rotas
+Objetivo:
 
-- GET /installments
-- POST /installments/:id/pay
+Permitir cobranças recorrentes.
 
-### Pay Payload
+Exemplos:
 
-```json
-{
-   "account_id": "uuid"
-}
-```
+- Netflix
+- Spotify
+- Internet
+- Academia
+- Apple One
+
+As assinaturas deverão:
+
+- aparecer no histórico;
+- participar da projeção financeira;
+- gerar pendências automaticamente;
+- respeitar categorias;
+- permitir pausa e cancelamento.
+
+---
+
+## ⏳ Wallets (Caixinhas)
+
+Planejado.
+
+Objetivo:
+
+Permitir criação de metas financeiras.
+
+Exemplos:
+
+- Reserva de emergência
+- Viagem
+- Notebook
+- Moto
+- Casa
+
+---
+
+## ⏳ Inteligência Financeira
+
+Planejado.
+
+Métricas previstas:
+
+- Gastos por categoria
+- Evolução mensal
+- Comparativo de meses
+- Evolução patrimonial
+- Média diária
+- Média semanal
+- Média mensal
+- Tendências
+
+---
+
+## ⏳ Pesquisa Global
+
+Planejado.
+
+Permitirá localizar rapidamente qualquer informação do sistema.
+
+Filtros previstos:
+
+- Texto
+- Categoria
+- Conta
+- Cartão
+- Compra
+- Parcela
+- Assinatura
+- Data
+- Período
+- Valor
+- Status
+
+---
+
+# ROADMAP DA V1
+
+## ✅ Já entregue
+
+- Sistema de autenticação
+- Dashboard consolidado
+- Fluxo de Caixa
+- Cartões
+- Parcelamento
+- Projeção financeira
+- Histórico híbrido
+- Pendências
+- Personalização dos cartões
+- Toasts
+- Navegação inicial
+
+---
+
+## 🚧 Em andamento
+
+- Refinamento da navegação
+- Pesquisa Global
+- Responsividade
+- Tema Claro/Escuro
+- Skeletons completos
+- Categorias padrão
+
+---
+
+## ⏳ Próximos módulos
+
+1. Assinaturas Recorrentes
+2. Wallets (Caixinhas)
+3. Inteligência Financeira
+4. Relatórios
+5. Exportação de dados
+
+---
+
+# VERSÃO 1.0 (MVP)
+
+Para considerar a V1 concluída, o sistema deverá possuir:
+
+- [ ] Pesquisa Global
+- [ ] Tema Claro/Escuro
+- [ ] Categorias padrão
+- [ ] Assinaturas recorrentes
+- [ ] Wallets
+- [ ] Responsividade completa
+- [ ] Polimento final da interface
+- [ ] Testes finais de validação
+
+---
+
+# VERSÃO 2.0
+
+Itens reservados para a próxima grande versão:
+
+- Fechamento de Faturas (Invoices)
+- Múltiplos perfis financeiros
+- Compartilhamento familiar
+- Orçamentos mensais
+- IA para análise financeira
+- Metas inteligentes
+- Alertas automáticos
+- Integração bancária (Open Finance)
+
+---

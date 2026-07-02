@@ -1,5 +1,20 @@
 import { Knex } from "knex";
 
+export interface Subscription {
+   id: string;
+   user_id: string;
+   category_id: string;
+   account_id?: string | null;
+   card_id?: string | null;
+   title: string;
+   amount: number;
+   due_day: number;
+   frequency: "monthly" | "yearly";
+   status: "active" | "paused" | "cancelled";
+   created_at: string;
+   updated_at: string;
+}
+
 declare module "knex/types/tables" {
    export interface Tables {
       users: {
@@ -30,6 +45,7 @@ declare module "knex/types/tables" {
          user_id?: string;
          account_id?: string;
          category_id?: string;
+         subscription_id?: string | null;
          session_id?: string;
          title: string;
          description?: string;
@@ -40,5 +56,7 @@ declare module "knex/types/tables" {
          completed_date?: string;
          created_at: string;
       };
+
+      subscriptions: Subscription;
    }
 }

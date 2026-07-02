@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { db } from "../database.js";
-import { checkAuth } from "../middlewares/check-auto.js";
+import { checkAuth } from "../middlewares/check-auth.js";
 
 export async function categoriesRoutes(app: FastifyInstance) {
    app.addHook("preHandler", checkAuth);
