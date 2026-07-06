@@ -1,44 +1,34 @@
 import React from "react";
+import { Card } from "../ui";
 
 interface SummaryCardProps {
   title: string;
   value: number | undefined;
   icon: React.ElementType;
-  variant?: "brand" | "secondary" | "accent";
 }
 
-export function SummaryCard({
-  title,
-  value,
-  icon: Icon,
-  variant = "brand",
-}: SummaryCardProps) {
+export function SummaryCard({ title, value, icon: Icon }: SummaryCardProps) {
+  // A formatação de moeda é regra de apresentação de domínio (mantida sem alteração lógica)
   const formattedValue = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(value ?? 0);
 
-  const iconColorMap = {
-    brand: "text-brand",
-    secondary: "text-secondary",
-    accent: "text-accent",
-  };
-
   return (
-    <div className="card-interactive flex items-center justify-between">
-      <div className="space-y-1">
-        <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
+    <Card variant="metric" className="flex items-center justify-between">
+      <div className="space-y-1 min-w-0">
+        <span className="text-xs font-semibold uppercase tracking-wider block truncate">
           {title}
         </span>
-        <strong className="text-2xl font-bold text-primary tracking-tight block">
+        <strong className="text-2xl font-bold tracking-tight block truncate">
           {formattedValue}
         </strong>
       </div>
-      <div
-        className={`p-2.5 rounded-xl bg-elevated border border-subtle ${iconColorMap[variant]}`}
-      >
-        <Icon size={20} />
+
+      {/* O contêiner do ícone usa apenas layout (flex/padding), sem definir bg-* ou text-* */}
+      <div className="p-2.5 flex items-center justify-center shrink-0">
+        <Icon size={24} />
       </div>
-    </div>
+    </Card>
   );
 }
