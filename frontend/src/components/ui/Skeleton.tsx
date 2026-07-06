@@ -1,9 +1,10 @@
 interface SkeletonProps {
-   className?: string;
+  className?: string;
 }
 
 export function Skeleton({ className = "" }: SkeletonProps) {
-   return (
-      <div className={`animate-pulse bg-slate-200 rounded-xl ${className}`} />
-   );
+  // Usa bg-elevated (que é nosso cinza ultra suave da paleta oficial) para o efeito de piscar
+  return (
+    <div className={`animate-pulse bg-elevated rounded-xl ${className}`} />
+  );
 }
