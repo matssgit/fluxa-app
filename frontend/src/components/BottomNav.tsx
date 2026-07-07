@@ -1,15 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  ArrowLeftRight,
-  CreditCard,
-  Repeat,
-  Wallet,
-} from "lucide-react";
+import { Home, ArrowLeftRight, CreditCard, Repeat, Wallet } from "lucide-react";
 
 // Constante interna para manter o Fast Refresh feliz
 const MOBILE_NAV_ITEMS = [
-  { label: "Painel", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Início", path: "/dashboard", icon: Home },
   { label: "Caixa", path: "/transactions", icon: ArrowLeftRight },
   { label: "Cartões", path: "/cards", icon: CreditCard },
   { label: "Assinaturas", path: "/subscriptions", icon: Repeat },

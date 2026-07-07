@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
+  Home,
   ArrowLeftRight,
   CreditCard,
   Repeat,
@@ -10,8 +10,8 @@ import {
 
 // Constante interna (sem export) para não quebrar o React Fast Refresh
 const NAV_ITEMS = [
-  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Lançamentos", path: "/transactions", icon: ArrowLeftRight },
+  { label: "Início", path: "/dashboard", icon: Home },
+  { label: "Caixa", path: "/transactions", icon: ArrowLeftRight },
   { label: "Cartões", path: "/cards", icon: CreditCard },
   { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
   { label: "Contas", path: "/accounts", icon: Wallet },
