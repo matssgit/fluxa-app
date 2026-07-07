@@ -1,64 +1,76 @@
 import { CreditCard } from "lucide-react";
-import { useCards } from "../hooks/useCredit";
-import { Skeleton } from "./ui/Skeleton"; // Importação arrumada apontando para a pasta UI
+import { type Card } from "../hooks/useCredit";
+import { CardItem } from "./CardItem";
+import { Skeleton } from "./ui/Skeleton";
+import { EmptyState } from "./ui/EmptyState";
 
-export function CardsSection() {
-  const { data: cards = [], isLoading } = useCards();
+interface CardsListProps {
+  cards: Card[];
+  isLoading: boolean;
+  onSelectCard: (card: Card) => void;
+  onNewCardClick: () => void;
+}
 
-  return (
-    <div className="mt-8">
-      <h2 className="text-lg font-semibold text-primary mb-4 tracking-tight">
-        Meus Cartões
-      </h2>
-
-      {/* ESTADO 1: LOADING (Skeletons) */}
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="card-default h-48 flex flex-col justify-between"
-            >
-              <div className="flex justify-between items-start">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </div>
-              <div>
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-8 w-32" />
-              </div>
+export function CardsList({
+  cards,
+  isLoading,
+  onSelectCard,
+  onNewCardClick,
+}: CardsListProps) {
+  // ESTADO 1: LOADING (Skeletons Neumórficos com min-h-40)
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="card-default min-h-40 flex flex-col justify-between"
+          >
+            <div className="flex justify-between items-start">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <Skeleton className="h-6 w-16 rounded-md" />
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* ESTADO 2: EMPTY STATE (Sem cartões) */}
-      {!isLoading && cards.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-10 bg-elevated border border-subtle rounded-2xl text-center">
-          <div className="w-16 h-16 bg-surface shadow-sm rounded-full flex items-center justify-center text-muted mb-4 border border-subtle">
-            <CreditCard size={32} />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-7 w-32" />
+            </div>
           </div>
-          <h3 className="text-primary font-semibold mb-1 tracking-tight">
-            Nenhum cartão cadastrado
-          </h3>
-          <p className="text-secondary text-sm max-w-xs">
-            Adicione seu primeiro cartão de crédito para começar a controlar
-            seus limites e parcelamentos.
-          </p>
-        </div>
-      )}
+        ))}
+      </div>
+    );
+  }
 
-      {/* ESTADO 3: SUCESSO (Lista os cartões reais) */}
-      {!isLoading && cards.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cards.map((card) => (
-            <div key={card.id} className="card-interactive">
-              <span className="font-semibold text-primary">{card.name}</span>
-              <span className="text-muted ml-2 text-sm">{card.brand}</span>
-            </div>
-          ))}
-        </div>
-      )}
+  // ESTADO 2: EMPTY STATE (Contrato do EmptyState 100% respeitado)
+  if (cards.length === 0) {
+    return (
+      <div className="card-default py-12 flex flex-col items-center justify-center text-center">
+        <EmptyState
+          icon={CreditCard}
+          title="Nenhum cartão cadastrado"
+          description="Adicione seu primeiro cartão de crédito para começar a organizar seus limites, compras parceladas e faturas."
+        />
+
+        {/* Botão de ação posicionado perfeitamente abaixo do estado vazio */}
+        <button
+          onClick={onNewCardClick}
+          className="mt-6 px-5 py-2.5 bg-brand hover:bg-brand-light text-white text-xs sm:text-sm font-bold rounded-xl transition-all duration-200 shadow-sm cursor-pointer"
+        >
+          Adicionar Cartão
+        </button>
+      </div>
+    );
+  }
+
+  // ESTADO 3: SUCESSO (Renderização do Grid Metalizado)
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {cards.map((card) => (
+        <CardItem
+          key={card.id}
+          card={card}
+          onClick={() => onSelectCard(card)}
+        />
+      ))}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import {
 import { useDashboard } from "../../hooks/useDashBoard";
 import { PayInstallmentModal } from "../../components/PayInstallmentModal";
 import { PaySubscriptionModal } from "../../components/PaySubscriptionModal";
+import { CreditSummaryWidget } from "../../components/dashboard/CreditSummaryWidget";
+import { InsightsWidget } from "../../components/dashboard/InsightsWidgets";
 
 // UI Library
 import { EmptyState, Card } from "../../components/ui";
@@ -280,6 +282,21 @@ export function Dashboard() {
               </div>
             </Card>
           </div>
+        </section>
+
+        {/* GRID INFERIOR: WIDGETS DE CRÉDITO E INSIGHTS */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          {/* WIDGET DE CRÉDITO */}
+          <CreditSummaryWidget />
+
+          {/* WIDGET DE INSIGHTS */}
+          <InsightsWidget
+            totalIncome={totalIncome}
+            totalExpenses={totalExpenses}
+            projectedBalance={projectedBalance}
+            savingsRate={savingsRate}
+            burnRatePercentage={burnRatePercentage}
+          />
         </section>
       </main>
 
