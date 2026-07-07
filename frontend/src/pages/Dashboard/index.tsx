@@ -99,6 +99,7 @@ export function Dashboard() {
             >
               <div>
                 <SectionTitle
+                  eyebrow="MOVIMENTAÇÕES"
                   title="Histórico Recente"
                   subtitle="Visão unificada das últimas movimentações"
                 />

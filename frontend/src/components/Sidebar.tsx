@@ -1,139 +1,92 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
+  ArrowLeftRight,
   CreditCard,
   Repeat,
-  Settings,
-  LogOut,
   Wallet,
-  Landmark,
+  Settings,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+
+// Constante interna (sem export) para não quebrar o React Fast Refresh
+const NAV_ITEMS = [
+  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Lançamentos", path: "/transactions", icon: ArrowLeftRight },
+  { label: "Cartões", path: "/cards", icon: CreditCard },
+  { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
+  { label: "Contas", path: "/accounts", icon: Wallet },
+];
 
 export function Sidebar() {
-  const { user, signOut } = useAuth();
   const location = useLocation();
 
-  const navItems = [
-    { path: "/", icon: LayoutDashboard, label: "Visão Geral" },
-    { path: "/cards", icon: CreditCard, label: "Cartões" },
-    { path: "/subscriptions", icon: Repeat, label: "Assinaturas" },
-    { path: "/accounts", icon: Landmark, label: "Contas" },
-  ];
-
   return (
-    <>
-      {/* SIDEBAR DESKTOP */}
-      <aside className="hidden md:flex flex-col w-64 bg-surface min-h-screen fixed left-0 top-0 border-r border-border z-50">
-        {/* Logo */}
-        <div className="p-6 flex items-center gap-3 border-b border-subtle">
-          <div className="bg-brand p-2 rounded-lg shadow-xs">
-            <Wallet className="text-surface" size={24} />
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface/90 backdrop-blur-md border-r border-subtle/30 z-40 transition-all duration-300">
+      {/* 1. CABEÇALHO DA MARCA */}
+      <div className="h-20 flex items-center px-8 border-b border-subtle/20">
+        <div className="flex items-center gap-3.5">
+          <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white font-black text-lg shadow-sm">
+            F
           </div>
-          <span className="text-primary font-bold text-xl tracking-tight">
-            Finance Beta
-          </span>
-        </div>
-
-        {/* Menu Principal */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          <p className="px-3 text-xs font-semibold text-muted uppercase tracking-wider mb-4">
-            Menu Principal
-          </p>
-
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${
-                  isActive
-                    ? "bg-brand/10 text-brand font-semibold"
-                    : "hover:bg-elevated text-secondary hover:text-primary"
-                }`}
-              >
-                <Icon
-                  size={20}
-                  className={
-                    isActive
-                      ? "text-brand"
-                      : "text-muted transition-colors group-hover:text-primary"
-                  }
-                />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Rodapé da Sidebar */}
-        <div className="p-4 border-t border-subtle space-y-2">
-          <Link
-            to="/settings"
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 font-medium text-sm ${
-              location.pathname === "/settings"
-                ? "bg-brand/10 text-brand font-semibold"
-                : "hover:bg-elevated text-secondary hover:text-primary"
-            }`}
-          >
-            <Settings size={20} />
-            Configurações
-          </Link>
-
-          <div className="flex items-center justify-between px-3 py-3 mt-2 bg-elevated rounded-xl border border-subtle">
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-xs text-muted">Logado como</span>
-              <span className="text-sm font-bold text-primary truncate">
-                {user?.name}
-              </span>
-            </div>
-            <button
-              onClick={signOut}
-              className="p-2 text-muted hover:text-brand rounded-lg transition-colors cursor-pointer"
-              title="Sair"
-            >
-              <LogOut size={18} />
-            </button>
+          <div>
+            <span className="font-bold text-primary tracking-tight text-base block leading-none">
+              Finance App
+            </span>
+            <span className="text-[10px] font-extrabold text-gold-500 tracking-[0.2em] uppercase mt-1 block">
+              Beta V2
+            </span>
           </div>
         </div>
-      </aside>
+      </div>
 
-      {/* BOTTOM NAVIGATION MOBILE */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-border z-50 px-2 py-2 flex justify-between items-center pb-safe">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+      {/* 2. LINKS DE NAVEGAÇÃO */}
+      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+        <div className="px-4 pb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted select-none">
+          Menu Principal
+        </div>
+
+        {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
+          const isActive = location.pathname.startsWith(item.path);
 
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center w-full py-2 gap-1 rounded-xl transition-colors ${
+              className={`group relative flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 select-none ${
                 isActive
-                  ? "text-brand font-semibold"
-                  : "text-muted hover:text-primary"
+                  ? "bg-brand/10 text-brand font-bold shadow-xs"
+                  : "text-secondary hover:bg-elevated/60 hover:text-primary"
               }`}
             >
-              <Icon size={20} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              {/* Indicador de Item Ativo (Pílula Vertical) */}
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-brand rounded-r-full animate-fade-in" />
+              )}
+
+              <Icon
+                className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${
+                  isActive
+                    ? "text-brand"
+                    : "text-muted group-hover:text-primary"
+                }`}
+              />
+              <span>{item.label}</span>
             </Link>
           );
         })}
+      </nav>
+
+      {/* 3. RODAPÉ / CONFIGURAÇÕES */}
+      <div className="p-4 border-t border-subtle/20 space-y-1">
         <Link
           to="/settings"
-          className={`flex flex-col items-center justify-center w-full py-2 gap-1 rounded-xl transition-colors ${
-            location.pathname === "/settings"
-              ? "text-brand font-semibold"
-              : "text-muted hover:text-primary"
-          }`}
+          className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-secondary hover:bg-elevated/60 hover:text-primary transition-all duration-200 select-none"
         >
-          <Settings size={20} />
-          <span className="text-[10px] font-medium">Ajustes</span>
+          <Settings className="w-5 h-5 text-muted" />
+          <span>Configurações</span>
         </Link>
-      </nav>
-    </>
+      </div>
+    </aside>
   );
 }

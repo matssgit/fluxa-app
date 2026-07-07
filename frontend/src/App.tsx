@@ -8,45 +8,54 @@ import { Settings } from "./pages/Settings";
 import { Register } from "./pages/Register";
 import { useAuth } from "./hooks/useAuth";
 import { Login } from "./pages/Login";
-import { DefaultLayout } from "./layouts/DefaultLayout"; // <--- NOVO IMPORT
+import { DefaultLayout } from "./layouts/DefaultLayout";
 import { Accounts } from "./pages/Accounts/index";
 
 const queryClient = new QueryClient();
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-   const { isAuthenticated } = useAuth();
-   if (!isAuthenticated) return <Navigate to="/login" replace />;
-   return <>{children}</>;
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
 }
 
 export default function App() {
-   return (
-      <QueryClientProvider client={queryClient}>
-         <AuthProvider>
-            <BrowserRouter>
-               <Routes>
-                  {/* Rotas Públicas */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-                  {/* Rotas Privadas Agrupadas no Layout */}
-                  <Route
-                     element={
-                        <PrivateRoute>
-                           <DefaultLayout />
-                        </PrivateRoute>
-                     }
-                  >
-                     <Route path="/" element={<Dashboard />} />
-                     <Route path="/cards" element={<CreditCards />} />
-                     <Route path="/subscriptions" element={<Subscriptions />} />
-                     <Route path="/settings" element={<Settings />} />
+            {/* Rotas Privadas Agrupadas no Layout */}
+            <Route
+              element={
+                <PrivateRoute>
+                  <DefaultLayout />
+                </PrivateRoute>
+              }
+            >
+              {/* 1. Redirecionamento da raiz para o Dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
 
-                     <Route path="/accounts" element={<Accounts />} />
-                  </Route>
-               </Routes>
-            </BrowserRouter>
-         </AuthProvider>
-      </QueryClientProvider>
-   );
+              {/* 2. Rotas Principais do Menu */}
+              <Route path="/cards" element={<CreditCards />} />
+              <Route path="/subscriptions" element={<Subscriptions />} />
+              <Route path="/accounts" element={<Accounts />} />
+              <Route path="/settings" element={<Settings />} />
+
+              {/* Rota temporária para Lançamentos não quebrar a navegação */}
+              <Route path="/transactions" element={<Dashboard />} />
+
+              {/* 3. BLINDAGEM ANTI-TELA BRANCA (Fallback 404) */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
 }

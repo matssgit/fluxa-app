@@ -1,96 +1,49 @@
-/* ==========================================================================
-   LEVEL 3: COMPONENTS (Variantes oficiais e classes reutilizáveis)
-   ========================================================================== */
-
-@layer components {
-  /* --------------------------------------------------------------------------
-     1. BOTÕES (Variantes oficiais: Primary, Secondary, Ghost, Danger)
+/* --------------------------------------------------------------------------
+     2. CARDS (Efeito Metalizado Flutuante Premium - Light & Dark Safe)
      -------------------------------------------------------------------------- */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 cursor-pointer select-none outline-none;
-  }
+.card {
+  @apply rounded-2xl transition-all duration-300;
+}
 
-  .btn:disabled,
-  .btn-disabled {
-    @apply opacity-50 cursor-not-allowed pointer-events-none;
-  }
+/* Chapa metalizada flutuante com reflexo chanfrado no topo */
+.card-default {
+  background: linear-gradient(
+    135deg,
+    var(--white) 0%,
+    #f7faf8 50%,
+    #edf2ef 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  @apply p-6 rounded-2xl transition-all duration-300 dark:bg-none dark:bg-surface dark:border-subtle/30 dark:shadow-sm;
+}
 
-  .btn-primary {
-    @apply btn bg-brand text-surface hover:bg-brand/90 shadow-xs active:scale-[0.98];
-  }
+.card-elevated {
+  background: linear-gradient(135deg, #fcfdfc 0%, #edf2ef 100%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--shadow-sm);
+  @apply p-6 rounded-2xl transition-all duration-300 dark:bg-none dark:bg-elevated dark:border-subtle/20;
+}
 
-  .btn-secondary {
-    @apply btn bg-elevated text-primary border border-border hover:bg-border/40 active:scale-[0.98];
-  }
+/* Card interativo ganha física de gravidade: eleva-se na direção do usuário no hover */
+.card-interactive {
+  background: linear-gradient(
+    135deg,
+    var(--white) 0%,
+    #f7faf8 50%,
+    #edf2ef 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  @apply p-6 rounded-2xl transition-all duration-300 cursor-pointer dark:bg-none dark:bg-surface dark:border-subtle/30;
+}
 
-  .btn-ghost {
-    @apply btn bg-transparent text-secondary hover:bg-elevated hover:text-primary;
-  }
-
-  .btn-danger {
-    @apply btn bg-danger text-surface hover:bg-danger/90 shadow-xs active:scale-[0.98];
-  }
-
-  /* --------------------------------------------------------------------------
-     2. CARDS (Variantes oficiais: Default, Elevated, Interactive)
-     -------------------------------------------------------------------------- */
-  .card {
-    @apply rounded-2xl transition-all duration-200;
-  }
-
-  .card-default {
-    @apply card bg-surface border border-subtle shadow-sm p-6;
-  }
-
-  .card-elevated {
-    @apply card bg-elevated border border-border shadow-md p-6;
-  }
-
-  .card-interactive {
-    @apply card bg-surface border border-subtle shadow-sm p-6 hover:-translate-y-0.5 hover:shadow-md cursor-pointer;
-  }
-
-  /* --------------------------------------------------------------------------
-     3. INPUTS (Variantes oficiais: Default, Focused, Disabled, Error)
-     -------------------------------------------------------------------------- */
-  .input {
-    @apply w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-primary placeholder:text-placeholder outline-none transition-all duration-200;
-  }
-
-  .input:focus,
-  .input-focused {
-    @apply border-brand ring-2 ring-brand/10;
-  }
-
-  .input:disabled,
-  .input-disabled {
-    @apply bg-elevated text-muted cursor-not-allowed opacity-60 border-subtle;
-  }
-
-  .input-error {
-    @apply border-danger focus:border-danger focus:ring-2 focus:ring-danger/10;
-  }
-
-  /* --------------------------------------------------------------------------
-     4. BADGES (Variantes oficiais: Success, Warning, Danger, Neutral)
-     -------------------------------------------------------------------------- */
-  .badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold tracking-wide uppercase;
-  }
-
-  .badge-success {
-    @apply badge bg-success/10 text-success border border-success/20;
-  }
-
-  .badge-warning {
-    @apply badge bg-warning/10 text-warning border border-warning/20;
-  }
-
-  .badge-danger {
-    @apply badge bg-danger/10 text-danger border border-danger/20;
-  }
-
-  .badge-neutral {
-    @apply badge bg-elevated text-muted border border-border;
-  }
+.card-interactive:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-6px);
+  border-color: var(--green-700);
 }
