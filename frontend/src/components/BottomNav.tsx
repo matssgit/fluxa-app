@@ -1,8 +1,20 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, ArrowLeftRight, CreditCard, Repeat, Wallet } from "lucide-react";
+import {
+  Home,
+  ArrowLeftRight,
+  CreditCard,
+  Repeat,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
-// Constante interna para manter o Fast Refresh feliz
-const MOBILE_NAV_ITEMS = [
+interface MobileNavItem {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+}
+
+const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { label: "Início", path: "/dashboard", icon: Home },
   { label: "Caixa", path: "/transactions", icon: ArrowLeftRight },
   { label: "Cartões", path: "/cards", icon: CreditCard },
@@ -15,7 +27,6 @@ export function BottomNav() {
 
   return (
     <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-50">
-      {/* Pílula Flutuante com Efeito Neumórfico/Vidro Acetinado */}
       <div className="bg-surface/85 backdrop-blur-md border border-white/60 dark:border-subtle/30 rounded-2xl shadow-md px-2 py-2 flex items-center justify-around transition-all duration-300">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -31,7 +42,6 @@ export function BottomNav() {
                   : "text-muted hover:text-secondary"
               }`}
             >
-              {/* Brilho de Fundo no Item Ativo */}
               {isActive && (
                 <span className="absolute inset-0 bg-brand/10 rounded-xl -z-10 animate-fade-in" />
               )}

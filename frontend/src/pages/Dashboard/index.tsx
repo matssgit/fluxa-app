@@ -26,23 +26,58 @@ import { PendencyItem } from "../../components/dashboard/PendencyItem";
 import { SectionTitle } from "../../components/dashboard/SectionTitle";
 import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton";
 
+/**
+ * Extrator Universal de Métricas (100% Strict TS - Zero Any)
+ * Varre o JSON do Backend em todos os níveis possíveis procurando as chaves financeiras,
+ * blindando o front contra variações de nomenclatura ou de estrutura na API.
+ */
+function extractMetric(source: unknown, keys: string[]): number {
+  if (!source || typeof source !== "object") return 0;
+  const srcObj = source as Record<string, unknown>;
+
+  // Locais mais comuns onde APIs financeiras aninham KPIs do dashboard
+  const objectsToSearch = [
+    srcObj.summary,
+    srcObj.monthSummary,
+    srcObj.overview,
+    srcObj.kpis,
+    srcObj.flow,
+    srcObj.month_summary,
+    srcObj,
+  ];
+
+  for (const obj of objectsToSearch) {
+    if (obj && typeof obj === "object") {
+      const record = obj as Record<string, unknown>;
+      for (const key of keys) {
+        const val = record[key];
+        if (val !== undefined && val !== null) {
+          const num = Number(val);
+          if (!isNaN(num)) return num;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 export function Dashboard() {
-  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isPayModalOpen, setIsPayModalOpen] = useState<boolean>(false);
   const [selectedInstallmentId, setSelectedInstallmentId] = useState<
     string | null
   >(null);
 
-  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+  const [isSubModalOpen, setIsSubModalOpen] = useState<boolean>(false);
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useDashboard();
 
-  function handleOpenPayModal(installmentId: string) {
+  function handleOpenPayModal(installmentId: string): void {
     setSelectedInstallmentId(installmentId);
     setIsPayModalOpen(true);
   }
 
-  function handleOpenSubModal(subId: string) {
+  function handleOpenSubModal(subId: string): void {
     setSelectedSubId(subId);
     setIsSubModalOpen(true);
   }
@@ -65,11 +100,67 @@ export function Dashboard() {
     );
   }
 
-  // Extração segura de métricas para o BI
-  const totalIncome = Number(data.summary?.totalIncome || 0);
-  const totalExpenses = Number(data.summary?.totalExpenses || 0);
-  const currentBalance = Number(data.summary?.currentBalance || 0);
-  const projectedBalance = Number(data.projection?.projectedBalance || 0);
+  // Extração à prova de falhas para Entradas, Saídas e Saldos
+  const totalIncome = extractMetric(data, [
+    "totalIncome",
+    "income",
+    "total_income",
+    "incomes",
+    "totalIncomes",
+    "revenues",
+    "revenue",
+    "totalRevenues",
+    "total_revenues",
+    "receitas",
+    "receita",
+    "totalReceitas",
+    "total_receitas",
+    "entradas",
+    "entrada",
+    "totalEntradas",
+    "total_entradas",
+    "monthIncome",
+    "month_income",
+  ]);
+
+  const totalExpenses = extractMetric(data, [
+    "totalExpenses",
+    "expense",
+    "total_expense",
+    "expenses",
+    "totalExpense",
+    "despesas",
+    "despesa",
+    "totalDespesas",
+    "total_despesas",
+    "saidas",
+    "saida",
+    "totalSaidas",
+    "total_saidas",
+    "monthExpense",
+    "month_expense",
+  ]);
+
+  const currentBalance = extractMetric(data, [
+    "currentBalance",
+    "amount",
+    "current_balance",
+    "balance",
+    "totalBalance",
+    "total_balance",
+    "saldo",
+    "saldoAtual",
+    "saldo_atual",
+  ]);
+
+  const projectedBalance = extractMetric(data, [
+    "projectedBalance",
+    "projected_balance",
+    "projection",
+    "projections",
+    "saldoProjetado",
+    "saldo_projetado",
+  ]);
 
   // Cálculos de Telemetria Financeira
   const burnRatePercentage =
@@ -80,7 +171,7 @@ export function Dashboard() {
       : 0;
   const isHealthy = projectedBalance >= 0 && burnRatePercentage <= 80;
 
-  const formatCurrency = (val: number) =>
+  const formatCurrency = (val: number): string =>
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -89,8 +180,9 @@ export function Dashboard() {
   // 3. COCKPIT ANALÍTICO PRINCIPAL
   return (
     <div className="w-full pb-16 min-h-screen animate-fade-in">
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-        {/* BANNER DE SAÚDE FINANCEIRA (Telemetria Instantânea) */}
+      {/* Alinhamento estrito preservado (px-1) */}
+      <main className="max-w-6xl mx-auto px-1 py-8 space-y-8">
+        {/* BANNER DE SAÚDE FINANCEIRA */}
         <div className="card-default p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
           <div className="flex items-center gap-4">
             <div
@@ -148,7 +240,6 @@ export function Dashboard() {
 
         {/* GRID CENTRAL: TELEMETRIA + RADAR DE CURTO PRAZO */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* WIDGET 1: TERMÔMETRO DE QUEIMA DE CAIXA (Substitui o antigo Histórico!) */}
           <div className="lg:col-span-2 flex flex-col">
             <Card
               variant="default"
@@ -162,7 +253,6 @@ export function Dashboard() {
                 />
 
                 <div className="mt-8 space-y-6">
-                  {/* Barra de Consumo (Burn Rate) */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-end">
                       <div>
@@ -191,7 +281,6 @@ export function Dashboard() {
                     </div>
                   </div>
 
-                  {/* Mini-Cards de Indicadores */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-subtle/20">
                     <div className="p-4 rounded-2xl bg-elevated/40 border border-subtle/20 flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
@@ -241,7 +330,6 @@ export function Dashboard() {
             </Card>
           </div>
 
-          {/* WIDGET 2: RADAR DE VENCIMENTOS (Mantido e lapidado) */}
           <div className="flex flex-col">
             <Card
               variant="default"
@@ -286,10 +374,8 @@ export function Dashboard() {
 
         {/* GRID INFERIOR: WIDGETS DE CRÉDITO E INSIGHTS */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          {/* WIDGET DE CRÉDITO */}
           <CreditSummaryWidget />
 
-          {/* WIDGET DE INSIGHTS */}
           <InsightsWidget
             totalIncome={totalIncome}
             totalExpenses={totalExpenses}

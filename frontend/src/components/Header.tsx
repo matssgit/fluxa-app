@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
-// Mapeamento atualizado de títulos para o novo contexto arquitetural
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
     title: "Início",
@@ -43,14 +42,11 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
 export function Header() {
   const location = useLocation();
   const { user, signOut } = useAuth();
-
-  // Estado para controlar a abertura do Menu de Perfil (Dropdown)
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Fecha o menu ao clicar fora dele
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: MouseEvent): void {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
@@ -67,8 +63,7 @@ export function Header() {
     ? PAGE_TITLES[currentPathKey]
     : { title: "Finance App", subtitle: "Gestão financeira inteligente" };
 
-  // Gera as iniciais do usuário para o Avatar (ex: Matheus Silva -> MS)
-  const getUserInitials = (name?: string) => {
+  const getUserInitials = (name?: string): string => {
     if (!name) return "MS";
     const parts = name.trim().split(" ");
     if (parts.length >= 2) {
@@ -79,7 +74,6 @@ export function Header() {
 
   return (
     <header className="h-20 w-full bg-surface/80 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-6 lg:px-10 flex items-center justify-between transition-all duration-300">
-      {/* 1. CONTEXTO DA PÁGINA (Título e Subtítulo) */}
       <div className="space-y-0.5">
         <h1 className="text-base lg:text-lg font-bold text-primary tracking-tight leading-none">
           {pageInfo.title}
@@ -89,15 +83,12 @@ export function Header() {
         </p>
       </div>
 
-      {/* 2. AÇÕES DO USUÁRIO E AVATAR FLUTUANTE */}
       <div className="flex items-center gap-4">
-        {/* Badge Sutil de Segurança (Apenas Desktop) */}
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-elevated/80 border border-subtle/30 text-[11px] font-semibold text-secondary">
           <ShieldCheck className="w-3.5 h-3.5 text-brand" />
           <span>Ambiente Protegido</span>
         </div>
 
-        {/* Bloco de Perfil com Menu Dropdown */}
         <div className="relative pl-2 border-l border-subtle/20" ref={menuRef}>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -112,7 +103,6 @@ export function Header() {
               </span>
             </div>
 
-            {/* Avatar Neumórfico (Iniciais) */}
             <div className="w-10 h-10 rounded-xl bg-brand text-white font-extrabold text-sm flex items-center justify-center shadow-sm border border-brand-light/30 group-hover:scale-105 transition-transform duration-200">
               {getUserInitials(user?.name)}
             </div>
@@ -124,7 +114,6 @@ export function Header() {
             />
           </button>
 
-          {/* 3. MENU FLUTUANTE (DROPDOWN ACETINADO) */}
           {isMenuOpen && (
             <div className="absolute right-0 mt-3 w-56 bg-surface/95 backdrop-blur-md rounded-2xl shadow-xl border border-subtle/30 py-2 animate-fade-in z-50">
               <div className="px-4 py-3 border-b border-subtle/20 sm:hidden">
@@ -184,12 +173,13 @@ export function Header() {
               </div>
 
               <div className="border-t border-subtle/20 mt-1 pt-1">
+                {/* Botão padronizado com token text-danger e hover:bg-danger/10 */}
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
                     signOut();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/10 transition-colors text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sair do Sistema</span>
