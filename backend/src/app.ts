@@ -10,47 +10,50 @@ import { accountsRoutes } from "./routes/accounts.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { transactionsRoutes } from "./routes/transactions.js";
 import { subscriptionsRoutes } from "./routes/subscriptions.js";
+import { walletsRoutes } from "./routes/wallets.js";
 
 export const app = fastify();
 
 // 2. Configuração do CORS (Sempre antes das rotas!)
 app.register(cors, {
-   origin: ["http://localhost:5173"],
-   credentials: true,
-   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  origin: ["http://localhost:5173"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
 });
 
 app.register(cookie);
 
 app.register(transactionsRoutes, {
-   prefix: "transactions",
+  prefix: "transactions",
 });
 
 app.register(fastifyJwt, {
-   secret: process.env.JWT_SECRET || "supersecret",
+  secret: process.env.JWT_SECRET || "supersecret",
 });
 
 app.register(usersRoutes, {
-   prefix: "users",
+  prefix: "users",
 });
 
 app.register(creditRoutes, {
-   prefix: "credit",
+  prefix: "credit",
 });
 
 app.register(accountsRoutes, {
-   prefix: "accounts",
+  prefix: "accounts",
 });
 
 app.register(categoriesRoutes, {
-   prefix: "categories",
+  prefix: "categories",
 });
 
 app.register(dashboardRoutes, {
-   prefix: "/dashboard",
+  prefix: "/dashboard",
 });
 
 app.register(subscriptionsRoutes, {
-   prefix: "/subscriptions",
+  prefix: "/subscriptions",
 });
+
+app.register(walletsRoutes, { prefix: "/wallets" });
