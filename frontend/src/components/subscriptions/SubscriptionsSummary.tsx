@@ -8,11 +8,11 @@ interface SubscriptionsSummaryProps {
 export function SubscriptionsSummary({
   subscriptions,
 }: SubscriptionsSummaryProps) {
-  // 1. Agregação Visual com conversão estrita (Number) para evitar concatenação de strings do Postgres
+  // 1. Agregação Visual de Custo Mensal (Soma ESTRITAMENTE serviços ATIVOS)
   const monthlyCost = subscriptions.reduce((acc, sub) => {
-    if (sub.status === "cancelled") return acc;
+    // Se não estiver ativa (ex: paused ou cancelled), ignora na soma do orçamento
+    if (sub.status !== "active") return acc;
 
-    // Converte explicitamente de String (do DB) para Number (do JS)
     const val = Number(sub.amount) || 0;
     const monthlyAmount = sub.frequency === "yearly" ? val / 12 : val;
     return acc + monthlyAmount;
@@ -21,15 +21,13 @@ export function SubscriptionsSummary({
   // 2. Projeção Anual Simples (Apresentação)
   const annualCost = monthlyCost * 12;
 
-  // 3. Contagem de Assinaturas Ativas
-  const activeCount = subscriptions.filter(
-    (s) => s.status !== "cancelled",
-  ).length;
+  // 3. Contagem de Assinaturas Ativas (Apenas as que estão rodando)
+  const activeCount = subscriptions.filter((s) => s.status === "active").length;
 
-  // 4. Inteligência Visual de Próximos Vencimentos (Próximos 7 dias)
+  // 4. Inteligência Visual de Próximos Vencimentos (Próximos 7 dias - Apenas Ativas)
   const todayDay = new Date().getDate();
   const upcomingCount = subscriptions.filter((sub) => {
-    if (sub.status === "cancelled") return false;
+    if (sub.status !== "active") return false;
     const diff = sub.due_day - todayDay;
     return diff >= 0 && diff <= 7;
   }).length;

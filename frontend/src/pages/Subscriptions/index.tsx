@@ -32,7 +32,6 @@ export function Subscriptions() {
 
   return (
     <div className="w-full pb-16 min-h-screen animate-fade-in">
-      {/* Alinhamento estrito preservado com px-1 */}
       <main className="max-w-6xl mx-auto px-1 py-8 space-y-8">
         {/* 1. CABEÇALHO */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -62,8 +61,8 @@ export function Subscriptions() {
           <div className="py-12">
             <EmptyState
               icon={Repeat}
-              title="Não foi possível carregar as assinaturas"
-              description="Ocorreu um erro ao consultar os seus serviços fixos. Por favor, atualize a página em instantes."
+              title="Não foi possível consultar os seus serviços"
+              description="Ocorreu uma instabilidade momentânea. Por favor, tente recarregar a página."
             />
           </div>
         )}
@@ -73,8 +72,8 @@ export function Subscriptions() {
           <div className="py-12">
             <EmptyState
               icon={Repeat}
-              title="Nenhuma assinatura ativa"
-              description="Você ainda não cadastrou nenhum serviço recorrente. Cadastre o primeiro para liberar a telemetria e monitorar os seus custos fixos!"
+              title="Nenhuma assinatura ativa no seu ecossistema"
+              description="Seu solo está livre de cobranças fixas por enquanto. Cadastre a primeira para ativar o acompanhamento de custos!"
             />
           </div>
         )}
@@ -82,12 +81,10 @@ export function Subscriptions() {
         {/* 5. COCKPIT PREMIUM: BANNER DE KPIS + CARDS METALIZADOS */}
         {!isLoading && !isError && subscriptions.length > 0 && (
           <div className="space-y-8">
-            {/* Banner de Telemetria Específica */}
             <SubscriptionsSummary
               subscriptions={subscriptions as Subscription[]}
             />
 
-            {/* Grelha de Cartões Metalizados */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {(subscriptions as Subscription[]).map((sub) => (
                 <SubscriptionCard

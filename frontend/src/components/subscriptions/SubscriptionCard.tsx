@@ -48,7 +48,11 @@ export function SubscriptionCard({
   }
 
   function handleDelete(): void {
-    if (window.confirm("Deseja realmente excluir este serviço recorrente?")) {
+    if (
+      window.confirm(
+        "Deseja realmente podar este serviço recorrente do seu histórico?",
+      )
+    ) {
       deleteSub(subscription.id);
     }
   }
@@ -161,7 +165,7 @@ export function SubscriptionCard({
           </div>
         )}
 
-        {/* Controles Rápida de Status (Ícones) */}
+        {/* Controles Rápidos de Status (Ícones) */}
         <div className="flex items-center gap-1 shrink-0 bg-elevated/60 p-1 rounded-xl border border-subtle/20">
           {status === "active" && (
             <button
