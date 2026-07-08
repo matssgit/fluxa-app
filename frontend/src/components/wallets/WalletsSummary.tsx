@@ -40,9 +40,9 @@ export function WalletsSummary({ wallets }: WalletsSummaryProps) {
     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
       {/* KPI 1: Acumulado Total */}
       <div className="card-default p-5 flex flex-col justify-between border-subtle/30">
-        <div className="flex justify-between items-start">
+        <div className="flex  justify-between items-start">
           <span className="text-[11px] font-extrabold uppercase tracking-widest text-muted">
-            Acumulado Total
+            Guardado
           </span>
           <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
             <Sprout size={18} className="animate-pulse" />
@@ -53,7 +53,7 @@ export function WalletsSummary({ wallets }: WalletsSummaryProps) {
             {formatCurrency(totalCurrent)}
           </span>
           <span className="text-[11px] font-medium text-muted block mt-0.5">
-            Recursos nas estufas
+            Recursos guardados até o momento
           </span>
         </div>
       </div>
@@ -62,9 +62,9 @@ export function WalletsSummary({ wallets }: WalletsSummaryProps) {
       <div className="card-default p-5 flex flex-col justify-between border-subtle/30">
         <div className="flex justify-between items-start">
           <span className="text-[11px] font-extrabold uppercase tracking-widest text-muted">
-            Alvo de Colheita
+            Objetivo
           </span>
-          <div className="w-9 h-9 rounded-xl bg-elevated text-secondary flex items-center justify-center shrink-0">
+          <div className="w-10 h-9 rounded-xl bg-elevated text-secondary flex items-center justify-center shrink-0">
             <Target size={18} />
           </div>
         </div>
@@ -82,7 +82,7 @@ export function WalletsSummary({ wallets }: WalletsSummaryProps) {
       <div className="card-default p-5 flex flex-col justify-between border-subtle/30">
         <div className="flex justify-between items-start">
           <span className="text-[11px] font-extrabold uppercase tracking-widest text-muted">
-            Maturidade Global
+            Crescimento
           </span>
           <div className="w-9 h-9 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
             <TrendingUp size={18} />
@@ -104,7 +104,7 @@ export function WalletsSummary({ wallets }: WalletsSummaryProps) {
       <div className="card-default p-5 flex flex-col justify-between border-subtle/30">
         <div className="flex justify-between items-start">
           <span className="text-[11px] font-extrabold uppercase tracking-widest text-muted">
-            Estufas Ativas
+            Metas Ativas
           </span>
           <div className="w-9 h-9 rounded-xl bg-elevated text-secondary flex items-center justify-center shrink-0">
             <Layers size={18} />
