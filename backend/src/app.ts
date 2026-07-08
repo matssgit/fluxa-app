@@ -11,6 +11,7 @@ import { categoriesRoutes } from "./routes/categories.js";
 import { transactionsRoutes } from "./routes/transactions.js";
 import { subscriptionsRoutes } from "./routes/subscriptions.js";
 import { walletsRoutes } from "./routes/wallets.js";
+import { analyticsRoutes } from "./routes/analytics.js";
 
 export const app = fastify();
 
@@ -56,4 +57,10 @@ app.register(subscriptionsRoutes, {
   prefix: "/subscriptions",
 });
 
-app.register(walletsRoutes, { prefix: "/wallets" });
+app.register(walletsRoutes, {
+  prefix: "/wallets",
+});
+
+app.register(analyticsRoutes, {
+  prefix: "/analytics",
+});
