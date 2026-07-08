@@ -1,8 +1,8 @@
 import { CreditCard } from "lucide-react";
-import { type Card } from "../hooks/useCredit";
+import { type Card } from "../../hooks/useCredit";
 import { CardItem } from "./CardItem";
-import { Skeleton } from "./ui/Skeleton";
-import { EmptyState } from "./ui/EmptyState";
+import { Skeleton } from "../ui/Skeleton";
+import { EmptyState } from "../ui/EmptyState";
 
 interface CardsListProps {
   cards: Card[];

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { CheckCircle2, Wallet } from "lucide-react";
-import { usePayInstallment } from "../hooks/useCredit";
-import { useAccounts } from "../hooks/useAccounts";
+import { usePayInstallment } from "../../hooks/useCredit";
+import { useAccounts } from "../../hooks/useAccounts";
 
 // Importação da nossa nova Biblioteca de Componentes!
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "./ui/Modal";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "../ui/Modal";
 
 interface PayInstallmentModalProps {
   isOpen: boolean;

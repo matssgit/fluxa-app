@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import { useTransactions } from "../../hooks/useTransactions";
-import { TransactionTable } from "../../components/TransactionTable";
-import { NewTransactionModal } from "../../components/NewTransactionModal";
+import { TransactionTable } from "../../components/transactions/TransactionTable";
+import { NewTransactionModal } from "../../components/transactions/NewTransactionModal";
 
 // Definição estrita para evitar 'any'
 interface SummaryData {

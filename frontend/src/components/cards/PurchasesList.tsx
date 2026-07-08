@@ -1,6 +1,6 @@
 import { ShoppingBag, CheckCircle2, AlertCircle } from "lucide-react";
-import { type Purchase, useInstallments } from "../hooks/useCredit";
-import { EmptyState } from "./ui/EmptyState";
+import { type Purchase, useInstallments } from "../../hooks/useCredit";
+import { EmptyState } from "../ui/EmptyState";
 
 interface PurchasesListProps {
   purchases: Purchase[];

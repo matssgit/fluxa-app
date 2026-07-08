@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Edit2, Trash2, CreditCard, Calendar } from "lucide-react";
-import { usePurchases, type Card, type Purchase } from "../hooks/useCredit";
-import { getCardGradient } from "../utils/cardColors";
+import { usePurchases, type Card, type Purchase } from "../../hooks/useCredit";
+import { getCardGradient } from "../../utils/cardColors";
 import { PurchasesList } from "./PurchasesList";
 import { PurchaseDetailsModal } from "./PurchaseDetailsModal";
 

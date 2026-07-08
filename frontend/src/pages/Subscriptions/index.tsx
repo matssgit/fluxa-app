@@ -6,7 +6,7 @@ import { CreateSubscriptionModal } from "./CreateSubscriptionModal";
 import { EmptyState } from "../../components/ui";
 
 // Reaproveitando o Modal Atômico existente no sistema
-import { PaySubscriptionModal } from "../../components/PaySubscriptionModal";
+import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
 
 // Consumindo o Barrel File dos componentes de domínio
 import {

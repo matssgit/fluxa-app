@@ -5,10 +5,10 @@ import {
   Tag,
   Check,
 } from "lucide-react";
-import { api } from "../api/client";
+import { api } from "../../api/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Skeleton } from "./ui/Skeleton";
+import { Skeleton } from "../ui/Skeleton";
 
 interface Transaction {
   id: string;

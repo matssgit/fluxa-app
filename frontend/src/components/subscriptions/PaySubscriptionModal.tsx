@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccounts } from "../hooks/useAccounts";
-import { usePaySubscription } from "../hooks/useSubscriptions";
+import { useAccounts } from "../../hooks/useAccounts";
+import { usePaySubscription } from "../../hooks/useSubscriptions";
 
 // Importação da nossa nova Biblioteca de Componentes!
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "./ui/Modal";
+import { Modal, ModalHeader, ModalBody, ModalFooter } from "../ui/Modal";
 
 const paySchema = z.object({
   account_id: z.string().uuid("Selecione uma conta para continuar"),

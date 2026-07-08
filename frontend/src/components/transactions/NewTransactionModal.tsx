@@ -10,9 +10,9 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAccounts } from "../hooks/useAccounts";
-import { useCategories } from "../hooks/useCategories";
-import { api } from "../api/client";
+import { useAccounts } from "../../hooks/useAccounts";
+import { useCategories } from "../../hooks/useCategories";
+import { api } from "../../api/client";
 
 const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),

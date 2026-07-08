@@ -1,4 +1,4 @@
-import { type Card } from "../hooks/useCredit";
+import { type Card } from "../../hooks/useCredit";
 import { CreditCard } from "lucide-react";
 
 interface CardItemProps {

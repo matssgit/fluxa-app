@@ -9,8 +9,8 @@ import {
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateCard } from "../hooks/useCredit";
-import { CARD_COLORS } from "../utils/cardColors";
+import { useCreateCard } from "../../hooks/useCredit";
+import { CARD_COLORS } from "../../utils/cardColors";
 
 const cardSchema = z.object({
   name: z.string().min(2, "O nome do cartão é obrigatório"),

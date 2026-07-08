@@ -12,8 +12,8 @@ import {
   PieChart,
 } from "lucide-react";
 import { useDashboard } from "../../hooks/useDashBoard";
-import { PayInstallmentModal } from "../../components/PayInstallmentModal";
-import { PaySubscriptionModal } from "../../components/PaySubscriptionModal";
+import { PayInstallmentModal } from "../../components/cards/PayInstallmentModal";
+import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
 import { CreditSummaryWidget } from "../../components/dashboard/CreditSummaryWidget";
 import { InsightsWidget } from "../../components/dashboard/InsightsWidgets";
 
@@ -25,6 +25,7 @@ import { SummaryCard } from "../../components/dashboard/SummaryCard";
 import { PendencyItem } from "../../components/dashboard/PendencyItem";
 import { SectionTitle } from "../../components/dashboard/SectionTitle";
 import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton";
+
 
 /**
  * Extrator Universal de Métricas (100% Strict TS - Zero Any)

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { CheckCircle2, Clock, Ban, CreditCard as CardIcon } from "lucide-react";
-import { useInstallments, useCancelPurchase } from "../hooks/useCredit";
+import { useInstallments, useCancelPurchase } from "../../hooks/useCredit";
 import { PayInstallmentModal } from "./PayInstallmentModal";
-import { CancelPurchaseModal } from "./CancelPurchaseModal";
-import { Skeleton } from "./ui/Skeleton";
-import { EmptyState } from "./ui/EmptyState";
+import { CancelPurchaseModal } from "../cards/CancelPurchaseModal";
+import { Skeleton } from "../ui/Skeleton";
+import { EmptyState } from "../ui/EmptyState";
 
 export function InstallmentsList() {
   const { data: installments = [], isLoading: isLoadingInstallments } =

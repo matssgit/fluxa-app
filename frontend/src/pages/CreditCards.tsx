@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Plus, ShoppingBag } from "lucide-react";
 import { useCards, useDeleteCard, type Card } from "../hooks/useCredit";
-import { CreateCardModal } from "../components/CreateCardModal";
+import { CreateCardModal } from "../components/cards/CreateCardModal";
 import { CreatePurchaseModal } from "../components/CreatePurchaseModal";
-import { EditCardModal } from "../components/EditCardModal";
-import { CardDetailsModal } from "../components/CardDetailsModal";
-import { DeleteActionModal } from "../components/DeleteActionModal";
-import { CardsList } from "../components/CardsList";
+import { EditCardModal } from "../components/cards/EditCardModal";
+import { CardDetailsModal } from "../components/cards/CardDetailsModal";
+import { DeleteActionModal } from "../components/transactions/DeleteActionModal";
+import { CardsList } from "../components/cards/CardsList";
 
 export function CreditCards() {
   const { data: cards = [], isLoading: isLoadingCards } = useCards();
