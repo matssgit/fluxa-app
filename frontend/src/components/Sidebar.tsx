@@ -6,6 +6,7 @@ import {
   Repeat,
   Wallet,
   Settings,
+  Sprout,
   type LucideIcon,
 } from "lucide-react";
 
@@ -30,16 +31,18 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface/90 backdrop-blur-md border-r border-subtle/30 z-40 transition-all duration-300">
       <div className="h-20 flex items-center px-8 border-b border-subtle/20">
         <div className="flex items-center gap-3.5">
-          <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white font-black text-lg shadow-sm">
-            F
+          {/* Logotipo Oficial Fluxa */}
+          <div className="w-9 h-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-black text-lg shadow-2xs shrink-0">
+            <span role="img" aria-label="Fluxa Sprout" className="select-none">
+              🌱
+            </span>
           </div>
           <div>
-            <span className="font-bold text-primary tracking-tight text-base block leading-none">
-              Finance App
+            <span className="font-extrabold text-primary tracking-tight text-base block leading-none">
+              Fluxa
             </span>
-            {/* Uso do token text-accent ao invés de cor fixa */}
-            <span className="text-[10px] font-extrabold text-accent tracking-[0.2em] uppercase mt-1 block">
-              Beta V2
+            <span className="text-[10px] font-extrabold text-brand tracking-[0.15em] uppercase mt-1 block">
+              Cultive sua vida financeira
             </span>
           </div>
         </div>
@@ -47,7 +50,7 @@ export function Sidebar() {
 
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         <div className="px-4 pb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted select-none">
-          Menu Principal
+          Ecossistema
         </div>
 
         {NAV_ITEMS.map((item) => {
@@ -81,7 +84,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-subtle/20 space-y-1">
+      <div className="p-4 border-t border-subtle/20 space-y-2">
+        {/* Assinatura Botânica Acolhedora */}
+        <div className="px-4 py-1 flex items-center gap-2 text-muted">
+          <Sprout size={14} className="text-brand shrink-0 animate-pulse" />
+          <span className="text-[11px] font-semibold italic">
+            Toda grande árvore começou como uma semente.
+          </span>
+        </div>
+
         <Link
           to="/settings"
           className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-secondary hover:bg-elevated/60 hover:text-primary transition-all duration-200 select-none"

@@ -12,14 +12,15 @@ import {
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
+// Copywriting Acolhedor & Botânico (Identidade Fluxa)
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
     title: "Início",
-    subtitle: "Central analítica, projeções e inteligência financeira",
+    subtitle: "Acompanhe o crescimento da sua vida financeira.",
   },
   "/transactions": {
     title: "Caixa",
-    subtitle: "Operação diária, conciliações e fluxo de entradas e saídas",
+    subtitle: "Gerencie entradas, saídas e acompanhe seu fluxo de caixa.",
   },
   "/cards": {
     title: "Ecossistema de Crédito",
@@ -27,15 +28,15 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   },
   "/subscriptions": {
     title: "Assinaturas Recorrentes",
-    subtitle: "Monitoramento de serviços e cobranças periódicas",
+    subtitle: "Monitoramento de serviços fixos e cobranças periódicas",
   },
   "/accounts": {
     title: "Contas & Carteiras",
-    subtitle: "Saldo bancário consolidado e liquidez imediata",
+    subtitle: "Organize suas contas e acompanhe seus saldos.",
   },
   "/settings": {
     title: "Configurações",
-    subtitle: "Preferências globais e administração da conta",
+    subtitle: "Personalize sua experiência no Fluxa.",
   },
 };
 
@@ -61,7 +62,7 @@ export function Header() {
 
   const pageInfo = currentPathKey
     ? PAGE_TITLES[currentPathKey]
-    : { title: "Finance App", subtitle: "Gestão financeira inteligente" };
+    : { title: "Fluxa", subtitle: "Cultive uma vida financeira saudável" };
 
   const getUserInitials = (name?: string): string => {
     if (!name) return "MS";
@@ -86,7 +87,7 @@ export function Header() {
       <div className="flex items-center gap-4">
         <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-elevated/80 border border-subtle/30 text-[11px] font-semibold text-secondary">
           <ShieldCheck className="w-3.5 h-3.5 text-brand" />
-          <span>Ambiente Protegido</span>
+          <span>Ambiente Seguro</span>
         </div>
 
         <div className="relative pl-2 border-l border-subtle/20" ref={menuRef}>
@@ -99,7 +100,7 @@ export function Header() {
                 {user?.name || "Matheus Silva"}
               </span>
               <span className="text-[10px] font-medium text-muted mt-0.5 block">
-                {user?.email || "matheus@financeapp.com"}
+                {user?.email || "matheus@fluxa.com"}
               </span>
             </div>
 
@@ -121,7 +122,7 @@ export function Header() {
                   {user?.name || "Matheus Silva"}
                 </p>
                 <p className="text-[10px] font-medium text-muted truncate">
-                  {user?.email || "matheus@financeapp.com"}
+                  {user?.email || "matheus@fluxa.com"}
                 </p>
               </div>
 
@@ -173,7 +174,6 @@ export function Header() {
               </div>
 
               <div className="border-t border-subtle/20 mt-1 pt-1">
-                {/* Botão padronizado com token text-danger e hover:bg-danger/10 */}
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
