@@ -16,11 +16,11 @@ import { useAuth } from "../hooks/useAuth";
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
     title: "Início",
-    subtitle: "Acompanhe o crescimento da sua vida financeira.",
+    subtitle: "Seu ecossistema analítico e saúde do patrimônio",
   },
   "/transactions": {
     title: "Caixa",
-    subtitle: "Gerencie entradas, saídas e acompanhe seu fluxo de caixa.",
+    subtitle: "Operação diária, conciliações e fluxo de entradas e saídas",
   },
   "/cards": {
     title: "Ecossistema de Crédito",
@@ -32,11 +32,17 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   },
   "/accounts": {
     title: "Contas & Carteiras",
-    subtitle: "Organize suas contas e acompanhe seus saldos.",
+    subtitle: "Saldo bancário consolidado e liquidez imediata",
   },
+
+  "/wallets": {
+    title: "Objetivos Financeiros",
+    subtitle: "Organize reservas, metas de curto prazo e patrimônio futuro",
+  },
+
   "/settings": {
     title: "Configurações",
-    subtitle: "Personalize sua experiência no Fluxa.",
+    subtitle: "Preferências globais e administração do ecossistema",
   },
 };
 

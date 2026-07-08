@@ -7,6 +7,7 @@ import {
   Wallet,
   Settings,
   Sprout,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Cartões", path: "/cards", icon: CreditCard },
   { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
   { label: "Contas", path: "/accounts", icon: Wallet },
+  { label: "Metas", path: "/wallets", icon: Target },
 ];
 
 export function Sidebar() {
