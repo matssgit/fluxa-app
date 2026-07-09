@@ -44,7 +44,8 @@ export function Transactions() {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    /* ✨ ERGONOMIA MOBILE: pb-28 garante que a navbar inferior não cubra a tabela no celular! */
+    <div className="space-y-8 pb-28 sm:pb-16 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
@@ -56,7 +57,7 @@ export function Transactions() {
         </div>
         <button
           onClick={() => setIsNewModalOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all duration-200"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer"
         >
           <Plus size={18} /> Novo Lançamento
         </button>
@@ -112,7 +113,7 @@ export function Transactions() {
             <button
               key={tab.id}
               onClick={() => setFilterStatus(tab.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filterStatus === tab.id ? "bg-surface text-primary shadow-2xs border border-subtle/30" : "text-muted hover:text-secondary"}`}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${filterStatus === tab.id ? "bg-surface text-primary shadow-2xs border border-subtle/30" : "text-muted hover:text-secondary"}`}
             >
               {tab.label}
             </button>
