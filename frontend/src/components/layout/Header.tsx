@@ -10,9 +10,8 @@ import {
   Settings,
   ChevronDown,
 } from "lucide-react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
 
-// Copywriting Acolhedor & Botânico (Identidade Fluxa)
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
     title: "Início",
@@ -34,12 +33,10 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
     title: "Contas & Carteiras",
     subtitle: "Saldo bancário consolidado e liquidez imediata",
   },
-
   "/wallets": {
     title: "Objetivos Financeiros",
     subtitle: "Organize reservas, metas de curto prazo e patrimônio futuro",
   },
-
   "/settings": {
     title: "Configurações",
     subtitle: "Preferências globais e administração do ecossistema",
@@ -80,38 +77,49 @@ export function Header() {
   };
 
   return (
-    <header className="h-20 w-full bg-surface/80 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-6 lg:px-10 flex items-center justify-between transition-all duration-300">
-      <div className="space-y-0.5">
-        <h1 className="text-base lg:text-lg font-bold text-primary tracking-tight leading-none">
-          {pageInfo.title}
-        </h1>
-        <p className="text-xs font-medium text-muted hidden sm:block">
+    /* ✨ HEADER PREMIUM: Vidro fosco real, bordas sutis e respiro executivo */
+    <header className="h-20 w-full bg-surface/75 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+      <div className="space-y-0.5 min-w-0 pr-4">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base sm:text-lg font-extrabold text-primary tracking-tight leading-none truncate">
+            {pageInfo.title}
+          </h1>
+          <span className="w-1.5 h-1.5 rounded-full bg-brand hidden sm:inline-block shrink-0" />
+        </div>
+        <p className="text-xs font-medium text-muted hidden sm:block truncate">
           {pageInfo.subtitle}
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-elevated/80 border border-subtle/30 text-[11px] font-semibold text-secondary">
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-elevated/60 border border-subtle/30 text-[11px] font-semibold text-secondary shadow-2xs">
           <ShieldCheck className="w-3.5 h-3.5 text-brand" />
           <span>Ambiente Seguro</span>
         </div>
 
-        <div className="relative pl-2 border-l border-subtle/20" ref={menuRef}>
+        <div
+          className="relative pl-2 sm:pl-3 border-l border-subtle/20"
+          ref={menuRef}
+        >
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center gap-3 p-1 rounded-2xl hover:bg-elevated/60 transition-all duration-200 cursor-pointer select-none group"
+            className="flex items-center gap-2.5 sm:gap-3 p-1 rounded-2xl hover:bg-elevated/60 transition-all duration-200 cursor-pointer select-none group focus:outline-none"
           >
             <div className="text-right hidden sm:block">
               <span className="text-xs font-bold text-primary block leading-none group-hover:text-brand transition-colors">
-                {user?.name || "Matheus Silva"}
+                {user?.name || "Matheus Santana"}
               </span>
-              <span className="text-[10px] font-medium text-muted mt-0.5 block">
+              <span className="text-[10px] font-medium text-muted mt-0.5 block truncate max-w-[140px]">
                 {user?.email || "matheus@fluxa.com"}
               </span>
             </div>
 
-            <div className="w-10 h-10 rounded-xl bg-brand text-white font-extrabold text-sm flex items-center justify-center shadow-sm border border-brand-light/30 group-hover:scale-105 transition-transform duration-200">
-              {getUserInitials(user?.name)}
+            {/* ✨ AVATAR COM ANEL DE FOCO E SOMBRA ACETINADA */}
+            <div className="relative">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-linear-to-tr from-brand to-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm border border-white/20 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30">
+                {getUserInitials(user?.name)}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-surface rounded-full" />
             </div>
 
             <ChevronDown
@@ -122,10 +130,10 @@ export function Header() {
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 mt-3 w-56 bg-surface/95 backdrop-blur-md rounded-2xl shadow-xl border border-subtle/30 py-2 animate-fade-in z-50">
-              <div className="px-4 py-3 border-b border-subtle/20 sm:hidden">
+            <div className="absolute right-0 mt-3 w-56 bg-surface/95 backdrop-blur-xl rounded-2xl shadow-xl border border-subtle/30 py-2 animate-fade-in z-50 divide-y divide-subtle/10">
+              <div className="px-4 py-3 sm:hidden">
                 <p className="text-xs font-bold text-primary truncate">
-                  {user?.name || "Matheus Silva"}
+                  {user?.name || "Matheus Santana"}
                 </p>
                 <p className="text-[10px] font-medium text-muted truncate">
                   {user?.email || "matheus@fluxa.com"}
@@ -179,13 +187,13 @@ export function Header() {
                 </Link>
               </div>
 
-              <div className="border-t border-subtle/20 mt-1 pt-1">
+              <div className="pt-1">
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
                     signOut();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/10 transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sair do Sistema</span>

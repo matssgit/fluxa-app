@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, ShoppingBag } from "lucide-react";
-import { useCards, useDeleteCard, type Card } from "../hooks/useCredit";
+import { useCards, useDeleteCard } from "../hooks/useCredit";
 import { CreateCardModal } from "../components/cards/CreateCardModal";
 import { CreatePurchaseModal } from "../components/CreatePurchaseModal";
 import { EditCardModal } from "../components/cards/EditCardModal";
@@ -12,19 +12,18 @@ export function CreditCards() {
   const { data: cards = [], isLoading: isLoadingCards } = useCards();
   const { mutateAsync: deleteCard } = useDeleteCard();
 
-  // Estados dos Modais Globais
   const [isNewCardModalOpen, setIsNewCardModalOpen] = useState(false);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
-  // Estados de Foco do Cartão
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const activeCard = cards.find((c) => c.id === selectedCardId) || null;
+
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Ações de Navegação de Modais
-  function handleOpenDetails(card: Card) {
-    setSelectedCard(card);
+  function handleOpenDetails(cardId: string) {
+    setSelectedCardId(cardId);
     setIsDetailsModalOpen(true);
   }
 
@@ -39,8 +38,8 @@ export function CreditCards() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* 1. CABEÇALHO DE AÇÕES */}
+    /* ✨ PADRONIZAÇÃO DE LARGURA: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 garante alinhamento oficial com todas as páginas! */
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pb-28 sm:pb-16 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
@@ -54,7 +53,7 @@ export function CreditCards() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setIsNewCardModalOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shadow-2xs border border-subtle/30 cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-2xs border border-subtle/30 cursor-pointer"
           >
             <Plus size={16} className="text-brand" />
             <span>Novo Cartão</span>
@@ -62,7 +61,7 @@ export function CreditCards() {
 
           <button
             onClick={() => setIsPurchaseModalOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer"
           >
             <ShoppingBag size={16} />
             <span>Lançar Compra</span>
@@ -70,15 +69,13 @@ export function CreditCards() {
         </div>
       </div>
 
-      {/* 2. LISTAGEM DE CARTÕES METALIZADOS */}
       <CardsList
         cards={cards}
         isLoading={isLoadingCards}
-        onSelectCard={handleOpenDetails}
+        onSelectCard={(card) => handleOpenDetails(card.id)}
         onNewCardClick={() => setIsNewCardModalOpen(true)}
       />
 
-      {/* 3. MODAIS GLOBAIS */}
       <CreateCardModal
         isOpen={isNewCardModalOpen}
         onClose={() => setIsNewCardModalOpen(false)}
@@ -88,39 +85,49 @@ export function CreditCards() {
         onClose={() => setIsPurchaseModalOpen(false)}
       />
 
-      {/* 4. MODAIS DE CONTEXTO DO CARTÃO SELECIONADO */}
       <CardDetailsModal
         isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        card={selectedCard}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedCardId(null);
+        }}
+        card={activeCard}
         onEditClick={handleOpenEdit}
         onDeleteClick={handleOpenDelete}
       />
 
       <EditCardModal
-        key={`edit-${selectedCard?.id}`}
+        key={`edit-${activeCard?.id}`}
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
-          setIsDetailsModalOpen(true);
+          if (activeCard) setIsDetailsModalOpen(true);
         }}
-        card={selectedCard}
+        card={activeCard}
       />
 
+      {/* ✨ EXCLUSÃO BLINDADA: Feedback claro em caso de bloqueio por chave estrangeira */}
       <DeleteActionModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
           setIsDeleteModalOpen(false);
-          setIsDetailsModalOpen(true);
+          if (activeCard) setIsDetailsModalOpen(true);
         }}
         title="Excluir Cartão"
-        description={`Você tem certeza que deseja excluir o cartão ${selectedCard?.name}?`}
+        description={`Você tem certeza que deseja excluir o cartão ${activeCard?.name}?`}
         warningText="O cartão só poderá ser excluído se não houver faturas ou parcelas abertas."
         onConfirm={async () => {
-          if (selectedCard) {
-            await deleteCard(selectedCard.id);
+          if (!activeCard) return;
+          try {
+            await deleteCard(activeCard.id);
             setIsDeleteModalOpen(false);
-            setSelectedCard(null);
+            setIsDetailsModalOpen(false);
+            setSelectedCardId(null);
+          } catch (error: unknown) {
+            console.error("Erro na exclusão do cartão:", error);
+            alert(
+              "⚠️ Exclusão Bloqueada por Segurança!\n\nEste cartão possui compras parceladas ou movimentações registradas no seu histórico. Para proteger a integridade dos seus relatórios, cancele as compras vinculadas a ele antes de excluí-lo.",
+            );
           }
         }}
       />

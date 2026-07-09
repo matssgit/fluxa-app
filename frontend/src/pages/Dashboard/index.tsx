@@ -183,7 +183,7 @@ export function Dashboard() {
   return (
     <div className="w-full pb-16 min-h-screen animate-fade-in">
       {/* Contêiner expandido para max-w-7xl com paddings otimizados para Mobile e Widescreen */}
-      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 pb-28 sm:pb-16 animate-fade-in">
         {/* BANNER DE SAÚDE FINANCEIRA */}
         <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
           <div className="flex items-center gap-4">

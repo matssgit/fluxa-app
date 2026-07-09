@@ -4,7 +4,6 @@ import { useTransactions } from "../../hooks/useTransactions";
 import { TransactionTable } from "../../components/transactions/TransactionTable";
 import { NewTransactionModal } from "../../components/transactions/NewTransactionModal";
 
-// Definição estrita para evitar 'any'
 interface SummaryData {
   income: number;
   expense: number;
@@ -44,8 +43,8 @@ export function Transactions() {
   });
 
   return (
-    /* ✨ ERGONOMIA MOBILE: pb-28 garante que a navbar inferior não cubra a tabela no celular! */
-    <div className="space-y-8 pb-28 sm:pb-16 animate-fade-in">
+    /* ✨ PADRONIZAÇÃO DE LARGURA: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 garante alinhamento com a tela de Cartões! */
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pb-28 sm:pb-16 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
@@ -57,7 +56,7 @@ export function Transactions() {
         </div>
         <button
           onClick={() => setIsNewModalOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer"
         >
           <Plus size={18} /> Novo Lançamento
         </button>
@@ -107,13 +106,18 @@ export function Transactions() {
         </div>
       </div>
 
-      <div className="flex border-b border-subtle/20 pb-4">
-        <div className="flex gap-2 p-1 bg-elevated/60 rounded-xl border border-subtle/20">
+      {/* ✨ FILTROS CENTRALIZADOS NO MOBILE: justify-center no celular, justify-start no desktop! */}
+      <div className="flex justify-center sm:justify-start border-b border-subtle/20 pb-4">
+        <div className="flex gap-1.5 p-1 bg-elevated/60 rounded-2xl border border-subtle/20 w-full sm:w-auto justify-center">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setFilterStatus(tab.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${filterStatus === tab.id ? "bg-surface text-primary shadow-2xs border border-subtle/30" : "text-muted hover:text-secondary"}`}
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                filterStatus === tab.id
+                  ? "bg-surface text-primary shadow-2xs border border-subtle/30"
+                  : "text-muted hover:text-secondary"
+              }`}
             >
               {tab.label}
             </button>

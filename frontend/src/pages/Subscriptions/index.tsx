@@ -4,11 +4,7 @@ import { useSubscriptions } from "../../hooks/useSubscriptions";
 import { type Subscription } from "../../types/subscription";
 import { CreateSubscriptionModal } from "./CreateSubscriptionModal";
 import { EmptyState } from "../../components/ui";
-
-// Reaproveitando o Modal Atômico existente no sistema
 import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
-
-// Consumindo o Barrel File dos componentes de domínio
 import {
   SubscriptionsSkeleton,
   SubscriptionsSummary,
@@ -17,11 +13,7 @@ import {
 
 export function Subscriptions() {
   const { data: subscriptions = [], isLoading, isError } = useSubscriptions();
-
-  // Controle do Modal de Criação
   const [isNewSubModalOpen, setIsNewSubModalOpen] = useState<boolean>(false);
-
-  // Controle do Modal Atômico de Baixa Mensal
   const [isPayModalOpen, setIsPayModalOpen] = useState<boolean>(false);
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
 
@@ -31,18 +23,27 @@ export function Subscriptions() {
   }
 
   return (
-    <div className="w-full pb-16 min-h-screen animate-fade-in">
-      <main className="max-w-6xl mx-auto px-1 py-8 space-y-8">
-        {/* 1. CABEÇALHO */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
-              Minhas Assinaturas
-            </h2>
-            <p className="text-muted text-xs sm:text-sm font-medium mt-0.5">
-              Monitorize os seus serviços recorrentes, compromissos fixos e
-              cobranças periódicas
-            </p>
+    <div className="w-full min-h-screen animate-fade-in">
+      {/* ✨ PADRONIZAÇÃO OFICIAL: max-w-7xl + pb-28 garantem alinhamento perfeito com Caixa e Cartões */}
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 pb-28 sm:pb-16">
+        {/* 1. CABEÇALHO REFINADO PINE & SAGE */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-subtle/15 pb-6">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0 shadow-2xs">
+              <Repeat size={22} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-primary tracking-tight">
+                  Minhas Assinaturas
+                </h2>
+                <span className="w-1.5 h-1.5 rounded-full bg-brand hidden sm:inline-block" />
+              </div>
+              <p className="text-muted text-xs sm:text-sm font-medium mt-0.5">
+                Monitorize os seus serviços recorrentes, compromissos fixos e
+                cobranças periódicas
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsNewSubModalOpen(true)}
@@ -53,10 +54,9 @@ export function Subscriptions() {
           </button>
         </div>
 
-        {/* 2. ESTADO DE CARREGAMENTO */}
+        {/* 2. ESTADOS DO SISTEMA */}
         {isLoading && <SubscriptionsSkeleton />}
 
-        {/* 3. ESTADO DE ERRO */}
         {isError && !isLoading && (
           <div className="py-12">
             <EmptyState
@@ -67,7 +67,6 @@ export function Subscriptions() {
           </div>
         )}
 
-        {/* 4. ESTADO VAZIO */}
         {!isLoading && !isError && subscriptions.length === 0 && (
           <div className="py-12">
             <EmptyState
@@ -78,7 +77,6 @@ export function Subscriptions() {
           </div>
         )}
 
-        {/* 5. COCKPIT PREMIUM: BANNER DE KPIS + CARDS METALIZADOS */}
         {!isLoading && !isError && subscriptions.length > 0 && (
           <div className="space-y-8">
             <SubscriptionsSummary
@@ -98,13 +96,11 @@ export function Subscriptions() {
         )}
       </main>
 
-      {/* MODAL DE CRIAÇÃO */}
       <CreateSubscriptionModal
         isOpen={isNewSubModalOpen}
         onClose={() => setIsNewSubModalOpen(false)}
       />
 
-      {/* MODAL ATÔMICO DE BAIXA MENSAL */}
       <PaySubscriptionModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
