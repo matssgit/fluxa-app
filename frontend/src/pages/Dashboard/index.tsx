@@ -11,11 +11,12 @@ import {
   Zap,
   PieChart,
 } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashBoard";
+import { useDashboard } from "../../hooks/useDashboard";
 import { PayInstallmentModal } from "../../components/cards/PayInstallmentModal";
 import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
 import { CreditSummaryWidget } from "../../components/dashboard/CreditSummaryWidget";
 import { InsightsWidget } from "../../components/dashboard/InsightsWidgets";
+import { formatCurrency } from "../../utils/formatters";
 
 // UI Library
 import { EmptyState, Card } from "../../components/ui";
@@ -26,7 +27,6 @@ import { PendencyItem } from "../../components/dashboard/PendencyItem";
 import { SectionTitle } from "../../components/dashboard/SectionTitle";
 import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton";
 
-
 /**
  * Extrator Universal de Métricas (100% Strict TS - Zero Any)
  * Varre o JSON do Backend em todos os níveis possíveis procurando as chaves financeiras,
@@ -36,7 +36,6 @@ function extractMetric(source: unknown, keys: string[]): number {
   if (!source || typeof source !== "object") return 0;
   const srcObj = source as Record<string, unknown>;
 
-  // Locais mais comuns onde APIs financeiras aninham KPIs do dashboard
   const objectsToSearch = [
     srcObj.summary,
     srcObj.monthSummary,
@@ -163,6 +162,13 @@ export function Dashboard() {
     "saldo_projetado",
   ]);
 
+  // ✨ BLINDAGEM DE PRODUTO (UX): Liquidez Real Disponível
+  // Se o histórico bruto for negativo (ex: testes sem saldo inicial), exibe a margem que sobrou das receitas do mês ou R$ 0,00.
+  const availableLiquidity =
+    currentBalance > 0
+      ? currentBalance
+      : Math.max(totalIncome - totalExpenses, 0);
+
   // Cálculos de Telemetria Financeira
   const burnRatePercentage =
     totalIncome > 0 ? Math.min((totalExpenses / totalIncome) * 100, 100) : 0;
@@ -172,16 +178,9 @@ export function Dashboard() {
       : 0;
   const isHealthy = projectedBalance >= 0 && burnRatePercentage <= 80;
 
-  const formatCurrency = (val: number): string =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(val);
-
   // 3. COCKPIT ANALÍTICO PRINCIPAL
   return (
     <div className="w-full pb-16 min-h-screen animate-fade-in">
-      {/* Alinhamento estrito preservado (px-1) */}
       <main className="max-w-6xl mx-auto px-1 py-8 space-y-8">
         {/* BANNER DE SAÚDE FINANCEIRA */}
         <div className="card-default p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
@@ -229,7 +228,7 @@ export function Dashboard() {
           />
           <SummaryCard
             title="Saldo Disponível"
-            value={currentBalance}
+            value={availableLiquidity}
             icon={DollarSign}
           />
           <SummaryCard

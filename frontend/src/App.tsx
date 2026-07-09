@@ -12,6 +12,8 @@ import { Register } from "./pages/Register";
 import { Wallets } from "./pages/Wallets";
 import { useAuth } from "./hooks/useAuth";
 import { Login } from "./pages/Login";
+// ✨ 1. ADICIONE O IMPORT AQUI:
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();
 
@@ -39,22 +41,48 @@ export default function App() {
                 </PrivateRoute>
               }
             >
-              {/* 1. Redirecionamento da raiz para o Dashboard */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              {/* 2. Rotas Principais do Menu */}
-              <Route path="/transactions" element={<Transactions />} />{" "}
-              {/* ✅ 2. Rota oficial no lugar certo! */}
+              <Route path="/transactions" element={<Transactions />} />
               <Route path="/subscriptions" element={<Subscriptions />} />
               <Route path="/cards" element={<CreditCards />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/wallets" element={<Wallets />} />
-              {/* 3. BLINDAGEM ANTI-TELA BRANCA (Fallback 404) */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Routes>
         </BrowserRouter>
+
+        {/* ✨ 2. ADICIONE O TOASTER GLOBAL AQUI NO FINAL DO AUTHPROVIDER: */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3500,
+            style: {
+              background: "#13312A",
+              color: "#FFFFFF",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
+              borderRadius: "12px",
+              fontSize: "14px",
+              fontWeight: "500",
+              boxShadow:
+                "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2)",
+            },
+            success: {
+              iconTheme: {
+                primary: "#10B981",
+                secondary: "#13312A",
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: "#EF4444",
+                secondary: "#FFFFFF",
+              },
+            },
+          }}
+        />
       </AuthProvider>
     </QueryClientProvider>
   );

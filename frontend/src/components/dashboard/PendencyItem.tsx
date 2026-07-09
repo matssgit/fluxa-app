@@ -1,9 +1,9 @@
-import { AlertCircle } from "lucide-react";
-import { Card, Button, Badge } from "../ui";
+import { Calendar, ArrowRight } from "lucide-react";
+import { formatCurrency } from "../../utils/formatters";
 
 interface PendencyItemProps {
   title: string;
-  amount: number | undefined;
+  amount: number;
   dueDate: string;
   onAction: () => void;
 }
@@ -14,42 +14,37 @@ export function PendencyItem({
   dueDate,
   onAction,
 }: PendencyItemProps) {
-  const formattedValue = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(amount ?? 0);
-
   return (
-    <Card variant="default" className="flex items-center justify-between p-4">
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        {/* O Badge aplica o tom semântico de alerta sem digitarmos bg-* ou border-* */}
-        <Badge
-          variant="warning"
-          className="p-2 flex items-center justify-center shrink-0"
-        >
-          <AlertCircle size={18} />
-        </Badge>
-
-        {/* Utilitários puramente de layout e tipografia semântica */}
-        <div className="min-w-0 flex-1">
-          <h4 className="font-semibold text-sm truncate">{title}</h4>
-          <div className="flex items-center gap-2 mt-0.5 text-xs font-medium opacity-70">
-            <span>{formattedValue}</span>
-            <span>•</span>
-            <span>Vence dia {dueDate}</span>
-          </div>
+    <div className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-subtle/30 hover:border-subtle/60 transition-all duration-200 shadow-2xs group">
+      {/* Informações da Pendência */}
+      <div className="space-y-1 pr-3 overflow-hidden">
+        <h4 className="text-sm font-extrabold text-primary truncate tracking-tight">
+          {title}
+        </h4>
+        <div className="flex items-center gap-2 text-xs text-muted font-medium">
+          <span className="flex items-center gap-1">
+            <Calendar size={13} className="text-brand shrink-0" />
+            {dueDate}
+          </span>
+          <span>•</span>
+          <span className="font-bold text-primary">
+            {formatCurrency(amount)}
+          </span>
         </div>
       </div>
 
-      {/* Botão tipado, autônomo e sem classes manuais de estilização */}
-      <Button
-        variant="secondary"
-        size="sm"
+      {/* Botão "Resolver" Estilizado (Pine & Sage) */}
+      <button
+        type="button"
         onClick={onAction}
-        className="ml-3 shrink-0"
+        className="shrink-0 px-4 py-2 rounded-xl bg-brand text-white text-xs font-bold tracking-wide hover:bg-secondary active:scale-95 transition-all duration-200 flex items-center gap-1.5 shadow-xs cursor-pointer"
       >
-        Resolver
-      </Button>
-    </Card>
+        <span>Resolver</span>
+        <ArrowRight
+          size={14}
+          className="transition-transform group-hover:translate-x-0.5"
+        />
+      </button>
+    </div>
   );
 }
