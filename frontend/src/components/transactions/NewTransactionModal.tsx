@@ -87,6 +87,7 @@ export function NewTransactionModal({
       const payload = {
         title: data.title,
         amount: finalAmount,
+        type: data.type === "income" ? "entrada" : "saida",
         account_id: data.account_id,
         category_id: data.category_id || undefined,
         status: data.status,

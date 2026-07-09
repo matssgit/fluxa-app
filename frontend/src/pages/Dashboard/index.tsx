@@ -43,6 +43,7 @@ function extractMetric(source: unknown, keys: string[]): number {
     srcObj.kpis,
     srcObj.flow,
     srcObj.month_summary,
+    srcObj.projection,
     srcObj,
   ];
 
@@ -163,9 +164,9 @@ export function Dashboard() {
   ]);
 
   // ✨ BLINDAGEM DE PRODUTO (UX): Liquidez Real Disponível
-  // Se o histórico bruto for negativo (ex: testes sem saldo inicial), exibe a margem que sobrou das receitas do mês ou R$ 0,00.
+  // Retorna o saldo real da API (mesmo se negativo/neutro) ou a margem livre das receitas do mês.
   const availableLiquidity =
-    currentBalance > 0
+    currentBalance !== 0
       ? currentBalance
       : Math.max(totalIncome - totalExpenses, 0);
 
@@ -181,9 +182,10 @@ export function Dashboard() {
   // 3. COCKPIT ANALÍTICO PRINCIPAL
   return (
     <div className="w-full pb-16 min-h-screen animate-fade-in">
-      <main className="max-w-6xl mx-auto px-1 py-8 space-y-8">
+      {/* Contêiner expandido para max-w-7xl com paddings otimizados para Mobile e Widescreen */}
+      <main className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* BANNER DE SAÚDE FINANCEIRA */}
-        <div className="card-default p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
+        <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
           <div className="flex items-center gap-4">
             <div
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
@@ -214,27 +216,31 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* GRID SUPERIOR: CARDS DE RESUMO (KPIs) */}
+        {/* GRID SUPERIOR: CARDS DE RESUMO (KPIs Coloridos) */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <SummaryCard
             title="Entradas do Mês"
             value={totalIncome}
             icon={ArrowUpCircle}
+            variant="income"
           />
           <SummaryCard
             title="Saídas do Mês"
             value={totalExpenses}
             icon={ArrowDownCircle}
+            variant="expense"
           />
           <SummaryCard
             title="Saldo Disponível"
             value={availableLiquidity}
             icon={DollarSign}
+            variant="balance"
           />
           <SummaryCard
             title="Projeção Fim do Mês"
             value={projectedBalance}
             icon={Calendar}
+            variant="projection"
           />
         </section>
 
