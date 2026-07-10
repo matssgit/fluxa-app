@@ -208,7 +208,7 @@ export function TransactionTable({
                   </td>
 
                   <td className="p-4 text-secondary text-sm font-medium whitespace-nowrap">
-                    {displayDate
+                    {displayDate && !isNaN(new Date(displayDate).getTime())
                       ? new Intl.DateTimeFormat("pt-BR").format(
                           new Date(displayDate),
                         )
