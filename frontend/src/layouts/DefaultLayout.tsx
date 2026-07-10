@@ -10,14 +10,14 @@ export function DefaultLayout() {
       <Sidebar />
 
       {/* 2. ÁREA DE CONTEÚDO PRINCIPAL */}
-      {/* No desktop (lg:pl-64), empurramos o conteúdo 64px (w-64) para a direita para não ficar embaixo da Sidebar fixa */}
-      <div className="flex-1 flex flex-col min-h-screen lg:pl-64 transition-all duration-300">
+      {/* No desktop (lg:pl-64), empurramos o conteúdo 64px para a direita para não ficar embaixo da Sidebar fixa */}
+      <div className="flex-1 flex flex-col min-h-screen lg:pl-64 transition-all duration-300 relative">
         {/* Cabeçalho Superior Fixo */}
         <Header />
 
-        {/* Orquestrador de Rotas (Onde as páginas como Dashboard e Cartões são renderizadas) */}
-        {/* pb-24 no mobile garante que a BottomNav flutuante nunca cubra o final do conteúdo! */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 pb-24 lg:pb-10 animate-fade-in">
+        {/* 🏛️ REGRA 2: O CONTAINER GLOBAL (Single Source of Truth) */}
+        {/* px-3 no mobile = 94% de aproveitamento útil. pb-28 garante respiro absoluto acima da BottomNav! */}
+        <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-28 sm:py-8 animate-fade-in flex flex-col">
           <Outlet />
         </main>
       </div>

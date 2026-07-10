@@ -1,15 +1,9 @@
 import { useState } from "react";
-import {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-} from "../../components/ui";
+import { X, Building, DollarSign, ChevronDown } from "lucide-react";
 import { useTransferWallet } from "../../hooks/useWallets";
 import { useAccounts } from "../../hooks/useAccounts";
 import type { Wallet } from "../../types/wallet";
+import { PickerModal } from "../../components/ui/PickerModal";
 
 interface TransferWalletModalProps {
   isOpen: boolean;
@@ -17,9 +11,6 @@ interface TransferWalletModalProps {
   wallet: Wallet | null;
   type: "deposit" | "withdraw" | null;
 }
-
-const INPUT_CLASS =
-  "w-full h-11 px-3.5 rounded-xl bg-elevated/80 border border-subtle/30 text-primary text-sm font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/30 transition-all placeholder:text-muted/60";
 
 export function TransferWalletModal({
   isOpen,
@@ -32,18 +23,19 @@ export function TransferWalletModal({
 
   const [accountId, setAccountId] = useState("");
   const [amount, setAmount] = useState("");
+  
+  const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
 
-  if (!wallet || !type) return null;
+  if (!isOpen || !wallet || !type) return null;
 
   const isDeposit = type === "deposit";
-  const title = isDeposit
-    ? `Aportar em: ${wallet.title}`
-    : `Resgatar de: ${wallet.title}`;
+  const title = isDeposit ? `Aportar` : `Resgatar`;
   const subtitle = isDeposit
-    ? "Envie recursos de uma conta bancária para progredir rumo a esta meta."
-    : "Resgate recursos acumulados neste objetivo de volta para a sua liquidez imediata.";
+    ? `Enviando recursos para: ${wallet.title}`
+    : `Resgatando de: ${wallet.title}`;
 
   const maxWithdraw = Number(wallet.current_amount) || 0;
+  const selectedAccountName = accounts.find((a) => a.id === accountId)?.name || "Selecione uma conta...";
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>): void {
     e.preventDefault();
@@ -53,9 +45,7 @@ export function TransferWalletModal({
     if (isNaN(numericAmount) || numericAmount <= 0) return;
 
     if (!isDeposit && numericAmount > maxWithdraw) {
-      alert(
-        "O valor de resgate não pode ser maior que o saldo acumulado no objetivo.",
-      );
+      alert("O valor de resgate não pode ser maior que o saldo acumulado no objetivo.");
       return;
     }
 
@@ -70,7 +60,7 @@ export function TransferWalletModal({
         onSuccess: () => {
           handleClose();
         },
-      },
+      }
     );
   }
 
@@ -81,89 +71,86 @@ export function TransferWalletModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <ModalHeader title={title} onClose={handleClose} />
-
-      <form onSubmit={handleSubmit}>
-        <ModalBody className="space-y-4">
-          <p className="text-xs font-medium text-muted -mt-2 mb-2">
-            {subtitle}
-          </p>
-
-          {/* Seleção de Conta Bancária */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
-              {isDeposit
-                ? "Conta de Origem (Sai o dinheiro)"
-                : "Conta de Destino (Entra o dinheiro)"}
-            </label>
-            <div className="relative">
-              <select
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                className={INPUT_CLASS}
-                required
-              >
-                <option value="" disabled>
-                  Selecione uma conta bancária...
-                </option>
-                {accounts.map((acc) => (
-                  <option key={acc.id} value={acc.id}>
-                    {acc.name}
-                  </option>
-                ))}
-              </select>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
+        <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md max-h-[82vh] sm:max-h-[88vh] flex flex-col overflow-hidden border border-subtle/30 transition-all duration-300">
+          
+          <div className="flex justify-between items-center p-4 sm:p-6 border-b border-subtle/20 shrink-0">
+            <div>
+              <h2 className="text-base sm:text-xl font-bold text-primary tracking-tight">{title}</h2>
+              <p className="text-xs font-medium text-muted mt-0.5">{subtitle}</p>
             </div>
+            <button onClick={handleClose} className="p-2 text-muted hover:text-primary hover:bg-elevated rounded-full transition-colors cursor-pointer">
+              <X size={18} />
+            </button>
           </div>
 
-          {/* Valor da Transferência */}
-          <div>
-            <div className="flex justify-between items-baseline mb-1.5">
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted">
-                Valor do {isDeposit ? "Aporte" : "Resgate"} (R$)
+          <form id="transfer-wallet-form" onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+            
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
+                <Building size={13} className="text-muted" />
+                <span>{isDeposit ? "Conta de Origem (Sai o dinheiro) *" : "Conta de Destino (Entra o dinheiro) *"}</span>
               </label>
-              {!isDeposit && (
-                <span className="text-[11px] font-bold text-secondary">
-                  Disponível: R$ {maxWithdraw.toFixed(2)}
-                </span>
-              )}
+              {/* ✨ TRIGGER BUTTON: Conta (Lei da Adaptação Mobile - Touch Friendly) */}
+              <button
+                type="button"
+                onClick={() => setIsAccountPickerOpen(true)}
+                className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!accountId ? "text-muted" : "text-primary"}`}
+              >
+                <span className="truncate pr-2">{selectedAccountName}</span>
+                <ChevronDown size={16} className="text-muted shrink-0" />
+              </button>
             </div>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted font-bold text-sm select-none">
-                R$
-              </span>
-              <Input
+
+            <div>
+              <div className="flex justify-between items-baseline mb-1">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  <DollarSign size={13} className="text-muted" />
+                  <span>Valor do {isDeposit ? "Aporte" : "Resgate"} (R$) *</span>
+                </label>
+                {!isDeposit && (
+                  <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded">
+                    Disp: R$ {maxWithdraw.toFixed(2)}
+                  </span>
+                )}
+              </div>
+              <input
                 type="number"
                 step="0.01"
                 max={!isDeposit ? maxWithdraw : undefined}
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className={`${INPUT_CLASS} pl-10`}
+                className="w-full rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm sm:text-base font-extrabold shadow-2xs tracking-tight"
                 required
               />
             </div>
-          </div>
-        </ModalBody>
 
-        <ModalFooter>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleClose}
-            disabled={isPending}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant={isDeposit ? "primary" : "secondary"}
-            isLoading={isPending}
-          >
-            {isDeposit ? "Confirmar Aporte" : "Confirmar Resgate"}
-          </Button>
-        </ModalFooter>
-      </form>
-    </Modal>
+          </form>
+
+          <div className="p-4 sm:p-6 bg-surface border-t border-subtle/20 flex gap-3 shrink-0">
+            <button type="button" onClick={handleClose} disabled={isPending} className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-xs sm:text-sm font-bold transition-all shadow-2xs cursor-pointer">
+              Cancelar
+            </button>
+            <button type="submit" form="transfer-wallet-form" disabled={isPending || !accountId || !amount} className={`flex-1 px-4 py-2.5 sm:py-3 rounded-xl text-white text-xs sm:text-sm font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer ${isDeposit ? "bg-brand hover:bg-brand-light" : "bg-amber-500 hover:bg-amber-400"}`}>
+              {isPending ? "Processando..." : (isDeposit ? "Confirmar Aporte" : "Confirmar Resgate")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <PickerModal
+        isOpen={isAccountPickerOpen}
+        onClose={() => setIsAccountPickerOpen(false)}
+        title={isDeposit ? "Selecione a Conta de Origem" : "Selecione a Conta de Destino"}
+        selectedValue={accountId}
+        onSelect={(val) => setAccountId(val as string)}
+        options={accounts.map((acc) => ({
+          label: acc.name,
+          value: acc.id,
+        }))}
+      />
+    </>
   );
 }

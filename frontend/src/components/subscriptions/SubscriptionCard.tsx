@@ -59,10 +59,10 @@ export function SubscriptionCard({
 
   return (
     <div
-      className={`card-default p-6 flex flex-col justify-between border-subtle/30 group transition-all duration-300 ${
+      className={`card-default p-6 flex flex-col justify-between border-subtle/30 group transition-all duration-300 ease-out ${
         status === "cancelled"
           ? "opacity-60 bg-elevated/20"
-          : "hover:border-brand/40"
+          : "hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 bg-surface"
       }`}
     >
       {/* Topo: Título + Badge de Status */}

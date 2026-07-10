@@ -16,12 +16,10 @@ export function CardItem({ card, onClick }: CardItemProps) {
   const cardColor = card.color || "#10B981";
 
   return (
+    // Substitua APENAS a className do container principal no CardItem.tsx
     <div
       onClick={onClick}
-      className="card-interactive group flex flex-col justify-between min-h-44 relative overflow-hidden p-6 rounded-3xl bg-surface transition-all duration-300 cursor-pointer shadow-2xs border"
-      style={{
-        borderColor: `${cardColor}40`, // Borda suave em 25% de opacidade na cor do cartão
-      }}
+      className="card-interactive group flex flex-col justify-between min-h-44 relative overflow-hidden p-6 rounded-3xl bg-surface transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 cursor-pointer shadow-2xs border border-subtle/30"
     >
       {/* ✨ AURA DE BRILHO PERSONALIZADA: Efeito Neumórfico acetinado na cor exata do cartão */}
       <div

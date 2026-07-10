@@ -5,6 +5,7 @@ import {
   updateSubscriptionStatus,
   deleteSubscription,
   paySubscription,
+  getSubscriptionAnalytics, // ✨ AQUI: Importação que estava faltando!
 } from "../services/subscriptions";
 
 // Hook para buscar a lista
@@ -67,5 +68,14 @@ export function usePaySubscription() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
+  });
+}
+
+// Hook para a inteligência analítica do painel
+export function useSubscriptionAnalytics() {
+  return useQuery({
+    queryKey: ["subscriptions", "analytics"],
+    queryFn: getSubscriptionAnalytics,
+    staleTime: 1000 * 60 * 5, // Cache de 5 minutos
   });
 }

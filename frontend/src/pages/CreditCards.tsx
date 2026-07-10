@@ -38,8 +38,8 @@ export function CreditCards() {
   }
 
   return (
-    /* ✨ PADRONIZAÇÃO DE LARGURA: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 garante alinhamento oficial com todas as páginas! */
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pb-28 sm:pb-16 animate-fade-in">
+    /* 🏛️ NAKED PAGE: Zero larguras ou paddings globais, apenas o espaçamento interno (space-y) */
+    <div className="w-full space-y-6 sm:space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
@@ -80,6 +80,7 @@ export function CreditCards() {
         isOpen={isNewCardModalOpen}
         onClose={() => setIsNewCardModalOpen(false)}
       />
+
       <CreatePurchaseModal
         isOpen={isPurchaseModalOpen}
         onClose={() => setIsPurchaseModalOpen(false)}
@@ -106,7 +107,6 @@ export function CreditCards() {
         card={activeCard}
       />
 
-      {/* ✨ EXCLUSÃO BLINDADA: Feedback claro em caso de bloqueio por chave estrangeira */}
       <DeleteActionModal
         isOpen={isDeleteModalOpen}
         onClose={() => {
