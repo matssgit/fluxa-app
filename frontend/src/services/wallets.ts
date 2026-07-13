@@ -3,7 +3,7 @@ import type {
   Wallet,
   CreateWalletData,
   UpdateWalletData,
-  TransferWalletData,
+  UpdateWalletProgressData,
 } from "../types/wallet";
 
 export async function getWallets(): Promise<Wallet[]> {
@@ -31,7 +31,8 @@ export async function deleteWallet(id: string): Promise<void> {
   await api.delete(`/wallets/${id}`);
 }
 
-// Endpoint para nutrir (depositar) ou resgatar dinheiro da Caixinha
-export async function transferWallet(data: TransferWalletData): Promise<void> {
-  await api.post(`/wallets/${data.wallet_id}/transfer`, data);
+export async function updateWalletProgress(
+  data: UpdateWalletProgressData,
+): Promise<void> {
+  await api.post(`/wallets/${data.wallet_id}/progress`, data);
 }

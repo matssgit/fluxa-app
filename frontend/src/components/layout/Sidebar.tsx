@@ -30,10 +30,10 @@ export function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface/90 backdrop-blur-md border-r border-subtle/30 z-40 transition-all duration-300">
+    /* ✨ Aqui está a mágica: hidden min-[1400px]:flex */
+    <aside className="hidden min-[1400px]:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface/90 backdrop-blur-md border-r border-subtle/30 z-40 transition-all duration-300">
       <div className="h-20 flex items-center px-8 border-b border-subtle/20">
         <div className="flex items-center gap-3.5">
-          {/* Logotipo Oficial Fluxa */}
           <div className="w-9 h-9 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand font-black text-lg shadow-2xs shrink-0">
             <span role="img" aria-label="Fluxa Sprout" className="select-none">
               🌱
@@ -44,7 +44,7 @@ export function Sidebar() {
               Fluxa
             </span>
             <span className="text-[10px] font-extrabold text-brand tracking-[0.15em] uppercase mt-1 block">
-              Cultive sua vida financeira
+              Cultive sua vida
             </span>
           </div>
         </div>
@@ -87,7 +87,6 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-subtle/20 space-y-2">
-        {/* Assinatura Botânica Acolhedora */}
         <div className="px-4 py-1 flex items-center gap-2 text-muted">
           <Sprout size={14} className="text-brand shrink-0 animate-pulse" />
           <span className="text-[11px] font-semibold italic">

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Plus, ShoppingBag } from "lucide-react";
-import { useCards, useDeleteCard } from "../hooks/useCredit";
-import { CreateCardModal } from "../components/cards/CreateCardModal";
-import { CreatePurchaseModal } from "../components/CreatePurchaseModal";
-import { EditCardModal } from "../components/cards/EditCardModal";
-import { CardDetailsModal } from "../components/cards/CardDetailsModal";
-import { DeleteActionModal } from "../components/transactions/DeleteActionModal";
-import { CardsList } from "../components/cards/CardsList";
+import { useCards, useDeleteCard } from "../../hooks/useCredit";
+import { CreateCardModal } from "../../components/cards/CreateCardModal";
+import { CreatePurchaseModal } from "../../components/cards/CreatePurchaseModal";
+import { EditCardModal } from "../../components/cards/EditCardModal";
+import { CardDetailsModal } from "../../components/cards/CardDetailsModal";
+import { DeleteActionModal } from "../../components/transactions/DeleteActionModal";
+import { CardsList } from "../../components/cards/CardsList";
 
 export function CreditCards() {
   const { data: cards = [], isLoading: isLoadingCards } = useCards();
@@ -38,35 +38,24 @@ export function CreditCards() {
   }
 
   return (
-    /* 🏛️ NAKED PAGE: Zero larguras ou paddings globais, apenas o espaçamento interno (space-y) */
     <div className="w-full space-y-6 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
-            Meus Cartões
-          </h2>
-          <p className="text-muted text-xs sm:text-sm font-medium mt-0.5">
-            Gerencie seus limites, datas de fechamento e faturas ativas
-          </p>
-        </div>
+      {/* 🚀 REGRA 16: Título removido. Começamos direto com as Ações! */}
+      <div className="flex flex-col sm:flex-row justify-start items-center gap-3 w-full">
+        <button
+          onClick={() => setIsNewCardModalOpen(true)}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-2xs border border-subtle/30 cursor-pointer"
+        >
+          <Plus size={16} className="text-brand" />
+          <span>Novo Cartão</span>
+        </button>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            onClick={() => setIsNewCardModalOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-2xs border border-subtle/30 cursor-pointer"
-          >
-            <Plus size={16} className="text-brand" />
-            <span>Novo Cartão</span>
-          </button>
-
-          <button
-            onClick={() => setIsPurchaseModalOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer"
-          >
-            <ShoppingBag size={16} />
-            <span>Lançar Compra</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsPurchaseModalOpen(true)}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer"
+        >
+          <ShoppingBag size={16} />
+          <span>Lançar Compra</span>
+        </button>
       </div>
 
       <CardsList
@@ -76,6 +65,7 @@ export function CreditCards() {
         onNewCardClick={() => setIsNewCardModalOpen(true)}
       />
 
+      {/* MODAIS DO ECOSSISTEMA DE CRÉDITO */}
       <CreateCardModal
         isOpen={isNewCardModalOpen}
         onClose={() => setIsNewCardModalOpen(false)}

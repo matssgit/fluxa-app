@@ -118,14 +118,6 @@ export function Transactions() {
     <>
       <div className="w-full space-y-6 sm:space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
-              Fluxo de Caixa
-            </h2>
-            <p className="text-muted text-sm font-medium mt-0.5">
-              Operações diárias, pesquisas e conciliação
-            </p>
-          </div>
           <button
             onClick={() => setIsNewModalOpen(true)}
             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer"

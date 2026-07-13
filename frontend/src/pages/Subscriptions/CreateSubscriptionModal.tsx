@@ -1,10 +1,10 @@
+import { useState } from "react";
 import {
-  X,
-  Calendar,
   DollarSign,
   Tag,
   Building,
   CreditCard,
+  CalendarDays,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,7 +15,14 @@ import { useCategories } from "../../hooks/useCategories";
 import { useCards } from "../../hooks/useCredit";
 import { useQueryClient } from "@tanstack/react-query";
 
-// Interfaces seguras para blindar a tipagem sem 'any'
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "../../components/ui/Modal";
+import { PickerModal } from "../../components/ui/PickerModal";
+
 interface Category {
   id: string;
   name: string;
@@ -60,10 +67,16 @@ export function CreateSubscriptionModal({
   const { data: cards = [] } = useCards();
   const queryClient = useQueryClient();
 
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [isFrequencyPickerOpen, setIsFrequencyPickerOpen] = useState(false);
+  const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+  const [isDueDayPickerOpen, setIsDueDayPickerOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<SubscriptionForm>({
@@ -72,11 +85,25 @@ export function CreateSubscriptionModal({
   });
 
   const paymentMethod = watch("payment_method");
+  const currentCategoryId = watch("category_id");
+  const currentFrequency = watch("frequency");
+  const currentAccountId = watch("account_id");
+  const currentCardId = watch("card_id");
+  const currentDueDay = watch("due_day");
 
-  // Suporta tanto o padrão inglês ("expense") como o português ("saida") vindos da API
   const filteredCategories = (categories as Category[]).filter(
     (c) => c.type === "expense" || c.type === "saida",
   );
+
+  const selectedCategoryName =
+    filteredCategories.find((c) => c.id === currentCategoryId)?.name ||
+    "Selecione...";
+  const selectedAccountName =
+    (accounts as Account[]).find((a) => a.id === currentAccountId)?.name ||
+    "Selecione a conta...";
+  const selectedCardName =
+    (cards as Card[]).find((c) => c.id === currentCardId)?.name ||
+    "Selecione o cartão...";
 
   if (!isOpen) return null;
 
@@ -93,7 +120,6 @@ export function CreateSubscriptionModal({
         card_id: data.payment_method === "card" ? data.card_id : undefined,
       });
 
-      // Invalida em cascata para atualizar a lista de assinaturas e o cockpit do Dashboard
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["subscriptions"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
@@ -107,225 +133,303 @@ export function CreateSubscriptionModal({
     }
   }
 
+  const daysOptions = Array.from({ length: 31 }, (_, i) => ({
+    label: `Dia ${i + 1}`,
+    value: String(i + 1),
+  }));
+
+  const categoryOptions = filteredCategories.map((c) => ({
+    label: c.name,
+    value: c.id,
+  }));
+
+  const sourceOptions =
+    paymentMethod === "account"
+      ? (accounts as Account[]).map((a) => ({ label: a.name, value: a.id }))
+      : (cards as Card[]).map((c) => ({ label: c.name, value: c.id }));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-page/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-subtle/30 transition-all duration-300">
-        {/* Cabeçalho */}
-        <div className="p-6 border-b border-subtle/20 flex justify-between items-center">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-primary tracking-tight">
-              Nova Assinatura Recorrente
-            </h2>
-            <p className="text-xs font-medium text-muted mt-0.5">
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} size="md">
+        <ModalHeader title="Nova Assinatura Recorrente" onClose={onClose} />
+
+        <form id="create-subscription-form" onSubmit={handleSubmit(onSubmit)}>
+          <ModalBody className="p-6 space-y-5">
+            <p className="text-xs font-medium text-muted -mt-2">
               Monitorize os seus serviços fixos e cobranças automáticas
             </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-muted hover:text-primary hover:bg-elevated rounded-full transition-colors cursor-pointer"
-          >
-            <X size={18} />
-          </button>
-        </div>
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
-          <div>
-            <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-              Nome do Serviço *
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: Netflix, Spotify, Internet Fibre..."
-              {...register("title")}
-              className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
-            />
-            {errors.title && (
-              <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
-                {errors.title.message}
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                <DollarSign size={13} className="text-muted" />
-                <span>Valor (R$) *</span>
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0,00"
-                {...register("amount", { valueAsNumber: true })}
-                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base font-extrabold shadow-2xs tracking-tight"
-              />
-              {errors.amount && (
-                <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
-                  {errors.amount.message}
-                </span>
-              )}
-            </div>
-
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                <Calendar size={13} className="text-muted" />
-                <span>Dia de Vencimento *</span>
-              </label>
-              <input
-                type="number"
-                placeholder="Ex: 10"
-                {...register("due_day", { valueAsNumber: true })}
-                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-semibold shadow-2xs"
-              />
-              {errors.due_day && (
-                <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
-                  {errors.due_day.message}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                <Tag size={13} className="text-muted" />
-                <span>Categoria *</span>
-              </label>
-              <select
-                {...register("category_id")}
-                className="w-full rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 focus:bg-surface text-primary focus:border-brand outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-              >
-                <option value="" className="bg-surface text-muted">
-                  Selecione...
-                </option>
-                {filteredCategories.map((c: Category) => (
-                  <option
-                    key={c.id}
-                    value={c.id}
-                    className="bg-surface text-primary"
-                  >
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              {errors.category_id && (
-                <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
-                  {errors.category_id.message}
-                </span>
-              )}
-            </div>
-
+            {/* RESTAURADO: Input original com estilização correta */}
             <div>
               <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                Periodicidade
+                Nome do Serviço *
               </label>
-              <select
-                {...register("frequency")}
-                className="w-full rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 focus:bg-surface text-primary focus:border-brand outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-              >
-                <option value="monthly" className="bg-surface text-primary">
-                  Mensal
-                </option>
-                <option value="yearly" className="bg-surface text-primary">
-                  Anual
-                </option>
-              </select>
-            </div>
-          </div>
-
-          {/* Seletor de Método de Cobrança */}
-          <div className="pt-2 border-t border-subtle/20 space-y-3">
-            <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
-              Fonte de Cobrança Padrão
-            </label>
-            <div className="grid grid-cols-2 gap-3 p-1 bg-elevated/60 rounded-2xl border border-subtle/20">
-              <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  value="account"
-                  {...register("payment_method")}
-                  className="peer sr-only"
-                />
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
-                  <Building size={16} className="text-brand shrink-0" />
-                  <span>Conta / Débito</span>
-                </div>
-              </label>
-              <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  value="card"
-                  {...register("payment_method")}
-                  className="peer sr-only"
-                />
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
-                  <CreditCard size={16} className="text-brand shrink-0" />
-                  <span>Cartão de Crédito</span>
-                </div>
-              </label>
-            </div>
-
-            <div className="pt-1">
-              {paymentMethod === "account" ? (
-                <select
-                  {...register("account_id")}
-                  className="w-full rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 focus:bg-surface text-primary focus:border-brand outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-                >
-                  <option value="" className="bg-surface text-muted">
-                    Selecione a conta de débito...
-                  </option>
-                  {(accounts as Account[]).map((acc) => (
-                    <option
-                      key={acc.id}
-                      value={acc.id}
-                      className="bg-surface text-primary"
-                    >
-                      {acc.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <select
-                  {...register("card_id")}
-                  className="w-full rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 focus:bg-surface text-primary focus:border-brand outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-                >
-                  <option value="" className="bg-surface text-muted">
-                    Selecione o cartão de crédito...
-                  </option>
-                  {(cards as Card[]).map((card) => (
-                    <option
-                      key={card.id}
-                      value={card.id}
-                      className="bg-surface text-primary"
-                    >
-                      {card.name}
-                    </option>
-                  ))}
-                </select>
+              <input
+                type="text"
+                placeholder="Ex: Netflix, Spotify, Internet..."
+                {...register("title")}
+                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
+              />
+              {errors.title && (
+                <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                  {errors.title.message}
+                </span>
               )}
             </div>
-          </div>
 
-          {/* Botões */}
-          <div className="pt-3 flex gap-3 border-t border-subtle/20 mt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shadow-2xs"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex-1 px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-light text-white text-xs sm:text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
-            >
-              {isPending ? "A guardar..." : "Guardar Assinatura"}
-            </button>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* RESTAURADO: Input de valor com estilização correta */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                  <DollarSign size={13} className="text-muted" />
+                  <span>Valor (R$) *</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...register("amount", { valueAsNumber: true })}
+                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base font-extrabold shadow-2xs tracking-tight"
+                />
+                {errors.amount && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.amount.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  <CalendarDays size={13} className="text-muted" />
+                  <span>Dia de Vencimento *</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsDueDayPickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    currentDueDay ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  <span className="truncate">
+                    {currentDueDay
+                      ? `Dia ${currentDueDay}`
+                      : "Selecionar dia..."}
+                  </span>
+                </button>
+                {errors.due_day && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.due_day.message}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  <Tag size={13} className="text-muted" />
+                  <span>Categoria *</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryPickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    currentCategoryId ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  <span className="truncate">{selectedCategoryName}</span>
+                </button>
+                {errors.category_id && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.category_id.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  Periodicidade
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsFrequencyPickerOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer text-primary"
+                >
+                  <span>
+                    {currentFrequency === "yearly" ? "Anual" : "Mensal"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-subtle/20 space-y-3">
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                Fonte de Cobrança Padrão
+              </label>
+
+              <div className="grid grid-cols-2 gap-3 p-1 bg-elevated/60 rounded-2xl border border-subtle/20">
+                <label className="flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="account"
+                    {...register("payment_method")}
+                    className="peer sr-only"
+                    onChange={(e) => {
+                      setValue(
+                        "payment_method",
+                        e.target.value as "account" | "card",
+                      );
+                      setValue("card_id", undefined);
+                    }}
+                  />
+                  <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
+                    <Building
+                      size={16}
+                      className={
+                        paymentMethod === "account"
+                          ? "text-brand"
+                          : "text-muted"
+                      }
+                    />
+                    <span>Conta Bancária</span>
+                  </div>
+                </label>
+                <label className="flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="card"
+                    {...register("payment_method")}
+                    className="peer sr-only"
+                    onChange={(e) => {
+                      setValue(
+                        "payment_method",
+                        e.target.value as "account" | "card",
+                      );
+                      setValue("account_id", undefined);
+                    }}
+                  />
+                  <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
+                    <CreditCard
+                      size={16}
+                      className={
+                        paymentMethod === "card" ? "text-brand" : "text-muted"
+                      }
+                    />
+                    <span>Cartão de Crédito</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsSourcePickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    (paymentMethod === "account" && currentAccountId) ||
+                    (paymentMethod === "card" && currentCardId)
+                      ? "text-primary"
+                      : "text-muted"
+                  }`}
+                >
+                  <span className="truncate">
+                    {paymentMethod === "account"
+                      ? selectedAccountName
+                      : selectedCardName}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </ModalBody>
+
+          <ModalFooter>
+            <div className="flex gap-3 w-full">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-sm font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                form="create-subscription-form"
+                className="flex-1 px-4 py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center"
+              >
+                {isPending ? (
+                  <span className="animate-pulse">A Guardar...</span>
+                ) : (
+                  "Guardar Assinatura"
+                )}
+              </button>
+            </div>
+          </ModalFooter>
         </form>
-      </div>
-    </div>
+      </Modal>
+
+      {/* --- INFRAESTRUTURA DE PICKERS --- */}
+      <PickerModal
+        isOpen={isCategoryPickerOpen}
+        onClose={() => setIsCategoryPickerOpen(false)}
+        title="Selecione a Categoria"
+        options={categoryOptions}
+        selectedValue={currentCategoryId || ""}
+        onSelect={(val) => {
+          setValue("category_id", String(val), { shouldValidate: true });
+          setIsCategoryPickerOpen(false);
+        }}
+      />
+
+      <PickerModal
+        isOpen={isFrequencyPickerOpen}
+        onClose={() => setIsFrequencyPickerOpen(false)}
+        title="Periodicidade"
+        options={[
+          { label: "Mensal", value: "monthly" },
+          { label: "Anual", value: "yearly" },
+        ]}
+        selectedValue={currentFrequency || ""}
+        onSelect={(val) => {
+          setValue("frequency", String(val) as "monthly" | "yearly", {
+            shouldValidate: true,
+          });
+          setIsFrequencyPickerOpen(false);
+        }}
+      />
+
+      <PickerModal
+        isOpen={isDueDayPickerOpen}
+        onClose={() => setIsDueDayPickerOpen(false)}
+        title="Dia de Vencimento"
+        options={daysOptions}
+        selectedValue={currentDueDay ? String(currentDueDay) : ""}
+        onSelect={(val) => {
+          setValue("due_day", Number(val), { shouldValidate: true });
+          setIsDueDayPickerOpen(false);
+        }}
+      />
+
+      <PickerModal
+        isOpen={isSourcePickerOpen}
+        onClose={() => setIsSourcePickerOpen(false)}
+        title={
+          paymentMethod === "account" ? "Selecionar Conta" : "Selecionar Cartão"
+        }
+        options={sourceOptions}
+        selectedValue={
+          paymentMethod === "account"
+            ? currentAccountId || ""
+            : currentCardId || ""
+        }
+        onSelect={(val) => {
+          if (paymentMethod === "account") {
+            setValue("account_id", String(val), { shouldValidate: true });
+          } else {
+            setValue("card_id", String(val), { shouldValidate: true });
+          }
+          setIsSourcePickerOpen(false);
+        }}
+      />
+    </>
   );
 }

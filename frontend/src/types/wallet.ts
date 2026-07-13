@@ -31,9 +31,9 @@ export interface UpdateWalletData {
   color?: string;
 }
 
-export interface TransferWalletData {
+export interface UpdateWalletProgressData {
   wallet_id: string;
-  account_id: string; // Conta de onde sai o dinheiro (ou para onde volta no resgate)
-  amount: number; // Valor da transferência
-  type: "deposit" | "withdraw"; // 'deposit' = nutrir meta; 'withdraw' = resgatar para conta
+  type: "deposit" | "withdraw";
+  amount: number;
+  observation?: string;
 }

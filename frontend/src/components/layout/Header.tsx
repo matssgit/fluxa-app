@@ -5,40 +5,39 @@ import {
   ShieldCheck,
   User,
   Tag,
-  Palette,
-  Database,
   Settings,
   ChevronDown,
+  Repeat,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
-    title: "Início",
+    title: "INÍCIO",
     subtitle: "Seu ecossistema analítico e saúde do patrimônio",
   },
   "/transactions": {
-    title: "Caixa",
+    title: "CAIXA & TRANSAÇÕES",
     subtitle: "Operação diária, conciliações e fluxo de entradas e saídas",
   },
   "/cards": {
-    title: "Ecossistema de Crédito",
+    title: "CARTÕES DE CRÉDITO",
     subtitle: "Gestão de cartões, faturas abertas e parcelas",
   },
   "/subscriptions": {
-    title: "Assinaturas Recorrentes",
+    title: "ASSINATURAS & SERVIÇOS",
     subtitle: "Monitoramento de serviços fixos e cobranças periódicas",
   },
   "/accounts": {
-    title: "Contas & Carteiras",
+    title: "CONTAS & CARTEIRAS",
     subtitle: "Saldo bancário consolidado e liquidez imediata",
   },
   "/wallets": {
-    title: "Objetivos Financeiros",
+    title: "OBJETIVOS FINANCEIROS",
     subtitle: "Organize reservas, metas de curto prazo e patrimônio futuro",
   },
   "/settings": {
-    title: "Configurações",
+    title: "CONFIGURAÇÕES",
     subtitle: "Preferências globais e administração do ecossistema",
   },
 };
@@ -77,7 +76,6 @@ export function Header() {
   };
 
   return (
-    /* ✨ HEADER PREMIUM: Vidro fosco real, bordas sutis e respiro executivo */
     <header className="h-20 w-full bg-surface/75 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
       <div className="space-y-0.5 min-w-0 pr-4">
         <div className="flex items-center gap-2">
@@ -109,12 +107,11 @@ export function Header() {
               <span className="text-xs font-bold text-primary block leading-none group-hover:text-brand transition-colors">
                 {user?.name || "Matheus Santana"}
               </span>
-              <span className="text-[10px] font-medium text-muted mt-0.5 block truncate max-w-[140px]">
+              <span className="text-[10px] font-medium text-muted mt-0.5 block truncate max-w-32">
                 {user?.email || "matheus@fluxa.com"}
               </span>
             </div>
 
-            {/* ✨ AVATAR COM ANEL DE FOCO E SOMBRA ACETINADA */}
             <div className="relative">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-linear-to-tr from-brand to-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm border border-white/20 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30">
                 {getUserInitials(user?.name)}
@@ -141,6 +138,16 @@ export function Header() {
               </div>
 
               <div className="py-1">
+                {/* ✨ Assinaturas injetada apenas para usuários de celular/tablet! */}
+                <Link
+                  to="/subscriptions"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
+                >
+                  <Repeat className="w-4 h-4 text-brand" />
+                  <span>Assinaturas</span>
+                </Link>
+
                 <Link
                   to="/settings"
                   onClick={() => setIsMenuOpen(false)}
@@ -162,28 +169,10 @@ export function Header() {
                 <Link
                   to="/settings"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors"
-                >
-                  <Palette className="w-4 h-4 text-muted" />
-                  <span>Tema (Dark / Light)</span>
-                </Link>
-
-                <Link
-                  to="/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors"
-                >
-                  <Database className="w-4 h-4 text-muted" />
-                  <span>Backup & Dados</span>
-                </Link>
-
-                <Link
-                  to="/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors lg:hidden"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
                 >
                   <Settings className="w-4 h-4 text-muted" />
-                  <span>Configurações</span>
+                  <span>Configurações globais</span>
                 </Link>
               </div>
 

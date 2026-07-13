@@ -24,7 +24,7 @@
        2. TOKENS SEMÂNTICOS (Fundo Musgo Escurecido & Contraste Metalizado)
        ========================================================================== */
     /* Fundo Musgo Executivo: Escuro e sóbrio para destacar o branco metalizado dos cards */
-    --color-page: #b0c2b7;
+    --color-page: #798a807e;
 
     /* Superfície base e elevações */
     --color-surface: var(--white);

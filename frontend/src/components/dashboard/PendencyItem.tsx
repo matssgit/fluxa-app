@@ -37,7 +37,7 @@ export function PendencyItem({
       <button
         type="button"
         onClick={onAction}
-        className="w-full sm:w-auto shrink-0 justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 text-emerald-600 dark:text-emerald-400 hover:text-white border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.18)] animate-pulse hover:animate-none active:scale-95 transition-all duration-300 flex items-center gap-1.5 cursor-pointer mt-1 sm:mt-0 font-extrabold text-xs tracking-wide"
+        className="w-full sm:w-auto shrink-0 justify-center px-4 py-2.5 sm:py-2 rounded-xl bg-emerald-600/15 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-600 hover:text-white border border-emerald-800/30 shadow-[0_0_15px_rgba(16,185,129,0.18)] animate-pulse hover:animate-none active:scale-95 transition-all duration-300 flex items-center gap-1.5 cursor-pointer mt-1 sm:mt-0 font-extrabold text-xs tracking-wide"
         title="Dar Baixa / Resolver Pendência"
       >
         <Check size={14} className="stroke-3 shrink-0" />

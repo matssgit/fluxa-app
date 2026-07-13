@@ -2,118 +2,128 @@ import { useState } from "react";
 import { Plus, Target } from "lucide-react";
 import { useWallets } from "../../hooks/useWallets";
 import type { Wallet } from "../../types/wallet";
-import { EmptyState } from "../../components/ui";
-import {
-  WalletsSkeleton,
-  WalletsSummary,
-  WalletCard,
-} from "../../components/wallets";
 
-// Nossos modais com infraestrutura fluida
-import { CreateWalletModal } from "./CreateWalletModal";
-import { TransferWalletModal } from "./TransferWalletModal";
+// Componentes da Página
+import { WalletsSummary } from "../../components/wallets/WalletsSummary";
+import { WalletCard } from "../../components/wallets/WalletCard";
+import { WalletsSkeleton } from "../../components/wallets/WalletsSkeleton";
+
+// Os 4 Modais do Ecossistema de Metas
+import { CreateWalletModal } from "../../components/wallets/CreateWalletModal";
+import { TransferWalletModal } from "../../components/wallets/TransferWalletModal";
+import { EditWalletModal } from "../../components/wallets/EditWalletModal";
+import { DeleteWalletModal } from "../../components/wallets/DeleteWalletModal";
+import { EmptyState } from "../../components/ui/EmptyState";
 
 export function Wallets() {
-  const { data: wallets = [], isLoading, isError } = useWallets();
+  const { data: wallets = [], isLoading } = useWallets();
 
-  const [isNewWalletModalOpen, setIsNewWalletModalOpen] =
-    useState<boolean>(false);
-  const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
-  const [transferType, setTransferType] = useState<
-    "deposit" | "withdraw" | null
-  >(null);
-  const [isTransferModalOpen, setIsTransferModalOpen] =
-    useState<boolean>(false);
+  // Estados de Controle de Modais
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  function handleOpenTransfer(
-    wallet: Wallet,
-    type: "deposit" | "withdraw",
-  ): void {
-    setSelectedWallet(wallet);
-    setTransferType(type);
-    setIsTransferModalOpen(true);
-  }
+  const [progressConfig, setProgressConfig] = useState<{
+    isOpen: boolean;
+    wallet: Wallet | null;
+    type: "deposit" | "withdraw" | null;
+  }>({
+    isOpen: false,
+    wallet: null,
+    type: null,
+  });
 
-  function handleCloseTransfer(): void {
-    setIsTransferModalOpen(false);
-    setSelectedWallet(null);
-    setTransferType(null);
-  }
+  const [editConfig, setEditConfig] = useState<{
+    isOpen: boolean;
+    wallet: Wallet | null;
+  }>({
+    isOpen: false,
+    wallet: null,
+  });
+
+  const [deleteConfig, setDeleteConfig] = useState<{
+    isOpen: boolean;
+    wallet: Wallet | null;
+  }>({
+    isOpen: false,
+    wallet: null,
+  });
+
+  // Handlers para abrir modais
+  const handleOpenProgress = (wallet: Wallet, type: "deposit" | "withdraw") => {
+    setProgressConfig({ isOpen: true, wallet, type });
+  };
+
+  const handleOpenEdit = (wallet: Wallet) => {
+    setEditConfig({ isOpen: true, wallet });
+  };
+
+  const handleOpenDelete = (wallet: Wallet) => {
+    setDeleteConfig({ isOpen: true, wallet });
+  };
 
   return (
-    <>
-      {/* 🏛️ NOVA ARQUITETURA (Naked Page): O DefaultLayout já gerencia o max-w, paddings, áreas seguras e animações */}
-      <div className="w-full space-y-6 sm:space-y-8">
-        {/* CABEÇALHO */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
-              Minhas Metas
-            </h2>
-            <p className="text-muted text-sm font-medium mt-0.5">
-              Acompanhe o progresso das suas reservas e objetivos financeiros
-            </p>
-          </div>
-          <button
-            onClick={() => setIsNewWalletModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer"
-          >
-            <Plus size={18} />
-            <span>Nova Meta</span>
-          </button>
-        </div>
-
-        {isLoading && <WalletsSkeleton />}
-
-        {isError && !isLoading && (
-          <div className="py-12">
-            <EmptyState
-              icon={Target}
-              title="Não foi possível consultar as suas reservas"
-              description="Ocorreu uma instabilidade momentânea. Por favor, tente recarregar a página em instantes."
-            />
-          </div>
-        )}
-
-        {!isLoading && !isError && wallets.length === 0 && (
-          <div className="py-12">
-            <EmptyState
-              icon={Target}
-              title="Você ainda não possui nenhuma meta cadastrada"
-              description="Crie seu primeiro objetivo financeiro para organizar reservas e acompanhar sua evolução ao longo do tempo."
-            />
-          </div>
-        )}
-
-        {/* COCKPIT DE METAS */}
-        {!isLoading && !isError && wallets.length > 0 && (
-          <div className="space-y-8">
-            <WalletsSummary wallets={wallets} />
-
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {wallets.map((wallet) => (
-                <WalletCard
-                  key={wallet.id}
-                  wallet={wallet}
-                  onTransfer={handleOpenTransfer}
-                />
-              ))}
-            </section>
-          </div>
-        )}
+    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-20 sm:pb-8">
+      {/* 1. Header (Mantido minimalista conforme o design system) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-surface text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+        >
+          <Plus size={18} />
+          <span>Nova Meta</span>
+        </button>
       </div>
 
+      {/* 2. Conteúdo Principal */}
+      {isLoading ? (
+        <WalletsSkeleton />
+      ) : wallets.length === 0 ? (
+        <EmptyState
+          title="Nenhuma meta definida"
+          description="Que tal planear a sua próxima viagem, a reserva de emergência ou o novo setup?"
+          icon={Target}
+        />
+      ) : (
+        <div className="space-y-6 sm:space-y-8">
+          <WalletsSummary wallets={wallets} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+            {wallets.map((wallet) => (
+              <WalletCard
+                key={wallet.id}
+                wallet={wallet}
+                onProgress={handleOpenProgress}
+                onEdit={handleOpenEdit}
+                onDelete={handleOpenDelete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3. Renderização dos Modais */}
       <CreateWalletModal
-        isOpen={isNewWalletModalOpen}
-        onClose={() => setIsNewWalletModalOpen(false)}
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
       />
 
       <TransferWalletModal
-        isOpen={isTransferModalOpen}
-        onClose={handleCloseTransfer}
-        wallet={selectedWallet}
-        type={transferType}
+        isOpen={progressConfig.isOpen}
+        onClose={() => setProgressConfig({ ...progressConfig, isOpen: false })}
+        wallet={progressConfig.wallet}
+        type={progressConfig.type}
       />
-    </>
+
+      <EditWalletModal
+        isOpen={editConfig.isOpen}
+        onClose={() => setEditConfig({ ...editConfig, isOpen: false })}
+        wallet={editConfig.wallet}
+      />
+
+      <DeleteWalletModal
+        isOpen={deleteConfig.isOpen}
+        onClose={() => setDeleteConfig({ ...deleteConfig, isOpen: false })}
+        wallet={deleteConfig.wallet}
+      />
+    </div>
   );
 }

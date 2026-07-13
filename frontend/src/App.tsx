@@ -12,7 +12,6 @@ import { Register } from "./pages/Register";
 import { Wallets } from "./pages/Wallets";
 import { useAuth } from "./hooks/useAuth";
 import { Login } from "./pages/Login";
-// ✨ 1. ADICIONE O IMPORT AQUI:
 import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient();

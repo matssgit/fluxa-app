@@ -1,10 +1,18 @@
 import { useState } from "react";
-import { Plus, Landmark, Wallet, PiggyBank, Building } from "lucide-react";
+import {
+  Plus,
+  Landmark,
+  Wallet,
+  PiggyBank,
+  Building,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useAccounts } from "../../hooks/useAccounts";
-import { AccountModal } from "../../components/AccountModal";
+import { AccountModal } from "../../components//accounts/AccountModal";
+import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
 import { EmptyState, Skeleton } from "../../components/ui";
 
-// Compatível com o retorno string do serviço backend
 interface AccountData {
   id: string;
   name: string;
@@ -36,9 +44,13 @@ const ACCOUNT_TYPE_CONFIG: Record<
 };
 
 export function Accounts() {
-  // Removido o isError para compatibilidade estrita com useAccounts
   const { accounts = [], isLoading } = useAccounts();
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [selectedAccount, setSelectedAccount] = useState<AccountData | null>(
+    null,
+  );
 
   const formatCurrency = (val: number): string =>
     new Intl.NumberFormat("pt-BR", {
@@ -46,22 +58,26 @@ export function Accounts() {
       currency: "BRL",
     }).format(val);
 
-  return (
-    /* 🏛️ NAKED PAGE: O Container global comanda as larguras, respiros e responsividade */
-    <div className="w-full space-y-6 sm:space-y-8">
-      {/* 1. CABEÇALHO */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-xl lg:text-2xl font-bold text-primary tracking-tight">
-            Contas & Carteiras
-          </h2>
-          <p className="text-muted text-xs sm:text-sm font-medium mt-0.5">
-            Gerencie suas fontes de liquidez bancária e dinheiro em espécie
-          </p>
-        </div>
+  function handleCreate() {
+    setSelectedAccount(null);
+    setIsModalOpen(true);
+  }
 
+  function handleEdit(acc: AccountData) {
+    setSelectedAccount(acc);
+    setIsModalOpen(true);
+  }
+
+  function handleDelete(acc: AccountData) {
+    setSelectedAccount(acc);
+    setIsDeleteModalOpen(true);
+  }
+
+  return (
+    <div className="w-full space-y-6 sm:space-y-8 animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleCreate}
           className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer"
         >
           <Plus size={18} />
@@ -69,16 +85,14 @@ export function Accounts() {
         </button>
       </div>
 
-      {/* 2. ESTADO DE CARREGAMENTO */}
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-44 w-full rounded-2xl" />
+          <Skeleton className="h-44 w-full rounded-2xl" />
+          <Skeleton className="h-44 w-full rounded-2xl" />
         </div>
       )}
 
-      {/* 3. LISTA DE CONTAS */}
       {!isLoading && accounts.length === 0 ? (
         <div className="py-12">
           <EmptyState
@@ -90,7 +104,6 @@ export function Accounts() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {accounts.map((acc: AccountData) => {
-            // Type casting seguro sem quebrar o linter
             const typeKey = (acc.type as AccountTypeKey) || "checking";
             const config =
               ACCOUNT_TYPE_CONFIG[typeKey] ?? ACCOUNT_TYPE_CONFIG.checking;
@@ -99,30 +112,53 @@ export function Accounts() {
             return (
               <div
                 key={acc.id}
-                className="card-default p-6 flex flex-col justify-between h-44 border border-subtle/30 bg-surface group transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
+                className="card-default p-6 flex flex-col justify-between h-auto min-h-48 border border-subtle/30 bg-surface group transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
               >
-                <div className="flex justify-between items-start">
-                  <div className="w-12 h-12 rounded-2xl bg-elevated flex items-center justify-center text-primary group-hover:bg-brand/10 group-hover:text-brand transition-colors">
-                    <IconComponent size={24} />
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-2xl bg-elevated flex items-center justify-center text-primary group-hover:bg-brand/10 group-hover:text-brand transition-colors">
+                      <IconComponent size={24} />
+                    </div>
+                    <span
+                      className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border ${config.badgeClass}`}
+                    >
+                      {config.label}
+                    </span>
                   </div>
 
-                  <span
-                    className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border ${config.badgeClass}`}
-                  >
-                    {config.label}
-                  </span>
+                  <div>
+                    <h3 className="font-bold text-base sm:text-lg text-primary tracking-tight truncate group-hover:text-brand transition-colors">
+                      {acc.name}
+                    </h3>
+                    <p className="text-xs text-muted font-medium mt-0.5">
+                      Saldo Atual:{" "}
+                      <strong className="text-primary">
+                        {formatCurrency(acc.balance ?? 0)}
+                      </strong>
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="font-bold text-base sm:text-lg text-primary tracking-tight truncate">
-                    {acc.name}
-                  </h3>
-                  <p className="text-xs text-muted font-medium mt-0.5">
-                    Saldo Atual:{" "}
-                    <strong className="text-primary">
-                      {formatCurrency(acc.balance ?? 0)}
-                    </strong>
-                  </p>
+                <div className="pt-4 mt-4 border-t border-subtle/20 flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                    Gestão
+                  </span>
+                  <div className="flex items-center gap-1 bg-elevated/60 p-1 rounded-xl border border-subtle/20">
+                    <button
+                      onClick={() => handleEdit(acc)}
+                      title="Editar conta"
+                      className="p-1.5 text-muted hover:text-brand hover:bg-surface rounded-lg transition-all cursor-pointer"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(acc)}
+                      title="Excluir conta"
+                      className="p-1.5 text-muted hover:text-danger hover:bg-surface rounded-lg transition-all cursor-pointer"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -130,10 +166,25 @@ export function Accounts() {
         </div>
       )}
 
-      {/* MODAL DE CRIAÇÃO */}
+      {/* O Type Casting seguro que satisfaz o linter */}
       <AccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        account={
+          selectedAccount
+            ? {
+                ...selectedAccount,
+                type: selectedAccount.type as "checking" | "wallet" | "savings",
+              }
+            : null
+        }
+      />
+
+      {/* O Modal de exclusão não será mais apagado sem querer! */}
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        account={selectedAccount}
       />
     </div>
   );

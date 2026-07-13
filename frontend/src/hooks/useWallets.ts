@@ -5,20 +5,21 @@ import {
   createWallet,
   updateWallet,
   deleteWallet,
-  transferWallet,
+  updateWalletProgress,
 } from "../services/wallets";
-import type { UpdateWalletData, TransferWalletData } from "../types/wallet";
+import type {
+  UpdateWalletData,
+  UpdateWalletProgressData,
+} from "../types/wallet";
 
-// Hook para buscar todas as Caixinhas/Metas
 export function useWallets() {
   return useQuery({
     queryKey: ["wallets"],
     queryFn: getWallets,
-    staleTime: 1000 * 60 * 5, // 5 minutos de cache
+    staleTime: 1000 * 60 * 5,
   });
 }
 
-// Hook para buscar detalhes de uma meta específica
 export function useWalletById(id: string) {
   return useQuery({
     queryKey: ["wallets", id],
@@ -27,7 +28,6 @@ export function useWalletById(id: string) {
   });
 }
 
-// Hook para criar uma nova meta no ecossistema
 export function useCreateWallet() {
   const queryClient = useQueryClient();
 
@@ -35,12 +35,10 @@ export function useCreateWallet() {
     mutationFn: createWallet,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
 
-// Hook para atualizar dados ou pausar/concluir meta
 export function useUpdateWallet() {
   const queryClient = useQueryClient();
 
@@ -48,12 +46,10 @@ export function useUpdateWallet() {
     mutationFn: (data: UpdateWalletData) => updateWallet(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
 
-// Hook para podar (excluir) meta do sistema
 export function useDeleteWallet() {
   const queryClient = useQueryClient();
 
@@ -61,23 +57,18 @@ export function useDeleteWallet() {
     mutationFn: deleteWallet,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }
 
-// Hook para Aportes (Nutrir) ou Resgates (Colher)
-export function useTransferWallet() {
+export function useUpdateWalletProgress() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: TransferWalletData) => transferWallet(data),
+    mutationFn: (data: UpdateWalletProgressData) => updateWalletProgress(data),
     onSuccess: () => {
-      // Invalidação em cascata completa de liquidez e patrimônio
+      // Invalida APENAS as metas, poupando a API de recarregar contas à toa!
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
 }

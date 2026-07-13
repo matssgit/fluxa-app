@@ -1,26 +1,48 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAccounts, createAccount } from "../services/accounts";
+import {
+  getAccounts,
+  createAccount,
+  updateAccount,
+  deleteAccount,
+} from "../services/accounts";
 
 export function useAccounts() {
-   const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-   const accountsQuery = useQuery({
-      queryKey: ["accounts"],
-      queryFn: getAccounts,
-   });
+  const query = useQuery({
+    queryKey: ["accounts"],
+    queryFn: getAccounts,
+    staleTime: 1000 * 60 * 5,
+  });
 
-   const createAccountMutation = useMutation({
-      mutationFn: createAccount,
-      onSuccess: () => {
-         // Invalida o cache para recarregar a lista automaticamente
-         queryClient.invalidateQueries({ queryKey: ["accounts"] });
-      },
-   });
+  const createMutation = useMutation({
+    mutationFn: createAccount,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["accounts"] }),
+  });
 
-   return {
-      accounts: accountsQuery.data || [],
-      isLoading: accountsQuery.isLoading,
-      createAccount: createAccountMutation.mutateAsync,
-      isCreating: createAccountMutation.isPending,
-   };
+  const updateMutation = useMutation({
+    mutationFn: updateAccount,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["accounts"] }),
+  });
+
+  return {
+    accounts: query.data || [],
+    isLoading: query.isLoading,
+    createAccount: createMutation.mutateAsync,
+    isCreating: createMutation.isPending,
+    // ✨ AQUI: Expondo a edição para o Modal!
+    updateAccount: updateMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
+  };
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 }

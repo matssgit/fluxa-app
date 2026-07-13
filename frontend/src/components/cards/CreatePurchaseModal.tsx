@@ -12,12 +12,12 @@ import {
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreatePurchase, useCards, type Card } from "../hooks/useCredit";
-import { useCategories } from "../hooks/useCategories";
+import { useCreatePurchase, useCards, type Card } from "../../hooks/useCredit";
+import { useCategories } from "../../hooks/useCategories";
 
 // Infraestrutura UX Padrão (Pine & Sage)
-import { PickerModal } from "./ui/PickerModal";
-import { DatePickerModal } from "./ui/DatePickerModal";
+import { PickerModal } from "../ui/PickerModal";
+import { DatePickerModal } from "../ui/DatePickerModal";
 
 // ✨ TIPAGEM ESTRITA PARA O LINTER
 interface CategoryData {

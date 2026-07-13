@@ -10,8 +10,8 @@ import {
   Landmark,
   Tag,
 } from "lucide-react";
-import { AccountModal } from "../components/AccountModal";
-import { CategoryModal } from "../components/CategoryModal";
+import { AccountModal } from "../components/accounts/AccountModal";
+import { CategoryModal } from "../components/transactions/CategoryModal";
 import { EmptyState, Skeleton } from "../components/ui";
 
 interface Account {

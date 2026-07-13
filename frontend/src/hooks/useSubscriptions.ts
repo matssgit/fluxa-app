@@ -5,7 +5,7 @@ import {
   updateSubscriptionStatus,
   deleteSubscription,
   paySubscription,
-  getSubscriptionAnalytics, // ✨ AQUI: Importação que estava faltando!
+  getSubscriptionAnalytics,
 } from "../services/subscriptions";
 
 // Hook para buscar a lista
