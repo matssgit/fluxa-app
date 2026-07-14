@@ -59,7 +59,6 @@ export function CreateSubscriptionModal({
 
   const today = new Date().toISOString().split("T")[0];
 
-  // ✨ ESTADOS DOS MODAIS UX
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isFrequencyModalOpen, setIsFrequencyModalOpen] = useState(false);
@@ -81,7 +80,6 @@ export function CreateSubscriptionModal({
     },
   });
 
-  // ✨ OBSERVADORES (React Compiler Safe)
   const selectedAccountId = useWatch({ control, name: "account_id" });
   const selectedCategoryId = useWatch({ control, name: "category_id" });
   const selectedFrequency = useWatch({
@@ -144,15 +142,17 @@ export function CreateSubscriptionModal({
 
   return (
     <>
+      {/* 🚀 ESTRUTURA GLOBAL IDÊNTICA AO NEW TRANSACTION MODAL */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
         <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md max-h-[82vh] sm:max-h-[88vh] flex flex-col overflow-hidden border border-subtle/30 transition-all duration-300">
+          {/* HEADER PADRÃO */}
           <div className="flex justify-between items-center p-4 sm:p-6 border-b border-subtle/20 shrink-0">
             <div>
-              <h2 className="text-base sm:text-xl font-bold text-primary tracking-tight">
+              <h2 className="text-lg sm:text-xl font-bold text-primary tracking-tight">
                 Nova Assinatura
               </h2>
-              <p className="text-xs font-medium text-muted mt-0.5 hidden sm:block">
-                Registre serviços com cobrança recorrente automática
+              <p className="text-xs font-medium text-muted mt-0.5">
+                Registre serviços com cobrança recorrente
               </p>
             </div>
             <button
@@ -163,41 +163,44 @@ export function CreateSubscriptionModal({
             </button>
           </div>
 
+          {/* ⚡ A MÁGICA: Formulário com min-h-0 (protege o scroll flex) e space-y-4 */}
           <form
             id="create-subscription-form"
             onSubmit={handleSubmit(onSubmit)}
-            className="p-4 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1"
+            className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              <div className="sm:col-span-2">
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
-                  <Repeat size={13} className="text-muted" />
-                  <span>Nome do Serviço *</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Netflix, Spotify, Academia..."
-                  {...register("title")}
-                  className="w-full rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs"
-                />
-                {errors.title && (
-                  <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                    {errors.title.message}
-                  </span>
-                )}
-              </div>
+            {/* LINHA 1: NOME DO SERVIÇO (Largura Total) */}
+            <div>
+              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                <Repeat size={13} className="text-muted" />
+                <span>Nome do Serviço *</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Netflix, Spotify..."
+                {...register("title")}
+                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
+              />
+              {errors.title && (
+                <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
+                  {errors.title.message}
+                </span>
+              )}
+            </div>
 
+            {/* LINHA 2: VALOR E FREQUÊNCIA (Lado a Lado no Mobile!) */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
                   <DollarSign size={13} className="text-muted" />
-                  <span>Valor do Plano *</span>
+                  <span>Valor *</span>
                 </label>
                 <input
                   type="number"
                   step="0.01"
                   placeholder="0,00"
                   {...register("amount", { valueAsNumber: true })}
-                  className="w-full rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm sm:text-base font-extrabold shadow-2xs tracking-tight"
+                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base sm:text-lg font-extrabold shadow-2xs tracking-tight"
                 />
                 {errors.amount && (
                   <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
@@ -207,35 +210,36 @@ export function CreateSubscriptionModal({
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
-                  <Layers size={13} className="text-muted" />
-                  <span>Frequência *</span>
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                  <Layers size={13} className="text-muted shrink-0" />
+                  <span className="truncate">Frequência *</span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Frequência */}
                 <button
                   type="button"
                   onClick={() => setIsFrequencyModalOpen(true)}
-                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
+                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
                 >
-                  <span>{frequencyLabels[selectedFrequency]}</span>
+                  <span className="truncate pr-2">
+                    {frequencyLabels[selectedFrequency]}
+                  </span>
                   <ChevronDown size={16} className="text-muted shrink-0" />
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+            {/* LINHA 3: DATA E CONTA (Lado a Lado no Mobile!) */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
-                  <CalendarIcon size={13} className="text-muted" />
-                  <span>Próximo Vencimento *</span>
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                  <CalendarIcon size={13} className="text-muted shrink-0" />
+                  <span className="truncate">Vencimento *</span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Data Base */}
                 <button
                   type="button"
                   onClick={() => setIsDateModalOpen(true)}
-                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
+                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
                 >
-                  <span>
+                  <span className="truncate">
                     {selectedDate
                       ? new Intl.DateTimeFormat("pt-BR").format(
                           new Date(selectedDate),
@@ -252,15 +256,14 @@ export function CreateSubscriptionModal({
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
-                  <Building size={13} className="text-muted" />
-                  <span>Conta Debitada *</span>
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                  <Building size={13} className="text-muted shrink-0" />
+                  <span className="truncate">Conta *</span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Conta */}
                 <button
                   type="button"
                   onClick={() => setIsAccountModalOpen(true)}
-                  className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedAccountId ? "text-muted" : "text-primary"}`}
+                  className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedAccountId ? "text-muted" : "text-primary"}`}
                 >
                   <span className="truncate pr-2">{selectedAccountName}</span>
                   <ChevronDown size={16} className="text-muted shrink-0" />
@@ -273,16 +276,16 @@ export function CreateSubscriptionModal({
               </div>
             </div>
 
+            {/* LINHA 4: CATEGORIA (Largura Total) */}
             <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1 pl-1">
+              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
                 <Tag size={13} className="text-muted" />
                 <span>Categoria</span>
               </label>
-              {/* ✨ TRIGGER BUTTON: Categoria */}
               <button
                 type="button"
                 onClick={() => setIsCategoryModalOpen(true)}
-                className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-2.5 sm:py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedCategoryId ? "text-muted" : "text-primary"}`}
+                className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-sm font-semibold shadow-2xs cursor-pointer ${!selectedCategoryId ? "text-muted" : "text-primary"}`}
               >
                 <span className="truncate pr-2">{selectedCategoryName}</span>
                 <ChevronDown size={16} className="text-muted shrink-0" />
@@ -290,11 +293,12 @@ export function CreateSubscriptionModal({
             </div>
           </form>
 
+          {/* FOOTER PADRÃO */}
           <div className="p-4 sm:p-6 bg-surface border-t border-subtle/20 flex gap-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-2xs"
+              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shadow-2xs"
             >
               Cancelar
             </button>
@@ -302,7 +306,7 @@ export function CreateSubscriptionModal({
               type="submit"
               form="create-subscription-form"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-xs sm:text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? "Salvando..." : "Criar Assinatura"}
             </button>

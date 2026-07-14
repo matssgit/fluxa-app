@@ -1,32 +1,14 @@
-import { useState, useEffect } from "react";
+import { useContext } from "react";
+import { ThemeContext } from "../contexts/ThemeContext";
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const savedTheme = localStorage.getItem("fluxa-theme") as "light" | "dark";
-    if (savedTheme) return savedTheme;
+  const context = useContext(ThemeContext);
 
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      return "dark";
-    }
-    return "light";
-  });
+  if (context === undefined) {
+    throw new Error(
+      "useTheme deve ser utilizado dentro de um ThemeProvider. Verifique a raiz da sua aplicação.",
+    );
+  }
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("fluxa-theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
-  };
-
-  return { theme, toggleTheme };
+  return context;
 }
