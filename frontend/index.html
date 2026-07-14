@@ -12,6 +12,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      document.documentElement.setAttribute(
+        "data-theme",
+        isDark ? "dark" : "light",
+      );
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

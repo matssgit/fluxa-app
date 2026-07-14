@@ -1,24 +1,21 @@
 @theme {
   /* COLORS */
-  --color-page: var(--beige-100);
-  --color-surface: var(--white);
-  --color-elevated: var(--gray-50);
-
-  --color-primary: var(--green-900);
-  --color-secondary: var(--green-700);
-  --color-muted: var(--gray-500);
-  --color-placeholder: var(--gray-400);
-
-  --color-border: var(--gray-200);
-  --color-subtle: var(--gray-50);
-
-  --color-brand: var(--green-700);
+  --color-page: var(--color-page);
+  --color-surface: var(--color-surface);
+  --color-elevated: var(--color-elevated);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-muted: var(--color-muted);
+  --color-placeholder: var(--color-placeholder);
+  --color-border: var(--color-border);
+  --color-subtle: var(--color-subtle);
+  --color-brand: var(--color-brand);
+  --color-brand-light: var(--color-brand-light);
   --color-accent: var(--gold-500);
-
-  --color-danger: var(--red-500);
-  --color-warning: var(--yellow-500);
-  --color-success: var(--green-700);
-  --color-info: var(--blue-500);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-success: var(--color-success);
+  --color-info: var(--color-info);
 
   /* RADIUS */
   --radius-sm: var(--radius-sm);

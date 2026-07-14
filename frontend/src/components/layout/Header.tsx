@@ -8,8 +8,11 @@ import {
   Settings,
   ChevronDown,
   Repeat,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import { useTheme } from "../../hooks/useTheme";
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
@@ -45,6 +48,8 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
 export function Header() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +66,6 @@ export function Header() {
   const currentPathKey = Object.keys(PAGE_TITLES).find((key) =>
     location.pathname.startsWith(key),
   );
-
   const pageInfo = currentPathKey
     ? PAGE_TITLES[currentPathKey]
     : { title: "Fluxa", subtitle: "Cultive uma vida financeira saudável" };
@@ -69,9 +73,8 @@ export function Header() {
   const getUserInitials = (name?: string): string => {
     if (!name) return "MS";
     const parts = name.trim().split(" ");
-    if (parts.length >= 2) {
+    if (parts.length >= 2)
       return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-    }
     return name.substring(0, 2).toUpperCase();
   };
 
@@ -90,7 +93,20 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full bg-elevated/60 border border-subtle/30 text-[11px] font-semibold text-secondary shadow-2xs">
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 rounded-full bg-elevated hover:bg-subtle/50 text-secondary transition-all duration-300 cursor-pointer flex items-center justify-center shadow-xs border border-subtle/20"
+          aria-label="Alternar tema"
+          title={theme === "light" ? "Ativar Dark Mode" : "Ativar Light Mode"}
+        >
+          {theme === "light" ? (
+            <Moon size={18} className="animate-scale-in" />
+          ) : (
+            <Sun size={18} className="animate-scale-in" />
+          )}
+        </button>
+
+        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-elevated/60 border border-subtle/30 text-[11px] font-semibold text-secondary shadow-2xs">
           <ShieldCheck className="w-3.5 h-3.5 text-brand" />
           <span>Ambiente Seguro</span>
         </div>
@@ -120,9 +136,7 @@ export function Header() {
             </div>
 
             <ChevronDown
-              className={`w-4 h-4 text-muted transition-transform duration-200 hidden sm:block ${
-                isMenuOpen ? "rotate-180 text-primary" : ""
-              }`}
+              className={`w-4 h-4 text-muted transition-transform duration-200 hidden sm:block ${isMenuOpen ? "rotate-180 text-primary" : ""}`}
             />
           </button>
 
@@ -138,7 +152,6 @@ export function Header() {
               </div>
 
               <div className="py-1">
-                {/* ✨ Assinaturas injetada apenas para usuários de celular/tablet! */}
                 <Link
                   to="/subscriptions"
                   onClick={() => setIsMenuOpen(false)}
@@ -147,7 +160,6 @@ export function Header() {
                   <Repeat className="w-4 h-4 text-brand" />
                   <span>Assinaturas</span>
                 </Link>
-
                 <Link
                   to="/settings"
                   onClick={() => setIsMenuOpen(false)}
@@ -156,7 +168,6 @@ export function Header() {
                   <User className="w-4 h-4 text-brand" />
                   <span>Meu Perfil</span>
                 </Link>
-
                 <Link
                   to="/settings"
                   onClick={() => setIsMenuOpen(false)}
@@ -165,7 +176,6 @@ export function Header() {
                   <Tag className="w-4 h-4 text-muted" />
                   <span>Categorias & Tags</span>
                 </Link>
-
                 <Link
                   to="/settings"
                   onClick={() => setIsMenuOpen(false)}

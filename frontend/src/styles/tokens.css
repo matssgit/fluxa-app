@@ -1,8 +1,6 @@
 @layer base {
   :root {
-    /* ==========================================================================
-       1. CORES BRUTAS E PRIMITIVAS (Paleta Pine & Sage)
-       ========================================================================== */
+    /* 1. CORES BRUTAS E PRIMITIVAS */
     --green-900: #13312a;
     --green-700: #155446;
     --gold-500: #c69a72;
@@ -20,61 +18,34 @@
     --blue-500: #3b82f6;
     --emerald-500: #10b981;
 
-    /* ==========================================================================
-       2. TOKENS SEMÂNTICOS (Fundo Musgo Escurecido & Contraste Metalizado)
-       ========================================================================== */
-    /* Fundo Musgo Executivo: Escuro e sóbrio para destacar o branco metalizado dos cards */
-    --color-page: #798a807e;
-
-    /* Superfície base e elevações */
-    --color-surface: var(--white);
-    --color-elevated: #e2ebe6;
-
-    /* Cores da Marca */
+    /* 2. TOKENS SEMÂNTICOS (Light Mode) */
+    --color-page: #f6f7f6;
+    --color-surface: #ffffff;
+    --color-elevated: #ececec91;
     --color-brand: var(--green-900);
     --color-brand-light: var(--green-700);
-
-    /* Textos com altíssimo contraste contra o fundo Musgo e o card metalizado */
-    --color-primary: #0f172a; /* Slate 900 */
-    --color-secondary: #334155; /* Slate 700 */
-    --color-muted: #64748b; /* Slate 500 */
-
-    /* Bordas e divisores */
-    --color-border: rgba(19, 49, 42, 0.12);
+    --color-primary: #17181a;
+    --color-secondary: #334155;
+    --color-muted: #64748b;
+    --color-placeholder: var(--gray-400);
+    --color-border: rgba(19, 49, 42, 0.932);
     --color-subtle: rgba(19, 49, 42, 0.2);
-
-    /* Cores Semânticas de Status */
     --color-danger: var(--red-500);
     --color-warning: var(--yellow-500);
     --color-success: var(--emerald-500);
     --color-info: var(--blue-500);
 
-    /* ==========================================================================
-       3. GEOMETRIA, ESPAÇAMENTO E SOMBRAS DE FLUTUAÇÃO 3D
-       ========================================================================== */
-    /* RADIUS */
+    /* 3. GEOMETRIA E SOMBRAS */
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 12px;
     --radius-xl: 16px;
-
-    /* SHADOWS (Física de luz dispersa para efeito de flutuação de 16px) */
     --shadow-xs: 0 2px 4px 0 rgb(13 32 28 / 0.08);
-
-    /* Sombra para Cards Elevados / Base */
     --shadow-sm:
       0 4px 12px -2px rgb(13 32 28 / 0.15), 0 2px 6px -1px rgb(13 32 28 / 0.1);
-
-    /* Sombra de Alto Impacto (Card flutuando no espaço) */
     --shadow-md:
       0 20px 32px -8px rgb(13 32 28 / 0.28),
       0 8px 16px -4px rgb(13 32 28 / 0.16), 0 0 1px 0 rgb(13 32 28 / 0.25);
-
-    /* SPACING TOKENS */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
 
     /* MOTION */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -82,31 +53,29 @@
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* ==========================================================================
-     4. DARK MODE (Inversão Semântica com Flutuação)
-     ========================================================================== */
+  /* 4. DARK MODE (Pine & Sage - Premium & High Contrast) */
   .dark {
-    --color-page: #0b1d19;
-    --color-surface: var(--green-900);
-    --color-elevated: #1a4037;
-
-    --color-primary: #f9fafb;
-    --color-secondary: #d1d5db;
-    --color-muted: #6b7280;
-    --color-border: #1e4d42;
-    --color-subtle: #155446;
-
-    --shadow-xs: 0 2px 4px 0 rgb(0 0 0 / 0.4);
+    --color-page: #08120f;
+    --color-surface: #10211c;
+    --color-elevated: #183129;
+    --color-primary: #f8faf9;
+    --color-secondary: #94a39e;
+    --color-muted: #5e6b67;
+    --color-placeholder: #3e4845;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --color-subtle: rgba(255, 255, 255, 0.03);
+    --color-brand: #34d399;
+    --color-accent: #d8b48f;
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
     --shadow-sm:
-      0 4px 12px -2px rgb(0 0 0 / 0.5), 0 2px 6px -1px rgb(0 0 0 / 0.3);
+      0 4px 12px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
     --shadow-md:
-      0 20px 32px -8px rgb(0 0 0 / 0.7), 0 8px 16px -4px rgb(0 0 0 / 0.5);
+      0 20px 32px -8px rgba(0, 0, 0, 0.8), 0 8px 16px -4px rgba(0, 0, 0, 0.6),
+      0 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 }
 
-/* ==========================================================================
-   5. REGRA DE BLINDAGEM DO FUNDO
-   ========================================================================== */
+/* 5. REGRA DE BLINDAGEM DO FUNDO */
 body,
 html {
   background-color: var(--color-page) !important;
