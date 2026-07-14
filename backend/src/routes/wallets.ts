@@ -5,21 +5,18 @@ import { db as knex } from "../database.js";
 import { checkAuth } from "../middlewares/check-auth.js";
 
 export async function walletsRoutes(app: FastifyInstance) {
-  // Todas as rotas de caixinhas exigem usuário autenticado
   app.addHook("preHandler", checkAuth);
 
-  // 1. LISTAR TODAS AS ESTUFAS DO USUÁRIO
+  // 1. LISTAR TODAS AS METAS DO USUÁRIO
   app.get("/", async (request) => {
     const { sub: userId } = request.user;
-
     const wallets = await knex("wallets")
       .where({ user_id: userId })
       .orderBy("created_at", "desc");
-
     return { wallets };
   });
 
-  // 2. BUSCAR ESTUFA POR ID
+  // 2. BUSCAR META POR ID (AGORA RETORNA O HISTÓRICO HUMANO)
   app.get("/:id", async (request, reply) => {
     const { sub: userId } = request.user;
     const paramsSchema = z.object({ id: z.string().uuid() });
@@ -28,15 +25,18 @@ export async function walletsRoutes(app: FastifyInstance) {
     const wallet = await knex("wallets").where({ id, user_id: userId }).first();
 
     if (!wallet) {
-      return reply
-        .status(404)
-        .send({ error: "Estufa não encontrada no seu ecossistema." });
+      return reply.status(404).send({ error: "Objetivo não encontrado." });
     }
 
-    return { wallet };
+    // Busca a linha do tempo evolutiva da meta
+    const history = await knex("wallet_history")
+      .where({ wallet_id: id })
+      .orderBy("created_at", "desc");
+
+    return { wallet, history };
   });
 
-  // 3. CRIAR NOVA ESTUFA
+  // 3. CRIAR NOVA META
   app.post("/", async (request, reply) => {
     const { sub: userId } = request.user;
 
@@ -51,9 +51,10 @@ export async function walletsRoutes(app: FastifyInstance) {
 
     const data = createWalletSchema.parse(request.body);
 
-    // Se já nascer com valor maior ou igual à meta, já inicia como completed
+    // Regra de Domínio: Se nascer >= meta, nasce concluída. Senão, ativa.
+    const initialAmount = Math.min(data.current_amount, data.target_amount);
     const initialStatus =
-      data.current_amount >= data.target_amount ? "completed" : "active";
+      initialAmount >= data.target_amount ? "completed" : "active";
 
     await knex("wallets").insert({
       id: randomUUID(),
@@ -61,7 +62,7 @@ export async function walletsRoutes(app: FastifyInstance) {
       title: data.title,
       description: data.description || null,
       target_amount: data.target_amount,
-      current_amount: data.current_amount,
+      current_amount: initialAmount,
       deadline: data.deadline ? new Date(data.deadline) : null,
       color: data.color,
       status: initialStatus,
@@ -70,7 +71,7 @@ export async function walletsRoutes(app: FastifyInstance) {
     return reply.status(201).send();
   });
 
-  // 4. ATUALIZAR ESTUFA / STATUS
+  // 4. ATUALIZAR META (DADOS CADASTRAIS)
   app.patch("/:id", async (request, reply) => {
     const { sub: userId } = request.user;
     const paramsSchema = z.object({ id: z.string().uuid() });
@@ -101,13 +102,13 @@ export async function walletsRoutes(app: FastifyInstance) {
       });
 
     if (updatedRows === 0) {
-      return reply.status(404).send({ error: "Estufa não encontrada." });
+      return reply.status(404).send({ error: "Objetivo não encontrado." });
     }
 
     return reply.status(204).send();
   });
 
-  // 5. EXCLUIR ESTUFA
+  // 5. EXCLUIR META
   app.delete("/:id", async (request, reply) => {
     const { sub: userId } = request.user;
     const paramsSchema = z.object({ id: z.string().uuid() });
@@ -118,109 +119,86 @@ export async function walletsRoutes(app: FastifyInstance) {
       .delete();
 
     if (deletedRows === 0) {
-      return reply.status(404).send({ error: "Estufa não encontrada." });
+      return reply.status(404).send({ error: "Objetivo não encontrado." });
     }
 
     return reply.status(204).send();
   });
 
-  // 6. APORTAR (NUTRIR) OU RESGATAR (COLHER)
-  app.post("/:id/transfer", async (request, reply) => {
+  // 6. ADICIONAR / REDUZIR PROGRESSO (REGRA 18)
+  app.post("/:id/progress", async (request, reply) => {
     const { sub: userId } = request.user;
     const paramsSchema = z.object({ id: z.string().uuid() });
     const { id: walletId } = paramsSchema.parse(request.params);
 
-    const transferSchema = z.object({
-      account_id: z.string().uuid(),
-      amount: z.number().positive(),
+    // Semântica Limpa: Não há contas, apenas evolução.
+    const progressSchema = z.object({
       type: z.enum(["deposit", "withdraw"]),
+      amount: z.number().positive(),
+      observation: z.string().optional(),
     });
 
-    const { account_id, amount, type } = transferSchema.parse(request.body);
+    const { type, amount, observation } = progressSchema.parse(request.body);
 
-    // Utilizando Transação (ACID) para garantir integridade financeira absoluta
-    await knex.transaction(async (trx) => {
-      const wallet = await trx("wallets")
-        .where({ id: walletId, user_id: userId })
-        .first();
-      const account = await trx("accounts")
-        .where({ id: account_id, user_id: userId })
-        .first();
+    try {
+      await knex.transaction(async (trx) => {
+        const wallet = await trx("wallets")
+          .where({ id: walletId, user_id: userId })
+          .first();
 
-      if (!wallet || !account) {
-        throw new Error("Estufa ou conta bancária não encontrada.");
-      }
-
-      const currentWalletAmount = Number(wallet.current_amount);
-      const targetAmount = Number(wallet.target_amount);
-
-      if (type === "deposit") {
-        // Nutrir: Sai da conta, entra na caixinha
-        const newWalletAmount = currentWalletAmount + amount;
-        const newStatus =
-          newWalletAmount >= targetAmount ? "completed" : wallet.status;
-
-        await trx("wallets").where({ id: walletId }).update({
-          current_amount: newWalletAmount,
-          status: newStatus,
-          updated_at: knex.fn.now(),
-        });
-
-        // Deduz do saldo da conta
-        await trx("accounts")
-          .where({ id: account_id })
-          .decrement("balance", amount);
-
-        // Registra a movimentação no histórico geral
-        await trx("transactions").insert({
-          id: randomUUID(),
-          user_id: userId,
-          account_id: account_id,
-          category_id: null, // Transferência interna
-          title: `Aporte em Estufa: ${wallet.title}`,
-          amount: amount,
-          type: "expense", // Saída da liquidez imediata
-          date: new Date(),
-        });
-      } else {
-        // Resgatar: Sai da caixinha, volta para a conta
-        if (currentWalletAmount < amount) {
-          throw new Error(
-            "O valor de resgate excede o saldo disponível na estufa.",
-          );
+        if (!wallet) {
+          throw new Error("Objetivo não encontrado.");
         }
 
-        const newWalletAmount = currentWalletAmount - amount;
-        const newStatus =
-          newWalletAmount < targetAmount && wallet.status === "completed"
-            ? "active"
-            : wallet.status;
+        const currentWalletAmount = Number(wallet.current_amount);
+        const targetAmount = Number(wallet.target_amount);
 
+        let newWalletAmount = 0;
+        let newStatus = wallet.status;
+
+        if (type === "deposit") {
+          // Regra: Nunca maior que 100%
+          newWalletAmount = Math.min(
+            currentWalletAmount + amount,
+            targetAmount,
+          );
+          if (newWalletAmount >= targetAmount) {
+            newStatus = "completed";
+          }
+        } else {
+          // Regra: Nunca menor que 0
+          newWalletAmount = Math.max(currentWalletAmount - amount, 0);
+          if (newWalletAmount < targetAmount && wallet.status === "completed") {
+            newStatus = "active";
+          }
+        }
+
+        // 1. Atualiza o termômetro (A Meta)
         await trx("wallets").where({ id: walletId }).update({
           current_amount: newWalletAmount,
           status: newStatus,
           updated_at: knex.fn.now(),
         });
 
-        // Credita no saldo da conta
-        await trx("accounts")
-          .where({ id: account_id })
-          .increment("balance", amount);
-
-        // Registra no histórico geral
-        await trx("transactions").insert({
+        // 2. Registra o evento histórico na linha do tempo
+        await trx("wallet_history").insert({
           id: randomUUID(),
-          user_id: userId,
-          account_id: account_id,
-          category_id: null,
-          title: `Resgate de Estufa: ${wallet.title}`,
+          wallet_id: walletId,
+          type: type,
           amount: amount,
-          type: "income", // Retorno para liquidez imediata
-          date: new Date(),
+          observation: observation || null,
+          created_at: new Date(),
         });
-      }
-    });
+      });
 
-    return reply.status(200).send();
+      return reply.status(200).send();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return reply.status(400).send({ message: error.message });
+      }
+      return reply
+        .status(500)
+        .send({ message: "Erro ao atualizar progresso." });
+    }
   });
 }

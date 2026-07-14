@@ -2,73 +2,70 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db as knex } from "../database.js";
 import { checkAuth } from "../middlewares/check-auth.js";
+import { endOfMonth, startOfMonth, format } from "date-fns";
 
 export async function analyticsRoutes(app: FastifyInstance) {
-  // Protege todas as rotas de analytics
   app.addHook("preHandler", checkAuth);
 
-  // COCKPIT EXECUTIVO: ENDPOINT PRINCIPAL DO DASHBOARD
   app.get("/dashboard", async (request) => {
-    // Blindagem estrita do ID do usuário (garante string pura sem undefined)
     const userId = request.user?.sub || "";
     if (!userId) {
       throw new Error("Usuário não autenticado.");
     }
 
     const querySchema = z.object({
-      month: z.string().optional(), // Ex: "2026-07"
+      month: z.string().optional(),
       year: z.coerce.number().optional(),
     });
 
     const { month } = querySchema.parse(request.query);
 
-    // 1. Definição de datas do ciclo atual (Mês atual se não for passado parâmetro)
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentMonthIndex = now.getMonth(); // 0 a 11
+    const currentMonthIndex = now.getMonth();
 
     const targetDate = month ? new Date(`${month}-01T00:00:00`) : now;
-    const startOfMonth = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth(),
-      1,
-    );
-    const endOfMonth = new Date(
-      targetDate.getFullYear(),
-      targetDate.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-    );
+    const monthStartStr = format(startOfMonth(targetDate), "yyyy-MM-dd");
+    const monthEndStr = format(endOfMonth(targetDate), "yyyy-MM-dd");
 
-    // 2. PATRIMÔNIO LÍQUIDO (Soma do saldo de todas as contas do usuário)
+    // 1. PATRIMÔNIO LÍQUIDO
     const accounts = await knex("accounts").where({ user_id: userId });
     const totalBalance = accounts.reduce(
       (acc, curr) => acc + (Number(curr.balance) || 0),
       0,
     );
 
-    // 3. TRANSAÇÕES DO MÊS ATUAL (Entradas e Saídas)
+    // 2. TRANSAÇÕES CONCLUÍDAS DO MÊS
     const currentTransactions = await knex("transactions")
-      .where({ user_id: userId })
-      .whereBetween("date", [
-        startOfMonth.toISOString(),
-        endOfMonth.toISOString(),
-      ]);
+      .where({ user_id: userId, status: "completed" })
+      .where(function () {
+        this.whereBetween("completed_date", [monthStartStr, monthEndStr])
+          .orWhereBetween("expected_date", [monthStartStr, monthEndStr])
+          .orWhereBetween("created_at", [monthStartStr, monthEndStr]);
+      });
 
     let monthlyIncome = 0;
     let monthlyExpenses = 0;
 
     currentTransactions.forEach((t) => {
-      const val = Number(t.amount) || 0;
-      if (t.type === "income") monthlyIncome += val;
-      if (t.type === "expense") monthlyExpenses += val;
+      const num = Number(t.amount || 0);
+      const val = Math.abs(num);
+      const typeStr = String(t.type || "").toLowerCase();
+      if (
+        typeStr === "income" ||
+        typeStr === "entrada" ||
+        typeStr === "receita" ||
+        (typeStr === "" && num > 0)
+      ) {
+        monthlyIncome += val;
+      } else {
+        monthlyExpenses += val;
+      }
     });
 
     const netSavings = monthlyIncome - monthlyExpenses;
 
-    // 4. CUSTOS FIXOS COMPROMETIDOS (Assinaturas Ativas)
+    // 3. CUSTOS FIXOS (Assinaturas)
     const activeSubscriptions = await knex("subscriptions").where({
       user_id: userId,
       status: "active",
@@ -79,7 +76,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       return acc + (sub.frequency === "yearly" ? val / 12 : val);
     }, 0);
 
-    // 5. ALGORITMO DE SAÚDE FINANCEIRA (Score 0 a 100)
+    // 4. ALGORITMO DE SAÚDE FINANCEIRA
     const savingsRate =
       monthlyIncome > 0
         ? Math.max(0, Math.round((netSavings / monthlyIncome) * 100))
@@ -98,12 +95,10 @@ export async function analyticsRoutes(app: FastifyInstance) {
           ? 12.0
           : 0;
 
-    // Cálculo ponderado do Score
     let score = 50;
     score += Math.min(30, savingsRate * 1.5);
     score += Math.min(20, liquidityMonths * 3.3);
     score -= Math.max(0, (commitmentRate - 30) * 1.0);
-
     score = Math.max(0, Math.min(100, Math.round(score)));
 
     let status: "excellent" | "good" | "attention" | "critical" = "good";
@@ -112,10 +107,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
     else if (score >= 40) status = "attention";
     else status = "critical";
 
-    // 6. DISTRIBUIÇÃO POR CATEGORIA (Despesas do Mês) - Com Fallbacks Estritos!
+    // 5. DISTRIBUIÇÃO POR CATEGORIA
     const categories = await knex("categories").where({ user_id: userId });
-
-    // Blindagem de tipos no Map para garantir que name e color nunca sejam undefined
     const categoryMap = new Map(
       categories.map((c) => [
         String(c.id || ""),
@@ -127,14 +120,21 @@ export async function analyticsRoutes(app: FastifyInstance) {
     );
 
     const categorySpendMap = new Map<string, number>();
-    currentTransactions
-      .filter((t) => t.type === "expense")
-      .forEach((t) => {
-        // Garante que o catId seja sempre uma string válida
+    currentTransactions.forEach((t) => {
+      const num = Number(t.amount || 0);
+      const typeStr = String(t.type || "").toLowerCase();
+      const isIncome =
+        typeStr === "income" ||
+        typeStr === "entrada" ||
+        typeStr === "receita" ||
+        (typeStr === "" && num > 0);
+
+      if (!isIncome) {
         const catId = String(t.category_id || "uncategorized");
         const current = categorySpendMap.get(catId) || 0;
-        categorySpendMap.set(catId, current + (Number(t.amount) || 0));
-      });
+        categorySpendMap.set(catId, current + Math.abs(num));
+      }
+    });
 
     const categoryDistribution: Array<{
       category_id: string;
@@ -153,7 +153,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
         monthlyExpenses > 0 ? Math.round((amount / monthlyExpenses) * 100) : 0;
       categoryDistribution.push({
         category_id: catId,
-        category_name: catInfo.name || "Outros", // Fallback estrito para string pura
+        category_name: catInfo.name || "Outros",
         amount,
         percentage,
         color: catInfo.color || "#64748B",
@@ -162,11 +162,17 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
     categoryDistribution.sort((a, b) => b.amount - a.amount);
 
-    // 7. EVOLUÇÃO DE FLUXO DE CAIXA (Últimos 6 Meses)
+    // 6. EVOLUÇÃO DE FLUXO DE CAIXA (6 Meses)
     const sixMonthsAgo = new Date(currentYear, currentMonthIndex - 5, 1);
+    const sixMonthsAgoStr = format(sixMonthsAgo, "yyyy-MM-dd");
+
     const historicalTransactions = await knex("transactions")
-      .where({ user_id: userId })
-      .where("date", ">=", sixMonthsAgo.toISOString());
+      .where({ user_id: userId, status: "completed" })
+      .where(function () {
+        this.where("completed_date", ">=", sixMonthsAgoStr)
+          .orWhere("expected_date", ">=", sixMonthsAgoStr)
+          .orWhere("created_at", ">=", sixMonthsAgoStr);
+      });
 
     const monthNames = [
       "Jan",
@@ -199,12 +205,24 @@ export async function analyticsRoutes(app: FastifyInstance) {
       let mExpense = 0;
 
       historicalTransactions.forEach((t) => {
-        // Blindagem contra data indefinida no banco
-        const tDate = new Date(t.date || Date.now());
-        if (tDate.getMonth() === mIndex && tDate.getFullYear() === y) {
-          const val = Number(t.amount) || 0;
-          if (t.type === "income") mIncome += val;
-          if (t.type === "expense") mExpense += val;
+        const rawDate = t.completed_date || t.expected_date || t.created_at;
+        const tDate = new Date(rawDate);
+        if (
+          !isNaN(tDate.getTime()) &&
+          tDate.getMonth() === mIndex &&
+          tDate.getFullYear() === y
+        ) {
+          const num = Number(t.amount || 0);
+          const val = Math.abs(num);
+          const typeStr = String(t.type || "").toLowerCase();
+          const isIncome =
+            typeStr === "income" ||
+            typeStr === "entrada" ||
+            typeStr === "receita" ||
+            (typeStr === "" && num > 0);
+
+          if (isIncome) mIncome += val;
+          else mExpense += val;
         }
       });
 
@@ -216,7 +234,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
       });
     }
 
-    // 8. GERADOR DINÂMICO DE INSIGHTS E RECOMENDAÇÕES
+    // 7. INSIGHTS E RECOMENDAÇÕES
     const insights = [];
     const recommendations = [];
 
@@ -272,7 +290,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
       });
     }
 
-    // Retorno estruturado seguindo rigorosamente o contrato do Frontend!
     return {
       metrics: {
         total_balance: totalBalance,

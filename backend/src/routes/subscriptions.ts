@@ -5,159 +5,236 @@ import { db as knex } from "../database.js";
 import { checkAuth } from "../middlewares/check-auth.js";
 
 export async function subscriptionsRoutes(app: FastifyInstance) {
-   // Protege todas as rotas de assinaturas
-   app.addHook("preHandler", checkAuth);
+  app.addHook("preHandler", checkAuth);
 
-   // ****** 1. CRIAR UMA ASSINATURA ******
-   app.post("/", async (request, reply) => {
-      const createSubscriptionSchema = z
-         .object({
-            title: z.string().min(1, "O nome é obrigatório"),
-            amount: z.number().positive("O valor deve ser positivo"),
-            due_day: z.number().min(1).max(31, "Dia inválido"),
-            frequency: z.enum(["monthly", "yearly"]).default("monthly"),
-            category_id: z.string().uuid("Categoria inválida"),
-            account_id: z.string().uuid().optional().nullable(),
-            card_id: z.string().uuid().optional().nullable(),
-         })
-         .refine((data) => data.account_id || data.card_id, {
-            message:
-               "A assinatura deve estar vinculada a uma Conta ou a um Cartão",
-            path: ["account_id"],
-         });
+  // ****** 1. ANALYTICS (CENTRO DE CONTROLE DE ASSINATURAS) ******
+  // DEVE FICAR NO TOPO para não conflitar com rotas de /:id
+  app.get("/analytics", async (request) => {
+    const userId = (request.user as any).sub;
 
-      const body = createSubscriptionSchema.parse(request.body);
-      const userId = (request.user as any).sub;
+    // 1. Busca apenas assinaturas ATIVAS para projeção de custos
+    const activeSubs = await knex("subscriptions").where({
+      user_id: userId,
+      status: "active",
+    });
 
-      await knex("subscriptions").insert({
-         id: randomUUID(),
-         user_id: userId,
-         category_id: body.category_id,
-         account_id: body.account_id,
-         card_id: body.card_id,
-         title: body.title,
-         amount: body.amount,
-         due_day: body.due_day,
-         frequency: body.frequency,
-         status: "active",
-      });
+    // 2. Busca o total de receitas do mês atual (para cruzar com o Orçamento)
+    const today = new Date();
 
-      return reply.status(201).send();
-   });
+    // Usando substring(0, 10) garantimos o tipo "string" estrito (YYYY-MM-DD)
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+      .toISOString()
+      .substring(0, 10);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      .toISOString()
+      .substring(0, 10);
 
-   // ****** 2. LISTAR ASSINATURAS (Com nomes da Categoria e Método de Pagamento) ******
-   app.get("/", async (request) => {
-      const userId = (request.user as any).sub;
+    const incomeResult = await knex("transactions")
+      .where({ user_id: userId })
+      .andWhere("amount", ">", 0) // Apenas Entradas
+      .andWhere(function () {
+        this.where("status", "completed")
+          .andWhereBetween("completed_date", [startOfMonth, endOfMonth])
+          .orWhere("status", "pending")
+          .andWhereBetween("expected_date", [startOfMonth, endOfMonth]);
+      })
+      .sum("amount as totalIncome")
+      .first();
 
-      const subscriptions = await knex("subscriptions")
-         .leftJoin("categories", "subscriptions.category_id", "categories.id")
-         .leftJoin("accounts", "subscriptions.account_id", "accounts.id")
-         .leftJoin("cards", "subscriptions.card_id", "cards.id")
-         .where("subscriptions.user_id", userId)
-         .select(
-            "subscriptions.*",
-            "categories.name as category_name",
-            "categories.color as category_color",
-            "accounts.name as account_name",
-            "cards.name as card_name",
-         )
-         .orderBy("subscriptions.title", "asc");
+    const totalIncomeMonth = Number(incomeResult?.totalIncome) || 0;
 
-      return { subscriptions };
-   });
+    // 3. Variáveis de Telemetria
+    let monthlyTotal = 0;
+    let yearlyProjection = 0;
+    let upcomingNext7Days = 0;
 
-   // ****** 3. ALTERAR STATUS DA ASSINATURA (Ativar, Pausar, Cancelar) ******
-   app.patch("/:id/status", async (request, reply) => {
-      const updateParamsSchema = z.object({
-         id: z.string().uuid("ID inválido"),
-      });
+    const currentDay = today.getDate();
+    const daysInMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+    ).getDate();
 
-      const updateBodySchema = z.object({
-         status: z.enum(["active", "paused", "cancelled"]),
-      });
+    // 4. Algoritmo de Normalização de Custos e Radar de Vencimentos
+    for (const sub of activeSubs) {
+      const amount = Number(sub.amount);
 
-      const { id } = updateParamsSchema.parse(request.params);
-      const { status } = updateBodySchema.parse(request.body);
-      const userId = (request.user as any).sub;
-
-      const subscription = await knex("subscriptions")
-         .where({ id, user_id: userId })
-         .first();
-
-      if (!subscription) {
-         return reply
-            .status(404)
-            .send({ message: "Assinatura não encontrada." });
+      // Custos Mensais vs Anuais
+      if (sub.frequency === "yearly") {
+        yearlyProjection += amount;
+        monthlyTotal += amount / 12;
+      } else {
+        monthlyTotal += amount;
+        yearlyProjection += amount * 12;
       }
 
-      await knex("subscriptions").where({ id }).update({ status });
+      // Radar de 7 Dias Dinâmico
+      const dueDay = sub.due_day;
+      let daysUntilDue = dueDay - currentDay;
 
-      return reply.status(204).send();
-   });
-
-   // ****** 4. EXCLUIR ASSINATURA ******
-   app.delete("/:id", async (request, reply) => {
-      const deleteParamsSchema = z.object({
-         id: z.string().uuid("ID inválido"),
-      });
-
-      const { id } = deleteParamsSchema.parse(request.params);
-      const userId = (request.user as any).sub;
-
-      const subscription = await knex("subscriptions")
-         .where({ id, user_id: userId })
-         .first();
-
-      if (!subscription) {
-         return reply
-            .status(404)
-            .send({ message: "Assinatura não encontrada." });
+      // Se o dia já passou neste mês, a próxima cobrança é no mês que vem
+      if (daysUntilDue < 0) {
+        daysUntilDue += daysInMonth;
       }
 
-      await knex("subscriptions").where({ id }).delete();
-
-      return reply.status(204).send();
-   });
-
-   // ****** 5. PAGAR/BAIXAR ASSINATURA DO MÊS ******
-   app.post("/:id/pay", async (request, reply) => {
-      const payParamsSchema = z.object({
-         id: z.string().uuid("ID inválido"),
-      });
-
-      const payBodySchema = z.object({
-         account_id: z.string().uuid("Selecione a conta para o débito"),
-      });
-
-      const { id } = payParamsSchema.parse(request.params);
-      const { account_id } = payBodySchema.parse(request.body);
-      const userId = (request.user as any).sub;
-
-      // 1. Busca a assinatura para pegar valor, nome e categoria
-      const subscription = await knex("subscriptions")
-         .where({ id, user_id: userId })
-         .first();
-
-      if (!subscription) {
-         return reply
-            .status(404)
-            .send({ message: "Assinatura não encontrada." });
+      if (daysUntilDue >= 0 && daysUntilDue <= 7) {
+        upcomingNext7Days++;
       }
+    }
 
-      // 2. Registra a despesa real no Fluxo de Caixa vinculando o ID da assinatura
-      await knex("transactions").insert({
-         id: randomUUID(),
-         user_id: userId,
-         account_id: account_id,
-         category_id: subscription.category_id,
-         subscription_id: subscription.id,
-         title: `Pagamento: ${subscription.title}`,
-         description: "Assinatura Mensal",
-         amount: subscription.amount,
-         status: "completed",
-         completed_date: new Date().toISOString().split("T")[0],
+    // 5. Cálculo de Impacto na Renda (Prevenção de divisão por zero)
+    const budgetImpact =
+      totalIncomeMonth > 0 ? (monthlyTotal / totalIncomeMonth) * 100 : 0;
+
+    return {
+      monthlyTotal,
+      yearlyProjection,
+      budgetImpact: Number(budgetImpact.toFixed(1)),
+      upcomingNext7Days,
+    };
+  });
+
+  // ****** 2. CRIAR UMA ASSINATURA ******
+  app.post("/", async (request, reply) => {
+    const createSubscriptionSchema = z
+      .object({
+        title: z.string().min(1, "O nome é obrigatório"),
+        amount: z.number().positive("O valor deve ser positivo"),
+        due_day: z.number().min(1).max(31, "Dia inválido"),
+        frequency: z.enum(["monthly", "yearly"]).default("monthly"),
+        category_id: z.string().uuid("Categoria inválida"),
+        account_id: z.string().uuid().optional().nullable(),
+        card_id: z.string().uuid().optional().nullable(),
+      })
+      .refine((data) => data.account_id || data.card_id, {
+        message: "A assinatura deve estar vinculada a uma Conta ou a um Cartão",
+        path: ["account_id"],
       });
 
-      return reply.status(201).send();
-   });
+    const body = createSubscriptionSchema.parse(request.body);
+    const userId = (request.user as any).sub;
+
+    await knex("subscriptions").insert({
+      id: randomUUID(),
+      user_id: userId,
+      category_id: body.category_id,
+      account_id: body.account_id,
+      card_id: body.card_id,
+      title: body.title,
+      amount: body.amount,
+      due_day: body.due_day,
+      frequency: body.frequency,
+      status: "active",
+    });
+
+    return reply.status(201).send();
+  });
+
+  // ****** 3. LISTAR ASSINATURAS ******
+  app.get("/", async (request) => {
+    const userId = (request.user as any).sub;
+
+    const subscriptions = await knex("subscriptions")
+      .leftJoin("categories", "subscriptions.category_id", "categories.id")
+      .leftJoin("accounts", "subscriptions.account_id", "accounts.id")
+      .leftJoin("cards", "subscriptions.card_id", "cards.id")
+      .where("subscriptions.user_id", userId)
+      .select(
+        "subscriptions.*",
+        "categories.name as category_name",
+        "categories.color as category_color",
+        "accounts.name as account_name",
+        "cards.name as card_name",
+      )
+      .orderBy("subscriptions.title", "asc");
+
+    return { subscriptions };
+  });
+
+  // ****** 4. ALTERAR STATUS DA ASSINATURA ******
+  app.patch("/:id/status", async (request, reply) => {
+    const updateParamsSchema = z.object({
+      id: z.string().uuid("ID inválido"),
+    });
+
+    const updateBodySchema = z.object({
+      status: z.enum(["active", "paused", "cancelled"]),
+    });
+
+    const { id } = updateParamsSchema.parse(request.params);
+    const { status } = updateBodySchema.parse(request.body);
+    const userId = (request.user as any).sub;
+
+    const subscription = await knex("subscriptions")
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!subscription) {
+      return reply.status(404).send({ message: "Assinatura não encontrada." });
+    }
+
+    await knex("subscriptions").where({ id }).update({ status });
+
+    return reply.status(204).send();
+  });
+
+  // ****** 5. EXCLUIR ASSINATURA ******
+  app.delete("/:id", async (request, reply) => {
+    const deleteParamsSchema = z.object({
+      id: z.string().uuid("ID inválido"),
+    });
+
+    const { id } = deleteParamsSchema.parse(request.params);
+    const userId = (request.user as any).sub;
+
+    const subscription = await knex("subscriptions")
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!subscription) {
+      return reply.status(404).send({ message: "Assinatura não encontrada." });
+    }
+
+    await knex("subscriptions").where({ id }).delete();
+
+    return reply.status(204).send();
+  });
+
+  // ****** 6. PAGAR/BAIXAR ASSINATURA DO MÊS ******
+  app.post("/:id/pay", async (request, reply) => {
+    const payParamsSchema = z.object({
+      id: z.string().uuid("ID inválido"),
+    });
+
+    const payBodySchema = z.object({
+      account_id: z.string().uuid("Selecione a conta para o débito"),
+    });
+
+    const { id } = payParamsSchema.parse(request.params);
+    const { account_id } = payBodySchema.parse(request.body);
+    const userId = (request.user as any).sub;
+
+    const subscription = await knex("subscriptions")
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!subscription) {
+      return reply.status(404).send({ message: "Assinatura não encontrada." });
+    }
+
+    await knex("transactions").insert({
+      id: randomUUID(),
+      user_id: userId,
+      account_id: account_id,
+      category_id: subscription.category_id,
+      subscription_id: subscription.id,
+      title: `Pagamento: ${subscription.title}`,
+      description: "Assinatura Mensal",
+      amount: subscription.amount,
+      status: "completed",
+      completed_date: new Date().toISOString().split("T")[0],
+    });
+
+    return reply.status(201).send();
+  });
 }
