@@ -1,12 +1,15 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import type { ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
+import type { User, UserPreferences } from "./AuthContext";
+import { AvatarStorage } from "../services/storage/AvatarStorage";
 import {
   login as apiLogin,
   register as apiRegister,
-  type User,
   type LoginCredentials,
   type RegisterCredentials,
 } from "../services/auth";
+import { api } from "../api/client";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
@@ -14,16 +17,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = localStorage.getItem("@FinanceApp:user");
 
     if (token && storedUser) {
-      return JSON.parse(storedUser);
+      try {
+        const parsedUser = JSON.parse(storedUser) as User;
+        // ✨ Arquitetura Abstrata: O serviço resolve a origem da imagem
+        parsedUser.avatar_url = AvatarStorage.load(parsedUser.avatar_url);
+        return parsedUser;
+      } catch {
+        return null;
+      }
     }
     return null;
   });
 
   async function signIn(data: LoginCredentials) {
-    const { token, user: loggedUser } = await apiLogin(data);
+    const response = (await apiLogin(data)) as unknown as {
+      token: string;
+      user: User;
+    };
+    const { token, user: loggedUser } = response;
+
+    loggedUser.avatar_url = AvatarStorage.load(loggedUser.avatar_url);
 
     localStorage.setItem("@FinanceApp:token", token);
-    localStorage.setItem("@FinanceApp:user", JSON.stringify(loggedUser));
+
+    const userToSave = { ...loggedUser };
+    if (AvatarStorage.isLocalBase64(userToSave.avatar_url)) {
+      userToSave.avatar_url = "local_cache";
+    }
+    localStorage.setItem("@FinanceApp:user", JSON.stringify(userToSave));
 
     setUser(loggedUser);
   }
@@ -36,12 +57,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function signOut() {
     localStorage.removeItem("@FinanceApp:token");
     localStorage.removeItem("@FinanceApp:user");
+    AvatarStorage.clear(); // Limpa o cache de imagens ao sair
     setUser(null);
+  }
+
+  async function updateProfile(data: {
+    name: string;
+    avatar_url?: string | null;
+  }) {
+    let dbAvatarUrl = data.avatar_url;
+
+    // ✨ Arquitetura Abstrata: O serviço salva localmente e devolve apenas a etiqueta 'local_cache'
+    if (AvatarStorage.isLocalBase64(data.avatar_url)) {
+      dbAvatarUrl = AvatarStorage.save(data.avatar_url as string);
+    }
+
+    await api.put("/users/profile", {
+      name: data.name,
+      avatar_url: dbAvatarUrl,
+    });
+
+    setUser((prev: User | null) => {
+      if (!prev) return prev;
+
+      const updatedUser: User = {
+        ...prev,
+        ...data,
+        avatar_url: data.avatar_url,
+      };
+      const userToSave = { ...updatedUser, avatar_url: dbAvatarUrl };
+      localStorage.setItem("@FinanceApp:user", JSON.stringify(userToSave));
+
+      return updatedUser;
+    });
+  }
+
+  async function updatePreferences(preferences: Partial<UserPreferences>) {
+    const response = await api.put<{
+      message: string;
+      preferences: UserPreferences;
+    }>("/users/preferences", preferences);
+
+    setUser((prev: User | null) => {
+      if (!prev) return prev;
+      const updatedUser: User = {
+        ...prev,
+        preferences: response.data.preferences,
+      };
+
+      const userToSave = { ...updatedUser };
+      if (AvatarStorage.isLocalBase64(userToSave.avatar_url)) {
+        userToSave.avatar_url = "local_cache";
+      }
+      localStorage.setItem("@FinanceApp:user", JSON.stringify(userToSave));
+
+      return updatedUser;
+    });
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, signIn, signUp, signOut }}
+      value={{
+        user,
+        isAuthenticated: !!user,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+        updatePreferences,
+      }}
     >
       {children}
     </AuthContext.Provider>

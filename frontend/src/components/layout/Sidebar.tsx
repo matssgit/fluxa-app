@@ -6,7 +6,6 @@ import {
   Repeat,
   Wallet,
   Settings,
-  Sprout,
   Target,
   type LucideIcon,
 } from "lucide-react";
@@ -23,14 +22,13 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Cartões", path: "/cards", icon: CreditCard },
   { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
   { label: "Contas", path: "/accounts", icon: Wallet },
-  { label: "Metas", path: "/wallets", icon: Target },
+  { label: "Objetivos", path: "/wallets", icon: Target },
 ];
 
 export function Sidebar() {
   const location = useLocation();
 
   return (
-    /* ✨ Aqui está a mágica: hidden min-[1400px]:flex */
     <aside className="hidden min-[1400px]:flex flex-col w-64 h-screen fixed top-0 left-0 bg-surface/90 backdrop-blur-md border-r border-subtle/30 z-40 transition-all duration-300">
       <div className="h-20 flex items-center px-8 border-b border-subtle/20">
         <div className="flex items-center gap-3.5">
@@ -43,16 +41,13 @@ export function Sidebar() {
             <span className="font-extrabold text-primary tracking-tight text-base block leading-none">
               Fluxa
             </span>
-            <span className="text-[10px] font-extrabold text-brand tracking-[0.15em] uppercase mt-1 block">
-              Cultive sua vida
-            </span>
           </div>
         </div>
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         <div className="px-4 pb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted select-none">
-          Ecossistema
+          Menu
         </div>
 
         {NAV_ITEMS.map((item) => {
@@ -87,13 +82,6 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-subtle/20 space-y-2">
-        <div className="px-4 py-1 flex items-center gap-2 text-muted">
-          <Sprout size={14} className="text-brand shrink-0 animate-pulse" />
-          <span className="text-[11px] font-semibold italic">
-            Toda grande árvore começou como uma semente.
-          </span>
-        </div>
-
         <Link
           to="/settings"
           className="flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-secondary hover:bg-elevated/60 hover:text-primary transition-all duration-200 select-none"

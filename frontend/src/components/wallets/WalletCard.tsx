@@ -8,6 +8,7 @@ import {
   Minus,
 } from "lucide-react";
 import type { Wallet } from "../../types/wallet";
+import { PrivacyMask } from "../ui/PrivacyMask";
 
 interface WalletCardProps {
   wallet: Wallet;
@@ -27,12 +28,6 @@ export function WalletCard({
   const progress =
     target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
   const isCompleted = progress >= 100 || wallet.status === "completed";
-
-  const formatCurrency = (val: number): string =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(isNaN(val) ? 0 : val);
 
   const formatDate = (dateStr?: string | null): string => {
     if (!dateStr) return "Sem data limite";
@@ -64,7 +59,6 @@ export function WalletCard({
           </div>
 
           <div className="shrink-0 flex items-center gap-2">
-            {/* Botões de Ação Ocultos (Aparecem no Hover) */}
             <div className="flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => onEdit(wallet)}
@@ -80,7 +74,6 @@ export function WalletCard({
               </button>
             </div>
 
-            {/* Badges */}
             {isCompleted ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 <CheckCircle2 size={12} />
@@ -106,7 +99,7 @@ export function WalletCard({
                 Acumulado
               </span>
               <span className="text-xl sm:text-2xl font-extrabold text-primary tracking-tight">
-                {formatCurrency(current)}
+                <PrivacyMask amount={current} />
               </span>
             </div>
             <div className="text-right">
@@ -114,7 +107,7 @@ export function WalletCard({
                 Objetivo
               </span>
               <span className="text-sm font-bold text-secondary">
-                {formatCurrency(target)}
+                <PrivacyMask amount={target} />
               </span>
             </div>
           </div>

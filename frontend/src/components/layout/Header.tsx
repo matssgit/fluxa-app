@@ -14,34 +14,35 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 
+// ✨ NOVA IDENTIDADE VISUAL OFICIAL (Objetiva, Clara e Corporativa)
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": {
-    title: "INÍCIO",
-    subtitle: "Seu ecossistema analítico e saúde do patrimônio",
+    title: "Dashboard",
+    subtitle: "Visão geral da sua vida financeira",
   },
   "/transactions": {
-    title: "CAIXA & TRANSAÇÕES",
-    subtitle: "Operação diária, conciliações e fluxo de entradas e saídas",
+    title: "Caixa",
+    subtitle: "Acompanhe receitas, despesas e movimentações",
   },
   "/cards": {
-    title: "CARTÕES DE CRÉDITO",
-    subtitle: "Gestão de cartões, faturas abertas e parcelas",
+    title: "Cartões",
+    subtitle: "Gerencie cartões, compras e parcelas",
   },
   "/subscriptions": {
-    title: "ASSINATURAS & SERVIÇOS",
-    subtitle: "Monitoramento de serviços fixos e cobranças periódicas",
+    title: "Assinaturas",
+    subtitle: "Controle cobranças e pagamentos recorrentes",
   },
   "/accounts": {
-    title: "CONTAS & CARTEIRAS",
-    subtitle: "Saldo bancário consolidado e liquidez imediata",
+    title: "Contas",
+    subtitle: "Gerencie contas, carteiras e saldos disponíveis",
   },
   "/wallets": {
-    title: "OBJETIVOS FINANCEIROS",
-    subtitle: "Organize reservas, metas de curto prazo e patrimônio futuro",
+    title: "Objetivos",
+    subtitle: "Organize metas e acompanhe sua evolução",
   },
   "/settings": {
-    title: "CONFIGURAÇÕES",
-    subtitle: "Preferências globais e administração do ecossistema",
+    title: "Configurações",
+    subtitle: "Personalize sua experiência no Fluxa",
   },
 };
 
@@ -68,10 +69,10 @@ export function Header() {
   );
   const pageInfo = currentPathKey
     ? PAGE_TITLES[currentPathKey]
-    : { title: "Fluxa", subtitle: "Cultive uma vida financeira saudável" };
+    : { title: "Fluxa", subtitle: "Sua vida financeira organizada" };
 
   const getUserInitials = (name?: string): string => {
-    if (!name) return "MS";
+    if (!name) return "US";
     const parts = name.trim().split(" ");
     if (parts.length >= 2)
       return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
@@ -121,17 +122,25 @@ export function Header() {
           >
             <div className="text-right hidden sm:block">
               <span className="text-xs font-bold text-primary block leading-none group-hover:text-brand transition-colors">
-                {user?.name || "Matheus Santana"}
+                {user?.name || "Usuário"}
               </span>
               <span className="text-[10px] font-medium text-muted mt-0.5 block truncate max-w-32">
-                {user?.email || "matheus@fluxa.com"}
+                {user?.email}
               </span>
             </div>
 
             <div className="relative">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-linear-to-tr from-brand to-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm border border-white/20 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30">
-                {getUserInitials(user?.name)}
-              </div>
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover shadow-sm border border-subtle/30 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30"
+                />
+              ) : (
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-linear-to-tr from-brand to-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm border border-white/20 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30">
+                  {getUserInitials(user?.name)}
+                </div>
+              )}
               <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-surface rounded-full" />
             </div>
 
@@ -144,10 +153,10 @@ export function Header() {
             <div className="absolute right-0 mt-3 w-56 bg-surface/95 backdrop-blur-xl rounded-2xl shadow-xl border border-subtle/30 py-2 animate-fade-in z-50 divide-y divide-subtle/10">
               <div className="px-4 py-3 sm:hidden">
                 <p className="text-xs font-bold text-primary truncate">
-                  {user?.name || "Matheus Santana"}
+                  {user?.name || "Usuário"}
                 </p>
                 <p className="text-[10px] font-medium text-muted truncate">
-                  {user?.email || "matheus@fluxa.com"}
+                  {user?.email}
                 </p>
               </div>
 

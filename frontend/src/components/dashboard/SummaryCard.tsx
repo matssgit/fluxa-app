@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { formatCurrency } from "../../utils/formatters";
+import { PrivacyMask } from "../ui/PrivacyMask";
 
 interface SummaryCardProps {
   title: string;
@@ -7,6 +7,7 @@ interface SummaryCardProps {
   icon: LucideIcon;
   variant?: "income" | "expense" | "balance" | "projection" | "default";
   subtitle?: string;
+  trend?: { value: number; isPositive: boolean };
 }
 
 export function SummaryCard({
@@ -16,27 +17,26 @@ export function SummaryCard({
   variant = "default",
   subtitle,
 }: SummaryCardProps) {
-  // ✨ Mapeamento Visual de Altíssimo Contraste e Ergonomia
   const variantStyles = {
     income: {
       badge: "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30",
       borderHover: "hover:border-emerald-500/50",
       glow: "group-hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)]",
-      emoji: "🟢",
+      emoji: "💰",
       valueColor: "text-emerald-500 dark:text-emerald-600 font-black",
     },
     expense: {
       badge: "bg-red-500/15 text-red-500 border border-red-500/30",
       borderHover: "hover:border-red-500/50",
       glow: "group-hover:shadow-[0_4px_20px_rgba(239,68,68,0.15)]",
-      emoji: "🔴",
+      emoji: "📉",
       valueColor: "text-red-500 dark:text-red-700 font-black",
     },
     balance: {
       badge: "bg-brand/15 text-brand border border-brand/30",
       borderHover: "hover:border-brand/60",
       glow: "group-hover:shadow-[0_4px_20px_rgba(19,49,42,0.25)]",
-      emoji: "💰",
+      emoji: "🏦",
       valueColor: "text-primary font-black",
     },
     projection: {
@@ -77,7 +77,7 @@ export function SummaryCard({
         <h4
           className={`text-xl sm:text-2xl tracking-tight transition-colors duration-200 ${style.valueColor}`}
         >
-          {formatCurrency(value)}
+          <PrivacyMask amount={value} />
         </h4>
         {subtitle && (
           <p className="text-[11px] font-medium text-muted mt-1">{subtitle}</p>

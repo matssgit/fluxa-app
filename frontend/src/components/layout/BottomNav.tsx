@@ -27,7 +27,7 @@ const MOBILE_NAV_ITEMS: MobileNavItem[] = [
     isPrimary: true,
   },
   { label: "Cartões", path: "/cards", icon: CreditCard },
-  { label: "Assinar", path: "/subscriptions", icon: Repeat }, // Rótulo levemente encurtado para caber bem
+  { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
   { label: "Metas", path: "/wallets", icon: Target },
 ];
 

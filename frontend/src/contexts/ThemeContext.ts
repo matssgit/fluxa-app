@@ -1,6 +1,7 @@
 import { createContext } from "react";
 
-export type Theme = "light" | "dark";
+
+export type Theme = "light" | "dark" | "system";
 
 export interface ThemeContextData {
   theme: Theme;
@@ -8,4 +9,6 @@ export interface ThemeContextData {
   toggleTheme: () => void;
 }
 
-export const ThemeContext = createContext<ThemeContextData | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextData>(
+  {} as ThemeContextData
+);

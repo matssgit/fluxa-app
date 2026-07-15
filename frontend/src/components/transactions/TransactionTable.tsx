@@ -13,6 +13,7 @@ import { api } from "../../api/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Skeleton } from "../ui/Skeleton";
+import { PrivacyMask } from "../ui/PrivacyMask";
 
 interface Transaction {
   id: string;
@@ -31,7 +32,6 @@ interface TransactionTableProps {
   isLoading: boolean;
 }
 
-// ✨ MAPEADOR INTELIGENTE DE ÍCONES (Pine & Sage) - Agora com WalletCards à prova de ilusão de óptica!
 function getAccountIcon(accountName?: string) {
   if (!accountName)
     return <Building size={16} className="text-muted shrink-0" />;
@@ -183,7 +183,6 @@ export function TransactionTable({
                     </div>
                   </td>
 
-                  {/* ✨ POLIMENTO: max-w-37.5 do Tailwind nativo e ícones que parecem cartões de verdade! */}
                   <td className="p-4">
                     <div className="flex items-center gap-2 text-secondary text-sm font-medium whitespace-nowrap">
                       {getAccountIcon(transaction.account_name)}
@@ -220,10 +219,7 @@ export function TransactionTable({
                       <span
                         className={`font-bold ${isIncome ? "text-emerald-500" : "text-primary"}`}
                       >
-                        {new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(transaction.amount)}
+                        <PrivacyMask amount={transaction.amount} />
                       </span>
                       {isPending && (
                         <button

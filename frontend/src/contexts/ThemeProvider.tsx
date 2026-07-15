@@ -1,71 +1,82 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-
 import { ThemeContext } from "./ThemeContext";
 import type { Theme } from "./ThemeContext";
+import { useAuth } from "../hooks/useAuth";
 
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // SSR Safe
-    if (typeof window === "undefined") return "light";
+  const { user, updatePreferences } = useAuth();
 
+  // 1. Fallback para a tela de Login (Lê o cache do navegador)
+  const [localTheme, setLocalTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "system";
     const savedTheme = localStorage.getItem("fluxa-theme") as Theme | null;
-    if (savedTheme) return savedTheme;
-
-    // Fallback SO
-    if (
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-    ) {
-      return "dark";
-    }
-
-    return "light";
+    return savedTheme || "system";
   });
 
-  // Efeito 1: Sincronização de DOM e LocalStorage
+  // 2. A Fonte da Verdade (Banco de Dados > LocalStorage)
+  const resolvedTheme: Theme =
+    (user?.preferences?.theme as Theme) || localTheme;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
 
-    localStorage.setItem("fluxa-theme", theme);
-  }, [theme]);
+    // Salva no cache para a próxima vez que abrir a tela de Login
+    localStorage.setItem("fluxa-theme", resolvedTheme);
 
-  // Efeito 2: Listener do SO (Reatividade)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem("fluxa-theme")) {
-        setTheme(e.matches ? "dark" : "light");
+    const applyTheme = (theme: "light" | "dark") => {
+      if (theme === "dark") {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
       }
     };
 
-    mediaQuery.addEventListener("change", handleChange);
+    if (resolvedTheme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      applyTheme(mediaQuery.matches ? "dark" : "light");
 
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
+      const handleChange = (e: MediaQueryListEvent) => {
+        applyTheme(e.matches ? "dark" : "light");
+      };
+
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    } else {
+      applyTheme(resolvedTheme);
+    }
+  }, [resolvedTheme]);
+
+  // 3. Função Inteligente: Sabe se deve salvar no Banco ou no Navegador
+  const handleSetTheme = async (newTheme: Theme) => {
+    setLocalTheme(newTheme); // Atualiza a UI imediatamente (Optimistic Update)
+    if (user) {
+      await updatePreferences({ theme: newTheme }); // Salva no Banco de Dados silenciosamente
+    }
+  };
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    const isDark =
+      resolvedTheme === "dark" ||
+      (resolvedTheme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    handleSetTheme(isDark ? "light" : "dark");
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme: resolvedTheme,
+        setTheme: handleSetTheme,
+        toggleTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

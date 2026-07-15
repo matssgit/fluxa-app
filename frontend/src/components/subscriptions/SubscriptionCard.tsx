@@ -15,6 +15,7 @@ import {
   useUpdateSubscriptionStatus,
   useDeleteSubscription,
 } from "../../hooks/useSubscriptions";
+import { PrivacyMask } from "../ui/PrivacyMask";
 
 interface SubscriptionCardProps {
   subscription: Subscription;
@@ -34,12 +35,6 @@ export function SubscriptionCard({
     subscription.card_name || subscription.account_name || "Cobrança Padrão";
   const categoryName = subscription.category_name || "Geral";
   const status = subscription.status || "active";
-
-  const formatCurrency = (val: number): string =>
-    new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(isNaN(val) ? 0 : val);
 
   function handleStatusChange(
     newStatus: "active" | "paused" | "cancelled",
@@ -65,7 +60,6 @@ export function SubscriptionCard({
           : "hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 bg-surface"
       }`}
     >
-      {/* Topo: Título + Badge de Status */}
       <div>
         <div className="flex justify-between items-start gap-3">
           <div className="truncate">
@@ -77,7 +71,6 @@ export function SubscriptionCard({
                 {subscription.frequency === "yearly" ? "Anual" : "Mensal"}
               </span>
 
-              {/* Badges Semânticos de Status */}
               {status === "active" && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded bg-brand/10 text-brand border border-brand/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
@@ -102,17 +95,15 @@ export function SubscriptionCard({
           </div>
         </div>
 
-        {/* Centro: Valor em Evidência */}
         <div className="py-4">
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted block">
             Valor Recorrente
           </span>
           <p className="text-xl sm:text-2xl font-extrabold text-primary tracking-tight mt-0.5">
-            {formatCurrency(Number(subscription.amount) || 0)}
+            <PrivacyMask amount={Number(subscription.amount) || 0} />
           </p>
         </div>
 
-        {/* Categoria e Fonte */}
         <div className="pb-3 flex items-center justify-between text-xs text-muted font-medium border-b border-subtle/20">
           <div className="flex items-center gap-2 truncate">
             <div
@@ -143,9 +134,7 @@ export function SubscriptionCard({
         </div>
       </div>
 
-      {/* Rodapé: Ações Operacionais e Ciclo de Vida */}
       <div className="pt-3 flex items-center justify-between gap-2 mt-2">
-        {/* Botão de Baixa (Só aparece se estiver ativa) */}
         {status === "active" ? (
           <button
             onClick={() => onPay(subscription.id)}
@@ -165,7 +154,6 @@ export function SubscriptionCard({
           </div>
         )}
 
-        {/* Controles Rápidos de Status (Ícones) */}
         <div className="flex items-center gap-1 shrink-0 bg-elevated/60 p-1 rounded-xl border border-subtle/20">
           {status === "active" && (
             <button

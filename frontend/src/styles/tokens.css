@@ -19,7 +19,7 @@
     --emerald-500: #10b981;
 
     /* 2. TOKENS SEMÂNTICOS (Light Mode) */
-    --color-page: #f6f7f6;
+    --color-page: #dbdbdb;
     --color-surface: #ffffff;
     --color-elevated: #ececec91;
     --color-brand: var(--green-900);
@@ -55,16 +55,16 @@
 
   /* 4. DARK MODE (Pine & Sage - Premium & High Contrast) */
   .dark {
-    --color-page: #08120f;
-    --color-surface: #10211c;
-    --color-elevated: #183129;
+    --color-page: #1c2020;
+    --color-surface: #2e3835;
+    --color-elevated: #35534a;
     --color-primary: #f8faf9;
-    --color-secondary: #94a39e;
-    --color-muted: #5e6b67;
-    --color-placeholder: #3e4845;
+    --color-secondary: #c9d1cf;
+    --color-muted: #a9acab;
+    --color-placeholder: #707775;
     --color-border: rgba(255, 255, 255, 0.06);
     --color-subtle: rgba(255, 255, 255, 0.03);
-    --color-brand: #34d399;
+    --color-brand: #67caac;
     --color-accent: #d8b48f;
     --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
     --shadow-sm:
