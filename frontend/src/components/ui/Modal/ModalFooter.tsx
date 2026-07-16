@@ -1,14 +1,15 @@
 import React from "react";
 
-export interface ModalFooterProps {
+export function ModalFooter({
+  children,
+  className = "",
+}: {
   children: React.ReactNode;
   className?: string;
-}
-
-export function ModalFooter({ children, className = "" }: ModalFooterProps) {
+}) {
   return (
     <div
-      className={`flex items-center justify-end gap-3 px-6 py-4 bg-elevated border-t border-subtle ${className}`}
+      className={`shrink-0 sticky bottom-0 z-10 bg-surface border-t border-subtle/20 p-4 sm:p-6 flex gap-3 justify-end ${className}`}
     >
       {children}
     </div>

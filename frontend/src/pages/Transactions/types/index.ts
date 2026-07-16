@@ -1,44 +1,86 @@
-// Define a natureza do evento financeiro
-export type FinancialEventType = "transaction" | "installment" | "subscription";
-export type FinancialEventStatus = "pending" | "completed" | "future";
+// 1. DOMÍNIOS LITERAIS
+export type FinancialEventStatus =
+  | "pending"
+  | "completed"
+  | "future"
+  | "cancelled";
 export type FinancialEventFlow = "income" | "expense" | "transfer";
+export type FinancialEventType =
+  | "transaction"
+  | "installment"
+  | "subscription"
+  | "transfer";
 
-// A fundação que TODOS os eventos partilham (Garante que a listagem base nunca quebra)
-export interface BaseFinancialEvent {
+export type EventSort =
+  | "date_desc"
+  | "date_asc"
+  | "amount_desc"
+  | "amount_asc"
+  | "name_asc"
+  | "next_billing"
+  | "updated_at_desc";
+
+// 2. FINANCIAL EVENT FILTERS (O Contrato da Super Omnibox)
+export interface FinancialEventFilters {
+  query?: string;
+
+  status?: FinancialEventStatus[];
+  flow?: FinancialEventFlow[];
+  type?: FinancialEventType[];
+
+  accountIds?: string[];
+  cardIds?: string[];
+  categoryIds?: string[];
+
+  minAmount?: number;
+  maxAmount?: number;
+
+  startDate?: string;
+  endDate?: string;
+
+  sort?: EventSort | string;
+  page?: number;
+  pageSize?: number;
+}
+
+// 3. FINANCIAL EVENT DTO (O Contrato da UI)
+export interface FinancialEventDTO {
   id: string;
   title: string;
   amount: number;
   flow: FinancialEventFlow;
   status: FinancialEventStatus;
-  date: string; // Data unificada (pode vir de created_at, due_date, etc.)
-  category_name?: string;
-  account_name?: string;
-  eventType: FinancialEventType;
+  date: string;
+  type: FinancialEventType;
+
+  merchant?: string;
+  notes?: string;
+  categoryId?: string;
+  category?: string;
+  accountId?: string;
+  account?: string;
+
+  context?: {
+    purchaseId?: string;
+    installmentNumber?: number;
+    totalInstallments?: number;
+    cardId?: string;
+    cardName?: string;
+    subscriptionId?: string;
+    nextBillingDate?: string;
+    destinationAccountId?: string;
+    destinationAccountName?: string;
+  };
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-// 1. Transação Comum (Pix, Débito, Dinheiro)
-export interface TransactionEvent extends BaseFinancialEvent {
-  eventType: "transaction";
+// 4. PAGINAÇÃO
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasNextPage: boolean;
 }
-
-// 2. Parcela de Cartão de Crédito
-export interface InstallmentEvent extends BaseFinancialEvent {
-  eventType: "installment";
-  purchase_id: string;
-  installment_number: number;
-  total_installments: number;
-  card_name: string;
-}
-
-// 3. Assinatura Recorrente
-export interface SubscriptionEvent extends BaseFinancialEvent {
-  eventType: "subscription";
-  subscription_id: string;
-  next_billing_date?: string;
-}
-
-// O Tipo União que a nossa Listagem Global vai consumir
-export type FinancialEvent =
-  | TransactionEvent
-  | InstallmentEvent
-  | SubscriptionEvent;

@@ -62,11 +62,11 @@ export function Wallets() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in pb-20 sm:pb-8">
-      {/* 1. Header (Mantido minimalista conforme o design system) */}
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-surface text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
         >
           <Plus size={18} />
           <span>Nova Meta</span>

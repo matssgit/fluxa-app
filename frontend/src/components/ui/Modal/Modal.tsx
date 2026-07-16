@@ -8,7 +8,6 @@ export interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, size = "md", children }: ModalProps) {
-  // Lock no scroll e fechamento com a tecla ESC
   useEffect(() => {
     if (!isOpen) return;
 
@@ -42,8 +41,8 @@ export function Modal({ isOpen, onClose, size = "md", children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className={`w-full ${sizeMap[size]} bg-surface border border-subtle shadow-md rounded-2xl overflow-hidden animate-scale-in`}
-        onClick={(e) => e.stopPropagation()} // Impede que o clique dentro do card feche o modal
+        className={`relative w-full ${sizeMap[size]} max-h-[80dvh] flex flex-col bg-surface border border-subtle shadow-md rounded-2xl overflow-hidden animate-scale-in`}
+        onClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>

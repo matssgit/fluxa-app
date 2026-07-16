@@ -1,141 +1,113 @@
 import { useState, useMemo } from "react";
+import { Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "../../api/client";
 import { TransactionToolbar } from "./components/TransactionToolbar";
 import { TransactionList } from "./components/TransactionList";
 import { NewTransactionModal } from "../../components/transactions/NewTransactionModal";
-import { useTransactions } from "../../hooks/useTransactions";
+import { AdvancedFiltersDrawer } from "./components/AdvancedFiltersDrawer";
+import { FinancialEventPanel } from "./components/FinancialEventPanel";
 import { useTransactionFilters } from "./hooks/useTransactionFilters";
-import { mapToFinancialEvents } from "./utils/eventMapper"; // ✨ Tradutor de Dados
+import { useFinancialEvents } from "./hooks/useFinancialEvents";
+import type { FinancialEventDTO } from "./types";
 
 export function Transactions() {
-  const { transactions, isLoading } = useTransactions();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<FinancialEventDTO | null>(
+    null,
+  );
 
-  // A URL comanda absolutamente tudo!
-  const {
-    searchQuery,
-    searchInput,
-    setSearchInput,
-    activeFilters,
-    toggleFilter,
-    activeSort,
-    setSort,
-    clearAllFilters,
-  } = useTransactionFilters();
+  const queryClient = useQueryClient(); // ✨ Instanciamos o gestor de cache do React Query
 
-  const isSearching = searchQuery.trim().length > 0;
-  const isFiltering = activeFilters.length > 0;
+  const { filters, setFilters, searchInput, setSearchInput, clearAllFilters } =
+    useTransactionFilters();
 
-  // SIMULAÇÃO LOCAL (Com o novo Polimorfismo)
-  const filteredTransactions = useMemo(() => {
-    if (!transactions) return [];
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFinancialEvents(filters);
 
-    // 1. Traduz os dados puros para Eventos Financeiros Avançados
-    const financialEvents = mapToFinancialEvents(transactions);
-    let filtered = [...financialEvents];
+  const events: FinancialEventDTO[] = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap((page) => page.items || []);
+  }, [data]);
 
-    // 2. Simulação da Pesquisa Global
-    if (isSearching) {
-      const term = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (ev) =>
-          ev.title.toLowerCase().includes(term) ||
-          (ev.category_name && ev.category_name.toLowerCase().includes(term)) ||
-          (ev.account_name && ev.account_name.toLowerCase().includes(term)),
-      );
+  // ✨ FUNÇÃO REAL DE "DAR BAIXA"
+  const handleMarkAsPaid = async (eventId: string) => {
+    try {
+      // 1. Chama a nova rota do backend que acabámos de criar
+      await api.patch(`/financial-events/${eventId}/pay`);
+
+      // 2. Invalida o cache para que a Timeline atualize instantaneamente com o novo status
+      await queryClient.invalidateQueries({ queryKey: ["financial-events"] });
+
+      // 3. Fecha o painel da Matrioska
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error("Erro ao dar baixa no lançamento:", error);
+      alert("Ocorreu um erro ao dar baixa no pagamento. Tente novamente.");
     }
-
-    // 3. Simulação dos Filtros Rápidos
-    if (isFiltering) {
-      if (
-        activeFilters.includes("income") &&
-        !activeFilters.includes("expense")
-      ) {
-        filtered = filtered.filter((ev) => ev.flow === "income");
-      }
-      if (
-        activeFilters.includes("expense") &&
-        !activeFilters.includes("income")
-      ) {
-        filtered = filtered.filter((ev) => ev.flow === "expense");
-      }
-      if (
-        activeFilters.includes("pending") &&
-        !activeFilters.includes("completed")
-      ) {
-        filtered = filtered.filter((ev) => ev.status === "pending");
-      }
-      if (
-        activeFilters.includes("completed") &&
-        !activeFilters.includes("pending")
-      ) {
-        filtered = filtered.filter((ev) => ev.status === "completed");
-      }
-    }
-
-    // 4. Simulação da Ordenação
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.date || 0).getTime();
-      const dateB = new Date(b.date || 0).getTime();
-
-      switch (activeSort) {
-        case "date_asc":
-          return dateA - dateB;
-        case "amount_desc":
-          return Math.abs(b.amount) - Math.abs(a.amount);
-        case "amount_asc":
-          return Math.abs(a.amount) - Math.abs(b.amount);
-        case "name_asc":
-          return a.title.localeCompare(b.title);
-        case "date_desc":
-        default:
-          return dateB - dateA;
-      }
-    });
-
-    return filtered;
-  }, [
-    transactions,
-    searchQuery,
-    isSearching,
-    isFiltering,
-    activeFilters,
-    activeSort,
-  ]);
+  };
 
   return (
     <>
       <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 sm:pt-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-6 sm:pt-0">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
-              Caixa
+              Central Financeira
             </h1>
             <p className="text-xs sm:text-sm font-medium text-muted mt-1">
-              Acompanhe receitas, despesas e movimentações
+              Consulte e pesquise toda a sua vida financeira
             </p>
           </div>
+
+          <button
+            onClick={() => setIsNewModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
+          >
+            <Plus size={18} /> Novo Lançamento
+          </button>
         </div>
 
         <TransactionToolbar
           searchTerm={searchInput}
-          activeFilters={activeFilters}
-          activeSort={activeSort}
+          filters={filters}
           onSearchChange={setSearchInput}
-          onFilterToggle={toggleFilter}
-          onSortChange={setSort}
-          onNewTransaction={() => setIsNewModalOpen(true)}
+          onFilterChange={setFilters}
+          onClearFilters={clearAllFilters}
+          onOpenAdvancedFilters={() => setIsDrawerOpen(true)}
         />
 
         <TransactionList
-          transactions={filteredTransactions}
+          transactions={events}
           isLoading={isLoading}
-          isSearching={isSearching}
-          isFiltering={isFiltering}
-          searchTerm={searchQuery}
+          isSearching={!!filters.query}
+          isFiltering={Object.keys(filters).length > (filters.query ? 1 : 0)}
+          searchTerm={filters.query}
           onClearFilters={clearAllFilters}
           onNewTransaction={() => setIsNewModalOpen(true)}
+          onEventClick={setSelectedEvent}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={() => fetchNextPage()}
         />
       </div>
+
+      <AdvancedFiltersDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        filters={filters}
+        onChange={setFilters}
+        onClear={clearAllFilters}
+      />
+
+      <FinancialEventPanel
+        event={selectedEvent}
+        isOpen={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onEdit={() => setIsNewModalOpen(true)}
+        onMarkAsPaid={handleMarkAsPaid} // ✨ Injetado com sucesso!
+      />
 
       <NewTransactionModal
         isOpen={isNewModalOpen}

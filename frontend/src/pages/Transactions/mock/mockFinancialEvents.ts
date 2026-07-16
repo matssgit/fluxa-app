@@ -1,0 +1,60 @@
+import type { FinancialEventDTO } from "../types";
+
+export const mockFinancialEvents: FinancialEventDTO[] = [
+  {
+    id: "evt-1",
+    title: "Mercado Extra",
+    amount: -183.2,
+    flow: "expense",
+    status: "completed",
+    date: new Date().toISOString(),
+    category: "Alimentação",
+    account: "Nubank",
+    type: "transaction",
+  },
+  {
+    id: "evt-2",
+    title: "Netflix (Plano Familiar)",
+    amount: -55.9,
+    flow: "expense",
+    status: "completed",
+    date: new Date().toISOString(),
+    category: "Assinaturas",
+    account: "Nubank",
+    type: "subscription",
+    context: {
+      subscriptionId: "sub-123",
+      nextBillingDate: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+    },
+  },
+  {
+    id: "evt-3",
+    title: "Samsung S25 Ultra",
+    amount: -580.0,
+    flow: "expense",
+    status: "pending",
+    date: new Date().toISOString(),
+    category: "Eletrônicos",
+    account: "Visa",
+    type: "installment",
+    context: {
+      purchaseId: "pur-999",
+      installmentNumber: 3,
+      totalInstallments: 12,
+      cardName: "Visa",
+    },
+  },
+  {
+    id: "evt-4",
+    title: "Salário",
+    amount: 8500.0,
+    flow: "income",
+    status: "completed",
+    date: new Date().toISOString(),
+    category: "Receitas",
+    account: "Itaú",
+    type: "transaction",
+  },
+];

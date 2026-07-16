@@ -1,134 +1,122 @@
-import { useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, Plus, Check } from "lucide-react";
-import { QUICK_FILTERS, SORT_OPTIONS } from "../constants";
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import type {
+  FinancialEventFilters,
+  FinancialEventFlow,
+  FinancialEventStatus,
+} from "../types";
 
 interface TransactionToolbarProps {
-  searchTerm: string;
-  activeFilters: string[];
-  activeSort: string;
+  searchTerm: string | undefined;
+  filters: FinancialEventFilters;
   onSearchChange: (value: string) => void;
-  onFilterToggle: (filterId: string) => void;
-  onSortChange: (sortId: string) => void;
-  onNewTransaction: () => void;
+  onFilterChange: (newFilters: FinancialEventFilters) => void;
+  onClearFilters: () => void;
+  onOpenAdvancedFilters: () => void;
 }
 
 export function TransactionToolbar({
   searchTerm,
-  activeFilters,
-  activeSort,
+  filters,
   onSearchChange,
-  onFilterToggle,
-  onSortChange,
-  onNewTransaction,
+  onFilterChange,
+  onClearFilters,
+  onOpenAdvancedFilters,
 }: TransactionToolbarProps) {
-  // Estado puramente visual (abrir/fechar menu). O estado do valor selecionado vem das props!
-  const [isSortOpen, setIsSortOpen] = useState(false);
-  const sortRef = useRef<HTMLDivElement>(null);
+  // Conta quantos filtros estão ativos no Drawer para mostrar no badge e controlar o botão Limpar
+  const activeCount = Object.entries(filters).reduce((acc, [key, value]) => {
+    if (["query", "page", "pageSize", "sort"].includes(key)) return acc;
+    if (Array.isArray(value)) return acc + value.length;
+    if (value !== undefined) return acc + 1;
+    return acc;
+  }, 0);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
-        setIsSortOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const toggleFlow = (flow: FinancialEventFlow) => {
+    const current = filters.flow || [];
+    const newFlow = current.includes(flow)
+      ? current.filter((f) => f !== flow)
+      : [...current, flow];
+    onFilterChange({ ...filters, flow: newFlow.length ? newFlow : undefined });
+  };
 
-  const currentSortLabel =
-    SORT_OPTIONS.find((opt) => opt.id === activeSort)?.label || "Ordenar";
+  const toggleStatus = (status: FinancialEventStatus) => {
+    const current = filters.status || [];
+    const newStatus = current.includes(status)
+      ? current.filter((s) => s !== status)
+      : [...current, status];
+    onFilterChange({
+      ...filters,
+      status: newStatus.length ? newStatus : undefined,
+    });
+  };
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      {/* 
-        LINHA 1 (Desktop) / BLOCO 1 (Mobile): 
-        Pesquisa | Ordenação | Novo Lançamento 
-      */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
-        {/* Input de Pesquisa (Ocupa o espaço máximo possível) */}
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search size={18} className="text-muted" />
-          </div>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Pesquisar lançamentos..."
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-surface border border-subtle/30 text-primary placeholder:text-muted/60 focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/50 transition-all shadow-sm text-sm"
-          />
-        </div>
-
-        {/* Grupo de Ações */}
-        <div className="flex items-center gap-3">
-          {/* Dropdown de Ordenação */}
-          <div className="relative flex-1 md:flex-none" ref={sortRef}>
-            <button
-              onClick={() => setIsSortOpen(!isSortOpen)}
-              className="w-full flex items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-surface border border-subtle/30 text-secondary hover:text-primary transition-colors shadow-sm text-sm font-semibold cursor-pointer"
-            >
-              <span className="truncate">{currentSortLabel}</span>
-              <ChevronDown
-                size={16}
-                className={`text-muted transition-transform duration-200 ${
-                  isSortOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {isSortOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-surface/95 backdrop-blur-xl border border-subtle/30 rounded-2xl shadow-xl z-20 py-2 animate-fade-in divide-y divide-subtle/10">
-                {SORT_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => {
-                      onSortChange(option.id);
-                      setIsSortOpen(false);
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-secondary hover:bg-elevated hover:text-primary transition-colors text-left cursor-pointer"
-                  >
-                    <span>{option.label}</span>
-                    {activeSort === option.id && (
-                      <Check size={16} className="text-brand" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Botão Principal */}
+    <div className="flex flex-col sm:flex-row gap-4">
+      <div className="relative flex-1">
+        <Search
+          size={18}
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
+        />
+        <input
+          type="text"
+          placeholder="Pesquisar lançamentos, lojas, categorias..."
+          value={searchTerm || ""}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="w-full pl-11 pr-4 py-3 bg-surface border border-subtle/30 rounded-2xl text-sm font-semibold text-primary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all shadow-sm"
+        />
+        {searchTerm && (
           <button
-            onClick={onNewTransaction}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all whitespace-nowrap cursor-pointer"
+            onClick={() => onSearchChange("")}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-primary cursor-pointer"
           >
-            <Plus size={18} />
-            <span className="hidden sm:inline">Novo Lançamento</span>
-            <span className="sm:hidden">Novo</span>
+            <X size={16} />
           </button>
-        </div>
+        )}
       </div>
 
-      {/* 
-        LINHA 2: Chips Dinâmicos Combináveis 
-      */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 snap-x scrollbar-none">
-        {QUICK_FILTERS.map((filter) => {
-          const isActive = activeFilters.includes(filter.id);
-          return (
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-2 sm:pb-0">
+        <button
+          onClick={() => toggleFlow("income")}
+          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("income") ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+        >
+          Receitas
+        </button>
+        <button
+          onClick={() => toggleFlow("expense")}
+          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("expense") ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+        >
+          Despesas
+        </button>
+        <button
+          onClick={() => toggleStatus("pending")}
+          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.status?.includes("pending") ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+        >
+          Pendentes
+        </button>
+
+        <div className="flex items-center ml-auto gap-1">
+          {/* ✨ Botão "Limpar" aparece dinamicamente se houver filtros ativos */}
+          {activeCount > 0 && (
             <button
-              key={filter.id}
-              onClick={() => onFilterToggle(filter.id)}
-              className={`snap-start shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer ${
-                isActive
-                  ? "bg-brand/10 border-brand text-brand shadow-xs"
-                  : "bg-surface border-subtle/30 text-secondary hover:bg-elevated hover:border-subtle/50"
-              }`}
+              onClick={onClearFilters}
+              className="px-3 py-3 text-sm font-bold text-muted hover:text-primary transition-all whitespace-nowrap cursor-pointer"
             >
-              {filter.label}
+              Limpar
             </button>
-          );
-        })}
+          )}
+
+          <button
+            onClick={onOpenAdvancedFilters}
+            className="px-4 py-3 rounded-2xl text-sm font-bold bg-surface border border-subtle/30 text-secondary hover:bg-elevated hover:text-primary transition-all flex items-center gap-2 whitespace-nowrap shadow-sm cursor-pointer"
+          >
+            <SlidersHorizontal size={16} />
+            Filtros
+            {activeCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center text-[10px] ml-1">
+                {activeCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

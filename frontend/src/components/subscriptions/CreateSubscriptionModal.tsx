@@ -1,3 +1,4 @@
+// frontend/src/components/subscriptions/CreateSubscriptionModal.tsx
 import { useState } from "react";
 import {
   X,
@@ -16,12 +17,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useCategories } from "../../hooks/useCategories";
 import { api } from "../../api/client";
+import { formatLocalDate } from "../../utils/date";
 
-// Infraestrutura UX Padrão
 import { PickerModal } from "../../components/ui/PickerModal";
 import { DatePickerModal } from "../../components/ui/DatePickerModal";
 
-// ✨ TIPAGEM ESTRITA
 interface AccountData {
   id: string;
   name: string;
@@ -57,7 +57,7 @@ export function CreateSubscriptionModal({
   const { accounts = [] } = useAccounts();
   const { categories = [] } = useCategories();
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatLocalDate(new Date());
 
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -93,6 +93,33 @@ export function CreateSubscriptionModal({
     defaultValue: today,
   });
 
+  if (!isOpen) return null;
+
+  if (categories.length === 0 || accounts.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
+        <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md p-6 text-center border border-subtle/30">
+          <Layers className="w-12 h-12 text-muted mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-primary mb-2">
+            Ação Necessária
+          </h3>
+          <p className="text-sm text-muted mb-6">
+            Para cadastrar uma assinatura é necessário possuir pelo menos uma
+            conta e uma categoria.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 rounded-xl border border-subtle/30 text-secondary font-bold text-sm hover:bg-subtle/50 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const expenseCategories = categories.filter(
     (cat: CategoryData) => cat.type === "saida" || cat.type === "expense",
   );
@@ -109,8 +136,6 @@ export function CreateSubscriptionModal({
     monthly: "Mensal",
     yearly: "Anual",
   };
-
-  if (!isOpen) return null;
 
   async function onSubmit(data: SubscriptionForm) {
     try {
@@ -142,10 +167,8 @@ export function CreateSubscriptionModal({
 
   return (
     <>
-      {/* 🚀 ESTRUTURA GLOBAL IDÊNTICA AO NEW TRANSACTION MODAL */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
-        <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md max-h-[82vh] sm:max-h-[88vh] flex flex-col overflow-hidden border border-subtle/30 transition-all duration-300">
-          {/* HEADER PADRÃO */}
+        <div className="relative w-full max-w-md max-h-[80dvh] flex flex-col bg-surface border border-subtle/30 shadow-2xl rounded-3xl overflow-hidden animate-scale-in">
           <div className="flex justify-between items-center p-4 sm:p-6 border-b border-subtle/20 shrink-0">
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-primary tracking-tight">
@@ -163,138 +186,134 @@ export function CreateSubscriptionModal({
             </button>
           </div>
 
-          {/* ⚡ A MÁGICA: Formulário com min-h-0 (protege o scroll flex) e space-y-4 */}
-          <form
-            id="create-subscription-form"
-            onSubmit={handleSubmit(onSubmit)}
-            className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1 min-h-0"
-          >
-            {/* LINHA 1: NOME DO SERVIÇO (Largura Total) */}
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                <Repeat size={13} className="text-muted" />
-                <span>Nome do Serviço *</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Ex: Netflix, Spotify..."
-                {...register("title")}
-                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
-              />
-              {errors.title && (
-                <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                  {errors.title.message}
-                </span>
-              )}
-            </div>
-
-            {/* LINHA 2: VALOR E FREQUÊNCIA (Lado a Lado no Mobile!) */}
-            <div className="grid grid-cols-2 gap-4">
+          <div className="flex-1 overflow-y-auto">
+            <form
+              id="create-subscription-form"
+              onSubmit={handleSubmit(onSubmit)}
+              className="p-4 sm:p-6 space-y-4"
+            >
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <DollarSign size={13} className="text-muted" />
-                  <span>Valor *</span>
+                  <Repeat size={13} className="text-muted" />
+                  <span>Nome do Serviço *</span>
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0,00"
-                  {...register("amount", { valueAsNumber: true })}
-                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base sm:text-lg font-extrabold shadow-2xs tracking-tight"
+                  type="text"
+                  placeholder="Ex: Netflix, Spotify..."
+                  {...register("title")}
+                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
                 />
-                {errors.amount && (
+                {errors.title && (
                   <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                    {errors.amount.message}
+                    {errors.title.message}
                   </span>
                 )}
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                    <DollarSign size={13} className="text-muted" />
+                    <span>Valor *</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    {...register("amount", { valueAsNumber: true })}
+                    className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base sm:text-lg font-extrabold shadow-2xs tracking-tight"
+                  />
+                  {errors.amount && (
+                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
+                      {errors.amount.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                    <Layers size={13} className="text-muted shrink-0" />
+                    <span className="truncate">Frequência *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsFrequencyModalOpen(true)}
+                    className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
+                  >
+                    <span className="truncate pr-2">
+                      {frequencyLabels[selectedFrequency]}
+                    </span>
+                    <ChevronDown size={16} className="text-muted shrink-0" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                    <CalendarIcon size={13} className="text-muted shrink-0" />
+                    <span className="truncate">Vencimento *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsDateModalOpen(true)}
+                    className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
+                  >
+                    <span className="truncate">
+                      {selectedDate
+                        ? new Intl.DateTimeFormat("pt-BR").format(
+                            new Date(`${selectedDate}T12:00:00`),
+                          )
+                        : "Selecione..."}
+                    </span>
+                    <CalendarIcon size={16} className="text-muted shrink-0" />
+                  </button>
+                  {errors.next_billing_date && (
+                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
+                      {errors.next_billing_date.message}
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                    <Building size={13} className="text-muted shrink-0" />
+                    <span className="truncate">Conta *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAccountModalOpen(true)}
+                    className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedAccountId ? "text-muted" : "text-primary"}`}
+                  >
+                    <span className="truncate pr-2">{selectedAccountName}</span>
+                    <ChevronDown size={16} className="text-muted shrink-0" />
+                  </button>
+                  {errors.account_id && (
+                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
+                      {errors.account_id.message}
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <Layers size={13} className="text-muted shrink-0" />
-                  <span className="truncate">Frequência *</span>
+                  <Tag size={13} className="text-muted" />
+                  <span>Categoria</span>
                 </label>
                 <button
                   type="button"
-                  onClick={() => setIsFrequencyModalOpen(true)}
-                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
+                  onClick={() => setIsCategoryModalOpen(true)}
+                  className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-sm font-semibold shadow-2xs cursor-pointer ${!selectedCategoryId ? "text-muted" : "text-primary"}`}
                 >
-                  <span className="truncate pr-2">
-                    {frequencyLabels[selectedFrequency]}
-                  </span>
+                  <span className="truncate pr-2">{selectedCategoryName}</span>
                   <ChevronDown size={16} className="text-muted shrink-0" />
                 </button>
               </div>
-            </div>
+            </form>
+          </div>
 
-            {/* LINHA 3: DATA E CONTA (Lado a Lado no Mobile!) */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <CalendarIcon size={13} className="text-muted shrink-0" />
-                  <span className="truncate">Vencimento *</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsDateModalOpen(true)}
-                  className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-                >
-                  <span className="truncate">
-                    {selectedDate
-                      ? new Intl.DateTimeFormat("pt-BR").format(
-                          new Date(selectedDate),
-                        )
-                      : "Selecione..."}
-                  </span>
-                  <CalendarIcon size={16} className="text-muted shrink-0" />
-                </button>
-                {errors.next_billing_date && (
-                  <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                    {errors.next_billing_date.message}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <Building size={13} className="text-muted shrink-0" />
-                  <span className="truncate">Conta *</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsAccountModalOpen(true)}
-                  className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedAccountId ? "text-muted" : "text-primary"}`}
-                >
-                  <span className="truncate pr-2">{selectedAccountName}</span>
-                  <ChevronDown size={16} className="text-muted shrink-0" />
-                </button>
-                {errors.account_id && (
-                  <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                    {errors.account_id.message}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* LINHA 4: CATEGORIA (Largura Total) */}
-            <div>
-              <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                <Tag size={13} className="text-muted" />
-                <span>Categoria</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsCategoryModalOpen(true)}
-                className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-sm font-semibold shadow-2xs cursor-pointer ${!selectedCategoryId ? "text-muted" : "text-primary"}`}
-              >
-                <span className="truncate pr-2">{selectedCategoryName}</span>
-                <ChevronDown size={16} className="text-muted shrink-0" />
-              </button>
-            </div>
-          </form>
-
-          {/* FOOTER PADRÃO */}
-          <div className="p-4 sm:p-6 bg-surface border-t border-subtle/20 flex gap-3 shrink-0">
+          <div className="shrink-0 sticky bottom-0 p-4 sm:p-6 bg-surface border-t border-subtle/20 flex gap-3 z-10">
             <button
               type="button"
               onClick={onClose}
@@ -314,7 +333,6 @@ export function CreateSubscriptionModal({
         </div>
       </div>
 
-      {/* MODAIS UX PINE & SAGE */}
       <PickerModal
         isOpen={isFrequencyModalOpen}
         onClose={() => setIsFrequencyModalOpen(false)}

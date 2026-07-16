@@ -230,7 +230,7 @@ export function Settings() {
                   </div>
                   <div className="whitespace-nowrap">
                     <span
-                      className={`text-sm font-bold ${isActive ? "text-primary" : "text-secondary"}`}
+                      className={`text-sm font-bold ${isActive ? "text-brand" : "text-primary"}`}
                     >
                       {tab.label}
                     </span>
@@ -486,7 +486,6 @@ export function Settings() {
                       </span>
                     </div>
                   </div>
-                  {/* ✨ TAILWIND V4: classes corrigidas para 'after:' puro */}
                   <label className="relative inline-flex items-center cursor-pointer shrink-0">
                     <input
                       type="checkbox"
@@ -566,7 +565,6 @@ export function Settings() {
                 </div>
               </div>
 
-              {/* DADOS */}
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-primary border-b border-subtle/20 pb-2">
                   Seus Dados
