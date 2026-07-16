@@ -10,29 +10,42 @@ export async function usersRoutes(app: FastifyInstance) {
   // 1. ATUALIZAR PERFIL (Identidade)
   // ==========================================
   app.put("/profile", { preHandler: [checkAuth] }, async (request, reply) => {
-    // Zod blindando a entrada: O email sequer existe no schema.
-    // Qualquer tentativa de enviar "email" no payload será ignorada.
-    const updateProfileSchema = z.object({
-      name: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
-      avatar_url: z.string().url().nullable().optional(),
-    });
+    try {
+      const updateProfileSchema = z.object({
+        name: z.string().min(2),
+        avatar_url: z
+          .string()
+          .refine((val) => !val.startsWith("data:image"), {
+            message:
+              "Imagens Base64 não são permitidas no banco. Utilize um serviço de Storage.",
+          })
+          .nullable()
+          .optional(),
+      });
 
-    const { name, avatar_url } = updateProfileSchema.parse(request.body);
+      const { name, avatar_url } = updateProfileSchema.parse(request.body);
 
-    // O ID vem de forma segura do token JWT decodificado pelo checkAuth
-    const userId = request.user.sub;
+      const userId = request.user.sub;
 
-    await db("users").where("id", userId).update({
-      name,
-      avatar_url,
-      updated_at: db.fn.now(), // Caso tenha essa coluna
-    });
+      await db("users").where("id", userId).update({
+        name,
+        avatar_url,
+      });
 
-    return reply.status(200).send({ message: "Perfil atualizado com sucesso" });
+      return reply
+        .status(200)
+        .send({ message: "Perfil atualizado com sucesso" });
+    } catch (error: any) {
+      console.error("🔥 ERRO FATAL NO PUT /profile:", error);
+      return reply.status(500).send({
+        error: "Internal Server Error",
+        details: error.message,
+      });
+    }
   });
 
   // ==========================================
-  // 2. ATUALIZAR PREFERÊNCIAS (JSON Merge)
+  // 2. ATUALIZAR PREFERÊNCIAS (Deep Merge Seguro)
   // ==========================================
   app.put(
     "/preferences",
@@ -41,11 +54,7 @@ export async function usersRoutes(app: FastifyInstance) {
       try {
         const updatePreferencesSchema = z.object({
           theme: z.enum(["light", "dark", "system"]).optional(),
-          privacy: z
-            .object({
-              hide_balance: z.boolean(),
-            })
-            .optional(),
+          privacy: z.object({ hide_balance: z.boolean() }).optional(),
           notifications: z
             .object({
               reminders_enabled: z.boolean(),
@@ -54,55 +63,44 @@ export async function usersRoutes(app: FastifyInstance) {
             .optional(),
         });
 
-        const newPreferences = updatePreferencesSchema.parse(request.body);
-        const userId = request.user.sub;
-
-        // 1. Busca o usuário atual
-        const user = await db("users").where("id", userId).first();
-
-        if (!user) {
+        const incomingPrefs = updatePreferencesSchema.parse(request.body);
+        const user = await db("users").where("id", request.user.sub).first();
+        if (!user)
           return reply.status(404).send({ error: "Usuário não encontrado" });
-        }
 
-        // 2. Parse ultra-seguro (Evita crashes se a coluna vier null ou mal formatada)
-        let currentPreferences: any = {};
+        let currentPrefs: any = {};
         try {
-          currentPreferences =
+          currentPrefs =
             typeof user.preferences === "string"
               ? JSON.parse(user.preferences)
               : user.preferences || {};
-        } catch (parseError) {
-          console.warn(
-            "Aviso: Falha ao fazer parse das preferências antigas. Assumindo objeto vazio.",
-          );
+        } catch (e) {
+          /* fallback vazio */
         }
 
-        // 3. Deep Merge blindado contra "undefined"
         const mergedPreferences = {
-          ...currentPreferences,
-          theme: newPreferences.theme ?? currentPreferences.theme ?? "system",
+          ...currentPrefs,
+          theme: incomingPrefs.theme ?? currentPrefs.theme ?? "system",
           privacy: {
-            ...(currentPreferences.privacy || {}),
-            ...(newPreferences.privacy || {}),
+            ...(currentPrefs.privacy || {}),
+            ...(incomingPrefs.privacy || {}),
           },
           notifications: {
-            ...(currentPreferences.notifications || {}),
-            ...(newPreferences.notifications || {}),
+            ...(currentPrefs.notifications || {}),
+            ...(incomingPrefs.notifications || {}),
           },
         };
 
         // 4. Salva no banco (Sem o JSON.stringify, deixamos o Knex/Driver lidar com o JSON nativamente)
-        await db("users").where("id", userId).update({
-          // Se você usa SQLite e mesmo assim der erro, mude para: JSON.stringify(mergedPreferences)
-          preferences: mergedPreferences,
-        });
+        await db("users")
+          .where("id", request.user.sub)
+          .update({ preferences: mergedPreferences });
 
         return reply.status(200).send({
           message: "Preferências atualizadas",
           preferences: mergedPreferences,
         });
       } catch (error: any) {
-        // 🔥 LOG FATAL: Vai mostrar exatamente onde o banco reclamou no terminal do Backend!
         console.error("🔥 ERRO FATAL NO PUT /preferences:", error);
         return reply.status(500).send({
           error: "Internal Server Error",
@@ -111,6 +109,47 @@ export async function usersRoutes(app: FastifyInstance) {
       }
     },
   );
+
+  // ==========================================
+  // 3. EXPORTAÇÃO DE DADOS (CSV de Transações)
+  // ==========================================
+  app.get("/export", { preHandler: [checkAuth] }, async (request, reply) => {
+    try {
+      const userId = request.user.sub;
+
+      // Busca todas as transações do utilizador
+      const transactions = await db("transactions")
+        .where("user_id", userId)
+        .orderBy("created_at", "desc");
+
+      // Constrói o cabeçalho do ficheiro CSV
+      let csvContent = "ID,Titulo,Valor,Tipo,Status,Data Criacao\n";
+
+      // Mapeia os dados e constrói as linhas separadas por vírgula
+      transactions.forEach((t) => {
+        // Escapa aspas no título para evitar quebras no Excel
+        const safeTitle = `"${(t.title || "").replace(/"/g, '""')}"`;
+        const amount = Number(t.amount || 0).toFixed(2);
+
+        csvContent += `${t.id},${safeTitle},${amount},${t.type},${t.status},${t.created_at}\n`;
+      });
+
+      // Configura os headers para forçar o browser a fazer o download do ficheiro
+      reply.header("Content-Type", "text/csv; charset=utf-8");
+      reply.header(
+        "Content-Disposition",
+        `attachment; filename="fluxa-transacoes-${new Date().toISOString().split("T")[0]}.csv"`,
+      );
+
+      return reply.send(csvContent);
+    } catch (error: any) {
+      console.error("🔥 ERRO FATAL NA EXPORTAÇÃO:", error);
+      return reply.status(500).send({
+        error: "Internal Server Error",
+        details: error.message,
+      });
+    }
+  });
 
   // ****** CADASTRO ******
   app.post("/register", async (request, reply) => {

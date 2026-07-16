@@ -12,8 +12,8 @@ export async function categoriesRoutes(app: FastifyInstance) {
       const createCategorySchema = z.object({
          name: z.string(),
          type: z.enum(["income", "expense"]),
-         color: z.string().optional(),
-         icon: z.string().optional(),
+         color: z.string().optional().nullable(),
+         icon: z.string().optional().nullable(),
       });
 
       const { name, type, color, icon } = createCategorySchema.parse(
@@ -21,13 +21,14 @@ export async function categoriesRoutes(app: FastifyInstance) {
       );
       const userId = (request.user as any).sub;
 
+      // CORREÇÃO: Fallback para `null` previne o "Undefined binding(s)" do Knex
       await db("categories").insert({
          id: randomUUID(),
          user_id: userId,
          name,
          type,
-         color,
-         icon,
+         color: color || null,
+         icon: icon || null,
       });
 
       return reply.status(201).send();

@@ -1,17 +1,18 @@
 import fastify from "fastify";
-import cors from "@fastify/cors"; // 1. Importação adicionada
+import cors from "@fastify/cors";
 import { env } from "./env/index.js";
 import cookie from "@fastify/cookie";
 import fastifyJwt from "@fastify/jwt";
 import { usersRoutes } from "./routes/users.js";
 import { creditRoutes } from "./routes/credit.js";
-import { dashboardRoutes } from "./routes/dashboard.js";
+import { walletsRoutes } from "./routes/wallets.js";
 import { accountsRoutes } from "./routes/accounts.js";
+import { analyticsRoutes } from "./routes/analytics.js";
+import { dashboardRoutes } from "./routes/dashboard.js";
 import { categoriesRoutes } from "./routes/categories.js";
 import { transactionsRoutes } from "./routes/transactions.js";
 import { subscriptionsRoutes } from "./routes/subscriptions.js";
-import { walletsRoutes } from "./routes/wallets.js";
-import { analyticsRoutes } from "./routes/analytics.js";
+import { financialEventsRoutes } from "./routes/financial-events.js";
 
 export const app = fastify();
 
@@ -63,4 +64,8 @@ app.register(walletsRoutes, {
 
 app.register(analyticsRoutes, {
   prefix: "/analytics",
+});
+
+app.register(financialEventsRoutes, {
+  prefix: "/financial-events",
 });
