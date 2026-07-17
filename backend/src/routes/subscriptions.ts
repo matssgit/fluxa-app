@@ -4,24 +4,23 @@ import { randomUUID } from "node:crypto";
 import { db as knex } from "../database.js";
 import { checkAuth } from "../middlewares/check-auth.js";
 
+interface AuthUser {
+  sub: string;
+}
+
 export async function subscriptionsRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
 
-  // ****** 1. ANALYTICS (CENTRO DE CONTROLE DE ASSINATURAS) ******
-  // DEVE FICAR NO TOPO para não conflitar com rotas de /:id
+  // ****** 1. ANALYTICS ******
   app.get("/analytics", async (request) => {
-    const userId = (request.user as any).sub;
+    const userId = (request.user as AuthUser).sub;
 
-    // 1. Busca apenas assinaturas ATIVAS para projeção de custos
     const activeSubs = await knex("subscriptions").where({
       user_id: userId,
       status: "active",
     });
 
-    // 2. Busca o total de receitas do mês atual (para cruzar com o Orçamento)
     const today = new Date();
-
-    // Usando substring(0, 10) garantimos o tipo "string" estrito (YYYY-MM-DD)
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
       .toISOString()
       .substring(0, 10);
@@ -31,7 +30,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
     const incomeResult = await knex("transactions")
       .where({ user_id: userId })
-      .andWhere("amount", ">", 0) // Apenas Entradas
+      .andWhere("amount", ">", 0)
       .andWhere(function () {
         this.where("status", "completed")
           .andWhereBetween("completed_date", [startOfMonth, endOfMonth])
@@ -43,7 +42,6 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
     const totalIncomeMonth = Number(incomeResult?.totalIncome) || 0;
 
-    // 3. Variáveis de Telemetria
     let monthlyTotal = 0;
     let yearlyProjection = 0;
     let upcomingNext7Days = 0;
@@ -55,11 +53,9 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
       0,
     ).getDate();
 
-    // 4. Algoritmo de Normalização de Custos e Radar de Vencimentos
     for (const sub of activeSubs) {
       const amount = Number(sub.amount);
 
-      // Custos Mensais vs Anuais
       if (sub.frequency === "yearly") {
         yearlyProjection += amount;
         monthlyTotal += amount / 12;
@@ -68,11 +64,9 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
         yearlyProjection += amount * 12;
       }
 
-      // Radar de 7 Dias Dinâmico
-      const dueDay = sub.due_day;
+      const dueDay = sub.due_day || 1;
       let daysUntilDue = dueDay - currentDay;
 
-      // Se o dia já passou neste mês, a próxima cobrança é no mês que vem
       if (daysUntilDue < 0) {
         daysUntilDue += daysInMonth;
       }
@@ -82,7 +76,6 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
       }
     }
 
-    // 5. Cálculo de Impacto na Renda (Prevenção de divisão por zero)
     const budgetImpact =
       totalIncomeMonth > 0 ? (monthlyTotal / totalIncomeMonth) * 100 : 0;
 
@@ -94,45 +87,74 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     };
   });
 
-  // ****** 2. CRIAR UMA ASSINATURA ******
+  // ****** 2. CRIAR ASSINATURAS ******
   app.post("/", async (request, reply) => {
-    const createSubscriptionSchema = z
-      .object({
-        title: z.string().min(1, "O nome é obrigatório"),
-        amount: z.number().positive("O valor deve ser positivo"),
-        due_day: z.number().min(1).max(31, "Dia inválido"),
-        frequency: z.enum(["monthly", "yearly"]).default("monthly"),
-        category_id: z.string().uuid("Categoria inválida"),
-        account_id: z.string().uuid().optional().nullable(),
-        card_id: z.string().uuid().optional().nullable(),
-      })
-      .refine((data) => data.account_id || data.card_id, {
-        message: "A assinatura deve estar vinculada a uma Conta ou a um Cartão",
-        path: ["account_id"],
+    // LOG DE SEGURANÇA: Ver o que está a chegar EXATAMENTE antes de validar
+    console.log(
+      "⚡ RECEBIDO NO BACKEND:",
+      JSON.stringify(request.body, null, 2),
+    );
+
+    try {
+      const createSubscriptionSchema = z.object({
+        title: z.string().min(1),
+        amount: z.number().positive(),
+        due_day: z.number().min(1).max(31).optional(),
+        next_billing_date: z.string().optional(),
+        frequency: z.enum(["monthly", "yearly"]),
+        category_id: z.string().nullable().optional(), // Relaxado
+        account_id: z.string().nullable().optional(), // Relaxado
+        card_id: z.string().nullable().optional(), // Relaxado
       });
 
-    const body = createSubscriptionSchema.parse(request.body);
-    const userId = (request.user as any).sub;
+      const body = createSubscriptionSchema.parse(request.body);
 
-    await knex("subscriptions").insert({
-      id: randomUUID(),
-      user_id: userId,
-      category_id: body.category_id,
-      account_id: body.account_id,
-      card_id: body.card_id,
-      title: body.title,
-      amount: body.amount,
-      due_day: body.due_day,
-      frequency: body.frequency,
-      status: "active",
-    });
+      // LOG DE SEGURANÇA: Verificar se os IDs estão nulos
+      console.log("🛠️ DADOS PROCESSADOS:", {
+        acc: body.account_id,
+        card: body.card_id,
+        cat: body.category_id,
+      });
 
-    return reply.status(201).send();
+      if (!body.account_id && !body.card_id) {
+        throw new Error("A assinatura precisa de uma Conta ou Cartão!");
+      }
+
+      const userId = (request.user as AuthUser).sub;
+
+      const calculatedDueDay =
+        body.due_day ||
+        (body.next_billing_date
+          ? parseInt(body.next_billing_date.split("-")[2] || "1", 10)
+          : 1);
+
+      await knex("subscriptions").insert({
+        id: randomUUID(),
+        user_id: userId,
+        category_id: body.category_id || null,
+        account_id: body.account_id || null,
+        card_id: body.card_id || null,
+        title: body.title,
+        amount: body.amount,
+        due_day: calculatedDueDay,
+        next_billing_date: body.next_billing_date || null,
+        frequency: body.frequency,
+        status: "active",
+      });
+
+      return reply.status(201).send();
+    } catch (error: unknown) {
+      console.error("🔥 ERRO FATAL:", error);
+      return reply.status(400).send({
+        message: "Erro de validação",
+        detail: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
   });
 
   // ****** 3. LISTAR ASSINATURAS ******
   app.get("/", async (request) => {
-    const userId = (request.user as any).sub;
+    const userId = (request.user as AuthUser).sub;
 
     const subscriptions = await knex("subscriptions")
       .leftJoin("categories", "subscriptions.category_id", "categories.id")
@@ -163,7 +185,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
     const { id } = updateParamsSchema.parse(request.params);
     const { status } = updateBodySchema.parse(request.body);
-    const userId = (request.user as any).sub;
+    const userId = (request.user as AuthUser).sub;
 
     const subscription = await knex("subscriptions")
       .where({ id, user_id: userId })
@@ -185,7 +207,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     });
 
     const { id } = deleteParamsSchema.parse(request.params);
-    const userId = (request.user as any).sub;
+    const userId = (request.user as AuthUser).sub;
 
     const subscription = await knex("subscriptions")
       .where({ id, user_id: userId })
@@ -212,7 +234,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
     const { id } = payParamsSchema.parse(request.params);
     const { account_id } = payBodySchema.parse(request.body);
-    const userId = (request.user as any).sub;
+    const userId = (request.user as AuthUser).sub;
 
     const subscription = await knex("subscriptions")
       .where({ id, user_id: userId })

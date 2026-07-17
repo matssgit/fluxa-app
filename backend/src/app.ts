@@ -55,7 +55,7 @@ app.register(dashboardRoutes, {
 });
 
 app.register(subscriptionsRoutes, {
-  prefix: "/subscriptions",
+  prefix: "subscriptions",
 });
 
 app.register(walletsRoutes, {

@@ -22,7 +22,10 @@ export class FinancialEventsRepository {
         ),
         "t.status",
         "t.created_at as date",
-        knex.raw("'transaction' as type"),
+        // ✨ A CAMUFLAGEM: Se tiver subscription_id, veste-se de assinatura
+        knex.raw(
+          "CASE WHEN t.subscription_id IS NOT NULL THEN 'subscription' ELSE 'transaction' END as type",
+        ),
         "t.description as merchant",
         "t.observation as notes",
         "t.category_id as categoryId",
@@ -30,7 +33,12 @@ export class FinancialEventsRepository {
         "t.account_id as accountId",
         "acc.name as account",
         knex.raw("NULL::text as card_name"), // Cast explícito para UNION
-        knex.raw("'{}'::jsonb as context"), // JSONB vazio para evitar erro no filtro context->>'cardId'
+        // ✨ O CONTEXTO: Injeta o ID da assinatura original para o ícone e UI funcionarem
+        knex.raw(`
+          CASE WHEN t.subscription_id IS NOT NULL 
+          THEN jsonb_build_object('subscriptionId', t.subscription_id)
+          ELSE '{}'::jsonb END as context
+        `),
         "t.created_at as createdAt",
         knex.raw('NULL::timestamp as "updatedAt"'), // Correção: Transações não têm updated_at
       )
@@ -81,7 +89,9 @@ export class FinancialEventsRepository {
         "s.title",
         "s.amount",
         knex.raw("'expense' as flow"),
-        "s.status",
+        knex.raw(
+          "CASE WHEN s.status = 'active' THEN 'pending' ELSE s.status END as status",
+        ),
         "s.created_at as date",
         knex.raw("'subscription' as type"),
         knex.raw("NULL::text as merchant"),
@@ -92,7 +102,9 @@ export class FinancialEventsRepository {
         "acc.name as account",
         "c.name as card_name",
         knex.raw(`jsonb_build_object(
-          'subscriptionId', s.id
+          'subscriptionId', s.id,
+          'dueDay', s.due_day,
+          'nextBillingDate', s.next_billing_date
         ) as context`),
         "s.created_at as createdAt",
         "s.updated_at as updatedAt",
@@ -100,7 +112,19 @@ export class FinancialEventsRepository {
       .leftJoin("categories as cat", "s.category_id", "cat.id")
       .leftJoin("accounts as acc", "s.account_id", "acc.id") // Correção de JOIN: Faltava o relacionamento da conta
       .leftJoin("cards as c", "s.card_id", "c.id")
-      .where("s.user_id", userId);
+      .where("s.user_id", userId)
+      // ✨ A OCULTAÇÃO: Esconde a assinatura pendente se já houver transação paga neste mês
+      .whereNotExists(function () {
+        this.select(1)
+          .from("transactions as t")
+          .whereRaw("t.subscription_id = s.id")
+          .whereRaw(
+            "EXTRACT(MONTH FROM t.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)",
+          )
+          .whereRaw(
+            "EXTRACT(YEAR FROM t.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)",
+          );
+      });
 
     // -------------------------------------------------------------------------
     // 4. THE MASTER QUERY
