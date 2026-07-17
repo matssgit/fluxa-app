@@ -9,9 +9,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAccounts } from "../../hooks/useAccounts";
-import { AccountModal } from "../../components//accounts/AccountModal";
+import { AccountModal } from "../../components/accounts/AccountModal";
 import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
-import { EmptyState, Skeleton } from "../../components/ui";
+import { Skeleton } from "../../components/ui";
+
+// ✨ IMPORTAMOS O NOVO COMPONENTE EDUCACIONAL (substituindo EmptyState genérico)
+import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
 interface AccountData {
   id: string;
@@ -75,15 +78,26 @@ export function Accounts() {
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <button
-          onClick={handleCreate}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer"
-        >
-          <Plus size={18} />
-          <span>Nova Conta</span>
-        </button>
-      </div>
+      {/* Exibe o Header e o botão apenas se existirem contas. Se estiver vazio, a FeatureIntroduction brilha. */}
+      {accounts.length > 0 && !isLoading && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
+              Contas
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-muted mt-1">
+              Faça a gestão dos seus saldos e patrimónios.
+            </p>
+          </div>
+          <button
+            onClick={handleCreate}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 shadow-sm cursor-pointer active:scale-95"
+          >
+            <Plus size={18} />
+            <span>Nova Conta</span>
+          </button>
+        </div>
+      )}
 
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -94,13 +108,27 @@ export function Accounts() {
       )}
 
       {!isLoading && accounts.length === 0 ? (
-        <div className="py-12">
-          <EmptyState
-            icon={Landmark}
-            title="Nenhuma conta cadastrada"
-            description="Você ainda não cadastrou nenhuma conta corrente ou carteira. Cadastre a primeira para liberar os lançamentos no seu Caixa!"
-          />
-        </div>
+        // 🚀 O NOVO ONBOARDING EDUCACIONAL ENTRA AQUI
+        <FeatureIntroduction
+          icon={Landmark}
+          title="Contas"
+          subtitle="Onde o seu dinheiro mora"
+          whatIs="Uma conta representa o lugar onde o seu dinheiro vive fisicamente ou digitalmente. Ela reflete o seu saldo real. Toda a movimentação financeira no Fluxa precisa estar ligada a uma conta."
+          examples={[
+            { label: "Conta Corrente", category: "Nubank, Itaú, Santander" },
+            {
+              label: "Carteira Física",
+              category: "Dinheiro vivo (notas e moedas)",
+            },
+            {
+              label: "Investimentos",
+              category: "Cora, Poupança, Tesouro Direto",
+            },
+          ]}
+          tip="Para que o seu Caixa seja preciso, cadastre as suas contas com os saldos exatos que tem hoje."
+          actionLabel="Criar a minha primeira Conta"
+          onAction={handleCreate}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {accounts.map((acc: AccountData) => {
@@ -112,11 +140,11 @@ export function Accounts() {
             return (
               <div
                 key={acc.id}
-                className="card-default p-6 flex flex-col justify-between h-auto min-h-48 border border-subtle/30 bg-surface group transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
+                className="card-default p-6 flex flex-col justify-between h-auto min-h-48 border border-subtle/30 bg-surface group transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 rounded-3xl"
               >
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-elevated flex items-center justify-center text-primary group-hover:bg-brand/10 group-hover:text-brand transition-colors">
+                    <div className="w-12 h-12 rounded-2xl bg-elevated flex items-center justify-center text-primary group-hover:bg-brand/10 group-hover:text-brand transition-colors shadow-inner">
                       <IconComponent size={24} />
                     </div>
                     <span
@@ -132,7 +160,7 @@ export function Accounts() {
                     </h3>
                     <p className="text-xs text-muted font-medium mt-0.5">
                       Saldo Atual:{" "}
-                      <strong className="text-primary">
+                      <strong className="text-primary text-sm">
                         {formatCurrency(acc.balance ?? 0)}
                       </strong>
                     </p>
@@ -140,7 +168,7 @@ export function Accounts() {
                 </div>
 
                 <div className="pt-4 mt-4 border-t border-subtle/20 flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted">
                     Gestão
                   </span>
                   <div className="flex items-center gap-1 bg-elevated/60 p-1 rounded-xl border border-subtle/20">
@@ -154,7 +182,7 @@ export function Accounts() {
                     <button
                       onClick={() => handleDelete(acc)}
                       title="Excluir conta"
-                      className="p-1.5 text-muted hover:text-danger hover:bg-surface rounded-lg transition-all cursor-pointer"
+                      className="p-1.5 text-muted hover:text-red-500 hover:bg-surface rounded-lg transition-all cursor-pointer"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -166,7 +194,6 @@ export function Accounts() {
         </div>
       )}
 
-      {/* O Type Casting seguro que satisfaz o linter */}
       <AccountModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -180,7 +207,6 @@ export function Accounts() {
         }
       />
 
-      {/* O Modal de exclusão não será mais apagado sem querer! */}
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

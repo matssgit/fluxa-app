@@ -7,6 +7,7 @@ import {
   Wallet,
   Settings,
   Target,
+  Tag,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,9 +20,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Início", path: "/dashboard", icon: Home },
   { label: "Caixa", path: "/transactions", icon: ArrowLeftRight },
+  { label: "Contas", path: "/accounts", icon: Wallet },
+  { label: "Categorias", path: "/categories", icon: Tag },
   { label: "Cartões", path: "/cards", icon: CreditCard },
   { label: "Assinaturas", path: "/subscriptions", icon: Repeat },
-  { label: "Contas", path: "/accounts", icon: Wallet },
   { label: "Objetivos", path: "/wallets", icon: Target },
 ];
 
@@ -47,7 +49,7 @@ export function Sidebar() {
 
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         <div className="px-4 pb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted select-none">
-          Menu
+          Menu principal
         </div>
 
         {NAV_ITEMS.map((item) => {

@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   LogOut,
   ShieldCheck,
-  User,
   Tag,
   Settings,
   ChevronDown,
@@ -14,40 +13,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 
-// ✨ NOVA IDENTIDADE VISUAL OFICIAL (Objetiva, Clara e Corporativa)
-const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
-  "/dashboard": {
-    title: "Dashboard",
-    subtitle: "Visão geral da sua vida financeira",
-  },
-  "/transactions": {
-    title: "Caixa",
-    subtitle: "Acompanhe receitas, despesas e movimentações",
-  },
-  "/cards": {
-    title: "Cartões",
-    subtitle: "Gerencie cartões, compras e parcelas",
-  },
-  "/subscriptions": {
-    title: "Assinaturas",
-    subtitle: "Controle cobranças e pagamentos recorrentes",
-  },
-  "/accounts": {
-    title: "Contas",
-    subtitle: "Gerencie contas, carteiras e saldos disponíveis",
-  },
-  "/wallets": {
-    title: "Objetivos",
-    subtitle: "Organize metas e acompanhe sua evolução",
-  },
-  "/settings": {
-    title: "Configurações",
-    subtitle: "Personalize sua experiência no Fluxa",
-  },
-};
-
 export function Header() {
-  const location = useLocation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
@@ -64,13 +30,6 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const currentPathKey = Object.keys(PAGE_TITLES).find((key) =>
-    location.pathname.startsWith(key),
-  );
-  const pageInfo = currentPathKey
-    ? PAGE_TITLES[currentPathKey]
-    : { title: "Fluxa", subtitle: "Sua vida financeira organizada" };
-
   const getUserInitials = (name?: string): string => {
     if (!name) return "US";
     const parts = name.trim().split(" ");
@@ -81,15 +40,15 @@ export function Header() {
 
   return (
     <header className="h-20 w-full bg-surface/75 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-      <div className="space-y-0.5 min-w-0 pr-4">
+      {/* 🚀 REGRA UX #04: HEADER FIXO (IDENTIDADE VISUAL DA APLICAÇÃO) */}
+      <div className="space-y-0.5 min-w-0 pr-4 select-none">
         <div className="flex items-center gap-2">
-          <h1 className="text-base sm:text-lg font-extrabold text-primary tracking-tight leading-none truncate">
-            {pageInfo.title}
+          <h1 className="text-xl sm:text-2xl font-black text-primary tracking-tight leading-none uppercase">
+            FLUXA
           </h1>
-          <span className="w-1.5 h-1.5 rounded-full bg-brand hidden sm:inline-block shrink-0" />
         </div>
-        <p className="text-xs font-medium text-muted hidden sm:block truncate">
-          {pageInfo.subtitle}
+        <p className="text-[10px] sm:text-xs font-semibold text-muted/60 tracking-widest hidden sm:block truncate uppercase">
+          Organize a sua vida financeira.
         </p>
       </div>
 
@@ -162,6 +121,14 @@ export function Header() {
 
               <div className="py-1">
                 <Link
+                  to="/categories"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
+                >
+                  <Tag className="w-4 h-4 text-muted" />
+                  <span>Categorias e Tags</span>
+                </Link>
+                <Link
                   to="/subscriptions"
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
@@ -174,24 +141,8 @@ export function Header() {
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors"
                 >
-                  <User className="w-4 h-4 text-brand" />
-                  <span>Meu Perfil</span>
-                </Link>
-                <Link
-                  to="/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors"
-                >
-                  <Tag className="w-4 h-4 text-muted" />
-                  <span>Categorias & Tags</span>
-                </Link>
-                <Link
-                  to="/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
-                >
                   <Settings className="w-4 h-4 text-muted" />
-                  <span>Configurações globais</span>
+                  <span>Configurações</span>
                 </Link>
               </div>
 

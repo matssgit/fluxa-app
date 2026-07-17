@@ -84,7 +84,7 @@ export function Dashboard() {
 
   if (isError || !data) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center p-6 ">
+      <div className="min-h-[60vh] flex items-center justify-center p-6 animate-fade-in">
         <EmptyState
           icon={AlertCircle}
           title="Não foi possível carregar a telemetria"
@@ -166,10 +166,21 @@ export function Dashboard() {
   const isHealthy = projectedBalance >= 0 && burnRatePercentage <= 80;
 
   return (
-    /* 🏛️ NAKED PAGE: O Container global comanda as larguras */
-    <div className="w-full space-y-6 sm:space-y-8">
+    <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-10">
+      {/* 🚀 REGRA UX #04: HIERARQUIA DE CONTEXTO */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-xs sm:text-sm font-medium text-muted mt-1">
+            Visão geral e telemetria em tempo real do seu património.
+          </p>
+        </div>
+      </div>
+
       {/* BANNER DE SAÚDE FINANCEIRA */}
-      <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand">
+      <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand rounded-3xl">
         <div className="flex items-center gap-4">
           <div
             className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
@@ -201,12 +212,11 @@ export function Dashboard() {
       </div>
 
       {/* GRID SUPERIOR: CARDS DE RESUMO */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 ">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
           title="Entradas do Mês"
           value={totalIncome}
           icon={ArrowUpCircle}
-          
           variant="income"
         />
         <SummaryCard

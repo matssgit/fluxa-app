@@ -1,25 +1,26 @@
 import type { Transaction } from "../../../types/transaction";
-import type { FinancialEvent, FinancialEventType } from "../types";
+import type { FinancialEventDTO, FinancialEventType } from "../types"; // ✨ Corrigido o import
 
 export function mapToFinancialEvents(
   transactions: Transaction[],
-): FinancialEvent[] {
+): FinancialEventDTO[] {
+  // ✨ Corrigido o retorno
   return transactions.map((tx) => {
     // 🧪 Heurística temporária para simular o polimorfismo
     // Na Etapa 7, o backend fará isto de forma nativa e precisa.
     let eventType: FinancialEventType = "transaction";
-    let extraProps = {};
+    let contextProps: FinancialEventDTO["context"] = {}; // ✨ Usando o context do DTO
 
     const titleLower = tx.title.toLowerCase();
 
     // Simula uma parcela se encontrar "x/y" ou a palavra "parcela"
     if (titleLower.includes("parcela") || titleLower.match(/\d+\/\d+/)) {
       eventType = "installment";
-      extraProps = {
-        purchase_id: `purchase-${tx.id}`,
-        installment_number: 1, // Simulado
-        total_installments: 12, // Simulado
-        card_name: tx.account_name || "Cartão",
+      contextProps = {
+        purchaseId: `purchase-${tx.id}`,
+        installmentNumber: 1, // Simulado
+        totalInstallments: 12, // Simulado
+        cardName: tx.account_name || "Cartão",
       };
     }
     // Simula uma assinatura para serviços conhecidos
@@ -29,9 +30,9 @@ export function mapToFinancialEvents(
       titleLower.includes("amazon")
     ) {
       eventType = "subscription";
-      extraProps = {
-        subscription_id: `sub-${tx.id}`,
-        next_billing_date: new Date(
+      contextProps = {
+        subscriptionId: `sub-${tx.id}`,
+        nextBillingDate: new Date(
           Date.now() + 30 * 24 * 60 * 60 * 1000,
         ).toISOString(),
       };
@@ -42,12 +43,12 @@ export function mapToFinancialEvents(
       title: tx.title,
       amount: tx.amount,
       flow: tx.amount >= 0 ? "income" : "expense",
-      status: tx.status === "pending" ? "pending" : "completed",
+      status: tx.status === "completed" ? "completed" : "pending", // ✨ A nossa correção do Bug 2
       date: tx.created_at || new Date().toISOString(),
-      category_name: tx.category_name,
-      account_name: tx.account_name,
-      eventType,
-      ...extraProps,
-    } as FinancialEvent;
+      type: eventType, // ✨ O DTO espera 'type' em vez de 'eventType'
+      category: tx.category_name, // ✨ O DTO espera 'category'
+      account: tx.account_name, // ✨ O DTO espera 'account'
+      context: contextProps, // ✨ O DTO isola os dados extras aqui
+    } as FinancialEventDTO;
   });
 }

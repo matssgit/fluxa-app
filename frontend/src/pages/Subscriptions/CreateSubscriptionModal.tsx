@@ -77,6 +77,7 @@ export function CreateSubscriptionModal({
     handleSubmit,
     watch,
     setValue,
+    getValues, // ✨ Adicionado para leitura segura
     reset,
     formState: { errors },
   } = useForm<SubscriptionForm>({
@@ -108,6 +109,20 @@ export function CreateSubscriptionModal({
   if (!isOpen) return null;
 
   async function onSubmit(data: SubscriptionForm): Promise<void> {
+    // 🛡️ Extração blindada diretamente da memória do React Hook Form
+    const formData = getValues();
+    const finalAccountId =
+      formData.payment_method === "account" ? formData.account_id : undefined;
+    const finalCardId =
+      formData.payment_method === "card" ? formData.card_id : undefined;
+
+    if (!finalAccountId && !finalCardId) {
+      alert(
+        "Atenção: Selecione a Conta Bancária ou o Cartão antes de guardar!",
+      );
+      return;
+    }
+
     try {
       await createSub({
         title: data.title,
@@ -115,9 +130,8 @@ export function CreateSubscriptionModal({
         due_day: data.due_day,
         frequency: data.frequency,
         category_id: data.category_id,
-        account_id:
-          data.payment_method === "account" ? data.account_id : undefined,
-        card_id: data.payment_method === "card" ? data.card_id : undefined,
+        account_id: finalAccountId,
+        card_id: finalCardId,
       });
 
       await Promise.all([
@@ -154,12 +168,15 @@ export function CreateSubscriptionModal({
         <ModalHeader title="Nova Assinatura Recorrente" onClose={onClose} />
 
         <form id="create-subscription-form" onSubmit={handleSubmit(onSubmit)}>
-          <ModalBody className="p-6 space-y-5">
+          {/* ✨ CORREÇÃO 1: Inputs ocultos para o formulário não perder os IDs */}
+          <input type="hidden" {...register("account_id")} />
+          <input type="hidden" {...register("card_id")} />
+
+          <ModalBody className="p-6 pb-38 space-y-5 overflow-y-auto max-h-[75vh]">
             <p className="text-xs font-medium text-muted -mt-2">
               Monitorize os seus serviços fixos e cobranças automáticas
             </p>
 
-            {/* RESTAURADO: Input original com estilização correta */}
             <div>
               <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
                 Nome do Serviço *
@@ -178,7 +195,6 @@ export function CreateSubscriptionModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* RESTAURADO: Input de valor com estilização correta */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
                   <DollarSign size={13} className="text-muted" />
@@ -269,18 +285,12 @@ export function CreateSubscriptionModal({
 
               <div className="grid grid-cols-2 gap-3 p-1 bg-elevated/60 rounded-2xl border border-subtle/20">
                 <label className="flex-1 cursor-pointer">
+                  {/* ✨ CORREÇÃO 2: Removido o onChange manual que destruía o register */}
                   <input
                     type="radio"
                     value="account"
                     {...register("payment_method")}
                     className="peer sr-only"
-                    onChange={(e) => {
-                      setValue(
-                        "payment_method",
-                        e.target.value as "account" | "card",
-                      );
-                      setValue("card_id", undefined);
-                    }}
                   />
                   <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
                     <Building
@@ -300,13 +310,6 @@ export function CreateSubscriptionModal({
                     value="card"
                     {...register("payment_method")}
                     className="peer sr-only"
-                    onChange={(e) => {
-                      setValue(
-                        "payment_method",
-                        e.target.value as "account" | "card",
-                      );
-                      setValue("account_id", undefined);
-                    }}
                   />
                   <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
                     <CreditCard
@@ -367,7 +370,6 @@ export function CreateSubscriptionModal({
         </form>
       </Modal>
 
-      {/* --- INFRAESTRUTURA DE PICKERS --- */}
       <PickerModal
         isOpen={isCategoryPickerOpen}
         onClose={() => setIsCategoryPickerOpen(false)}
@@ -422,10 +424,13 @@ export function CreateSubscriptionModal({
             : currentCardId || ""
         }
         onSelect={(val) => {
+          // ✨ LIMPEZA CORRETA AO SELECIONAR A OPÇÃO
           if (paymentMethod === "account") {
             setValue("account_id", String(val), { shouldValidate: true });
+            setValue("card_id", undefined);
           } else {
             setValue("card_id", String(val), { shouldValidate: true });
+            setValue("account_id", undefined);
           }
           setIsSourcePickerOpen(false);
         }}

@@ -22,7 +22,35 @@ interface TransactionListProps {
   onEventClick: (event: FinancialEventDTO) => void;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
-  fetchNextPage?: () => unknown; // ✨ Correção: Permite que o React Query passe a sua Promise sem erro de tipagem
+  fetchNextPage?: () => unknown;
+}
+
+// ✨ FUNÇÃO REAPROVEITADA: A mesma inteligência de cálculo de data aplicada no painel lateral
+function getSmartDueDate(event: FinancialEventDTO): Date {
+  const explicitDueDay = (event.context as { dueDay?: number })?.dueDay;
+  const dateString = event.context?.nextBillingDate || event.date;
+
+  const dueDay =
+    explicitDueDay ||
+    (dateString
+      ? parseInt(dateString.split("T")[0].split("-")[2], 10)
+      : new Date().getDate());
+
+  if (event.status === "completed") {
+    // 🛡️ HISTÓRICO: Ancoramos o vencimento ao mês em que o pagamento de facto ocorreu
+    const paymentDate = new Date(event.createdAt || event.date);
+    return new Date(paymentDate.getFullYear(), paymentDate.getMonth(), dueDay);
+  } else {
+    // ⏱️ CAIXA ATUAL: Dinâmico - Se o dia já passou, joga pro mês que vem
+    const today = new Date();
+    const currentDay = today.getDate();
+    const monthOffset = dueDay >= currentDay ? 0 : 1;
+    return new Date(
+      today.getFullYear(),
+      today.getMonth() + monthOffset,
+      dueDay,
+    );
+  }
 }
 
 export function TransactionList({
@@ -116,7 +144,6 @@ export function TransactionList({
     );
   }
 
-  // ✨ Correção: Tratamento ultra-seguro de parsing de data para evitar quebras do JS e queixas do Linter
   const groupedEvents = transactions.reduce(
     (acc, event) => {
       let dateKey = "Sem Data";
@@ -125,7 +152,7 @@ export function TransactionList({
           dateKey = new Date(event.date).toISOString().split("T")[0];
         }
       } catch {
-        dateKey = "1970-01-01"; // Fallback de segurança silencioso
+        dateKey = "1970-01-01";
       }
 
       if (!acc[dateKey]) acc[dateKey] = [];
@@ -198,17 +225,17 @@ export function TransactionList({
                           </span>
                         )}
 
+                        {/* ✨ CORREÇÃO AQUI: Lista Principal reflete a data correta para Assinaturas */}
                         {event.type === "subscription" && (
                           <span className="flex items-center gap-1.5">
-                            💳 {event.account || "Geral"} • Próxima:{" "}
+                            💳 {event.account || "Geral"} •{" "}
+                            {event.status === "completed"
+                              ? "Vencimento: "
+                              : "Próxima: "}
                             {new Intl.DateTimeFormat("pt-BR", {
                               day: "2-digit",
                               month: "2-digit",
-                            }).format(
-                              new Date(
-                                event.context?.nextBillingDate || event.date,
-                              ),
-                            )}
+                            }).format(getSmartDueDate(event))}
                           </span>
                         )}
 

@@ -13,7 +13,9 @@ import { CreateWalletModal } from "../../components/wallets/CreateWalletModal";
 import { TransferWalletModal } from "../../components/wallets/TransferWalletModal";
 import { EditWalletModal } from "../../components/wallets/EditWalletModal";
 import { DeleteWalletModal } from "../../components/wallets/DeleteWalletModal";
-import { EmptyState } from "../../components/ui/EmptyState";
+
+// ✨ IMPORTAMOS O NOVO COMPONENTE EDUCACIONAL
+import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
 export function Wallets() {
   const { data: wallets = [], isLoading } = useWallets();
@@ -62,25 +64,52 @@ export function Wallets() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in pb-20 sm:pb-8">
-      {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
-        >
-          <Plus size={18} />
-          <span>Nova Meta</span>
-        </button>
-      </div>
+      {/* 1. Header (Escondido se a página estiver vazia para dar foco à introdução) */}
+      {!isLoading && wallets.length > 0 && (
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
+              Metas e Objetivos
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-muted mt-1">
+              Guarde dinheiro com propósito e acompanhe o seu progresso.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+          >
+            <Plus size={18} />
+            <span>Nova Meta</span>
+          </button>
+        </div>
+      )}
 
       {/* 2. Conteúdo Principal */}
       {isLoading ? (
         <WalletsSkeleton />
       ) : wallets.length === 0 ? (
-        <EmptyState
-          title="Nenhuma meta definida"
-          description="Que tal planear a sua próxima viagem, a reserva de emergência ou o novo setup?"
+        // 🚀 O NOVO ONBOARDING EDUCACIONAL ENTRA AQUI
+        <FeatureIntroduction
           icon={Target}
+          title="Metas e Objetivos"
+          subtitle="Transforme os seus sonhos em planos reais"
+          whatIs="Metas ajudam você a guardar dinheiro com um propósito específico. Em vez de deixar o dinheiro solto na conta correndo o risco de ser gasto, você separa virtualmente o valor, acompanha o progresso e protege os seus sonhos."
+          examples={[
+            {
+              label: "Reserva de Emergência",
+              category: "Segurança Financeira",
+            },
+            { label: "Viagem de Férias", category: "Lazer e Experiências" },
+            { label: "Troca do Carro", category: "Bens Materiais" },
+            {
+              label: "Novo Setup / Notebook",
+              category: "Trabalho e Tecnologia",
+            },
+          ]}
+          tip="Definir uma data limite para a sua meta ajuda o Fluxa a calcular automaticamente quanto você precisa poupar por mês para chegar lá a tempo."
+          actionLabel="Criar a minha primeira Meta"
+          onAction={() => setIsCreateOpen(true)}
         />
       ) : (
         <div className="space-y-6 sm:space-y-8">

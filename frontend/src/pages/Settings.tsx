@@ -148,9 +148,7 @@ export function Settings() {
       user?.preferences?.privacy?.hide_balance ?? false;
     try {
       await updatePreferences({
-        privacy: {
-          hide_balance: !currentHideBalance,
-        },
+        privacy: { hide_balance: !currentHideBalance },
       });
       toast.success("Privacidade atualizada!");
     } catch (error) {
@@ -166,7 +164,6 @@ export function Settings() {
       reminders_enabled: false,
       subscriptions_enabled: false,
     };
-
     const currentStatus = currentNotifications[key];
 
     try {
@@ -178,13 +175,11 @@ export function Settings() {
         },
       });
 
-      if (!currentStatus) {
+      if (!currentStatus)
         toast.success(
           "Notificações ativadas! (O navegador poderá pedir permissão)",
         );
-      } else {
-        toast.success("Notificações desativadas.");
-      }
+      else toast.success("Notificações desativadas.");
     } catch (error) {
       toast.error("Erro ao atualizar notificações");
       console.error(error);

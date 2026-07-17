@@ -1,45 +1,54 @@
-// frontend/src/components/subscriptions/CreateSubscriptionModal.tsx
 import { useState } from "react";
 import {
-  X,
-  Repeat,
   DollarSign,
-  Calendar as CalendarIcon,
-  Building,
   Tag,
+  Building,
+  CreditCard,
+  CalendarDays,
   ChevronDown,
-  Layers,
 } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useCreateSubscription } from "../../hooks/useSubscriptions";
 import { useAccounts } from "../../hooks/useAccounts";
 import { useCategories } from "../../hooks/useCategories";
-import { api } from "../../api/client";
-import { formatLocalDate } from "../../utils/date";
+import { useCards } from "../../hooks/useCredit";
+import { useQueryClient } from "@tanstack/react-query";
 
+import {
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "../../components/ui/Modal";
 import { PickerModal } from "../../components/ui/PickerModal";
-import { DatePickerModal } from "../../components/ui/DatePickerModal";
 
-interface AccountData {
-  id: string;
-  name: string;
-}
-
-interface CategoryData {
+interface Category {
   id: string;
   name: string;
   type: string;
 }
 
+interface Account {
+  id: string;
+  name: string;
+}
+
+interface Card {
+  id: string;
+  name: string;
+}
+
 const subscriptionSchema = z.object({
-  title: z.string().min(2, "A descrição é obrigatória"),
+  title: z.string().min(1, "O nome do serviço é obrigatório"),
   amount: z.number().min(0.01, "O valor deve ser maior que zero"),
-  account_id: z.string().min(1, "Selecione uma conta"),
-  category_id: z.string().optional(),
-  frequency: z.enum(["monthly", "yearly", "weekly"]),
-  next_billing_date: z.string().min(1, "A data do próximo ciclo é obrigatória"),
+  due_day: z.number().min(1, "Dia inválido").max(31, "Dia inválido"),
+  frequency: z.enum(["monthly", "yearly"]),
+  category_id: z.string().min(1, "Selecione uma categoria"),
+  payment_method: z.enum(["account", "card"]),
+  account_id: z.string().optional(),
+  card_id: z.string().optional(),
 });
 
 type SubscriptionForm = z.infer<typeof subscriptionSchema>;
@@ -53,360 +62,409 @@ export function CreateSubscriptionModal({
   isOpen,
   onClose,
 }: CreateSubscriptionModalProps) {
-  const queryClient = useQueryClient();
+  const { mutateAsync: createSub, isPending } = useCreateSubscription();
   const { accounts = [] } = useAccounts();
   const { categories = [] } = useCategories();
+  const { data: cards = [] } = useCards();
+  const queryClient = useQueryClient();
 
-  const today = formatLocalDate(new Date());
-
-  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isFrequencyModalOpen, setIsFrequencyModalOpen] = useState(false);
-  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [isFrequencyPickerOpen, setIsFrequencyPickerOpen] = useState(false);
+  const [isDueDayPickerOpen, setIsDueDayPickerOpen] = useState(false);
+  const [isPaymentPickerOpen, setIsPaymentPickerOpen] = useState(false);
 
   const {
     register,
     handleSubmit,
-    reset,
-    control,
     setValue,
+    getValues,
+    control,
+    reset,
     formState: { errors },
   } = useForm<SubscriptionForm>({
     resolver: zodResolver(subscriptionSchema),
-    defaultValues: {
-      frequency: "monthly",
-      next_billing_date: today,
-    },
+    defaultValues: { frequency: "monthly", payment_method: "account" },
   });
 
-  const selectedAccountId = useWatch({ control, name: "account_id" });
-  const selectedCategoryId = useWatch({ control, name: "category_id" });
-  const selectedFrequency = useWatch({
-    control,
-    name: "frequency",
-    defaultValue: "monthly",
-  });
-  const selectedDate = useWatch({
-    control,
-    name: "next_billing_date",
-    defaultValue: today,
-  });
+  const paymentMethod = useWatch({ control, name: "payment_method" });
+  const currentCategoryId = useWatch({ control, name: "category_id" });
+  const currentFrequency = useWatch({ control, name: "frequency" });
+  const currentAccountId = useWatch({ control, name: "account_id" });
+  const currentCardId = useWatch({ control, name: "card_id" });
+  const currentDueDay = useWatch({ control, name: "due_day" });
+
+  const filteredCategories = (categories as Category[]).filter(
+    (c) => c.type === "expense" || c.type === "saida",
+  );
+
+  const selectedCategoryName =
+    filteredCategories.find((c) => c.id === currentCategoryId)?.name ||
+    "Selecione...";
+
+  const selectedPaymentName =
+    paymentMethod === "account"
+      ? (accounts as Account[]).find((a) => a.id === currentAccountId)?.name ||
+        "Selecione a conta..."
+      : (cards as Card[]).find((c) => c.id === currentCardId)?.name ||
+        "Selecione o cartão...";
 
   if (!isOpen) return null;
 
-  if (categories.length === 0 || accounts.length === 0) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
-        <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-md p-6 text-center border border-subtle/30">
-          <Layers className="w-12 h-12 text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-primary mb-2">
-            Ação Necessária
-          </h3>
-          <p className="text-sm text-muted mb-6">
-            Para cadastrar uma assinatura é necessário possuir pelo menos uma
-            conta e uma categoria.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-xl border border-subtle/30 text-secondary font-bold text-sm hover:bg-subtle/50 transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  async function onSubmit(data: SubscriptionForm): Promise<void> {
+    // 🔍 RASTREADOR 2: Ver o que chegou no Submit
+    console.log("FORM DATA", data);
+    console.log("ACCOUNT", data.account_id);
+    console.log("CARD", data.card_id);
 
-  const expenseCategories = categories.filter(
-    (cat: CategoryData) => cat.type === "saida" || cat.type === "expense",
-  );
+    const formData = getValues();
+    const finalAccountId =
+      formData.payment_method === "account" ? formData.account_id : undefined;
+    const finalCardId =
+      formData.payment_method === "card" ? formData.card_id : undefined;
 
-  const selectedAccountName =
-    accounts.find((a: AccountData) => a.id === selectedAccountId)?.name ||
-    "Selecione onde debita...";
-  const selectedCategoryName =
-    expenseCategories.find((c: CategoryData) => c.id === selectedCategoryId)
-      ?.name || "Sem categoria";
+    if (!finalAccountId && !finalCardId) {
+      alert(
+        "Atenção: Selecione a Conta Bancária ou o Cartão antes de guardar!",
+      );
+      return;
+    }
 
-  const frequencyLabels: Record<string, string> = {
-    weekly: "Semanal",
-    monthly: "Mensal",
-    yearly: "Anual",
-  };
-
-  async function onSubmit(data: SubscriptionForm) {
     try {
-      setIsSubmitting(true);
-
-      const payload = {
+      await createSub({
         title: data.title,
-        amount: Math.abs(data.amount),
-        account_id: data.account_id,
-        category_id: data.category_id || undefined,
+        amount: data.amount,
+        due_day: data.due_day,
         frequency: data.frequency,
-        next_billing_date: data.next_billing_date,
-        status: "active",
-      };
+        category_id: data.category_id,
+        account_id: finalAccountId,
+        card_id: finalCardId,
+      });
 
-      await api.post("/subscriptions", payload);
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["subscriptions"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
 
       reset();
       onClose();
     } catch (error) {
-      console.error("Erro ao criar assinatura:", error);
-      alert("Não foi possível salvar a assinatura. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
+      console.error("Erro ao criar assinatura", error);
+      alert("Não foi possível guardar a assinatura. Tente novamente.");
     }
   }
 
+  const daysOptions = Array.from({ length: 31 }, (_, i) => ({
+    label: `Dia ${i + 1}`,
+    value: String(i + 1),
+  }));
+
+  const categoryOptions = filteredCategories.map((c) => ({
+    label: c.name,
+    value: c.id,
+  }));
+
+  const paymentOptions =
+    paymentMethod === "account"
+      ? (accounts as Account[]).map((a) => ({ label: a.name, value: a.id }))
+      : (cards as Card[]).map((c) => ({ label: c.name, value: c.id }));
+
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-page/80 backdrop-blur-md animate-fade-in">
-        <div className="relative w-full max-w-md max-h-[80dvh] flex flex-col bg-surface border border-subtle/30 shadow-2xl rounded-3xl overflow-hidden animate-scale-in">
-          <div className="flex justify-between items-center p-4 sm:p-6 border-b border-subtle/20 shrink-0">
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-primary tracking-tight">
-                Nova Assinatura
-              </h2>
-              <p className="text-xs font-medium text-muted mt-0.5">
-                Registre serviços com cobrança recorrente
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 text-muted hover:text-primary hover:bg-elevated rounded-full transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-          </div>
+      <Modal isOpen={isOpen} onClose={onClose} size="md">
+        <ModalHeader title="Nova Assinatura Recorrente" onClose={onClose} />
 
-          <div className="flex-1 overflow-y-auto">
-            <form
-              id="create-subscription-form"
-              onSubmit={handleSubmit(onSubmit)}
-              className="p-4 sm:p-6 space-y-4"
-            >
+        <form id="create-subscription-form" onSubmit={handleSubmit(onSubmit)}>
+          <input type="hidden" {...register("account_id")} />
+          <input type="hidden" {...register("card_id")} />
+
+          <ModalBody className="p-6 space-y-5 overflow-y-auto max-h-[70vh] overscroll-contain">
+            <p className="text-xs font-medium text-muted -mt-2">
+              Monitorize os seus serviços fixos e cobranças automáticas
+            </p>
+
+            <div>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
+                Nome do Serviço *
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: Netflix, Spotify, Internet..."
+                {...register("title")}
+                className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
+              />
+              {errors.title && (
+                <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                  {errors.title.message}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <Repeat size={13} className="text-muted" />
-                  <span>Nome do Serviço *</span>
+                  <DollarSign size={13} className="text-muted" />
+                  <span>Valor (R$) *</span>
                 </label>
                 <input
-                  type="text"
-                  placeholder="Ex: Netflix, Spotify..."
-                  {...register("title")}
-                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-sm font-medium shadow-2xs"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  {...register("amount", { valueAsNumber: true })}
+                  className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base font-extrabold shadow-2xs tracking-tight"
                 />
-                {errors.title && (
-                  <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                    {errors.title.message}
+                {errors.amount && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.amount.message}
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                    <DollarSign size={13} className="text-muted" />
-                    <span>Valor *</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0,00"
-                    {...register("amount", { valueAsNumber: true })}
-                    className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary placeholder:text-muted/60 focus:border-brand outline-none transition-all text-base sm:text-lg font-extrabold shadow-2xs tracking-tight"
-                  />
-                  {errors.amount && (
-                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                      {errors.amount.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                    <Layers size={13} className="text-muted shrink-0" />
-                    <span className="truncate">Frequência *</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsFrequencyModalOpen(true)}
-                    className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-                  >
-                    <span className="truncate pr-2">
-                      {frequencyLabels[selectedFrequency]}
-                    </span>
-                    <ChevronDown size={16} className="text-muted shrink-0" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                    <CalendarIcon size={13} className="text-muted shrink-0" />
-                    <span className="truncate">Vencimento *</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsDateModalOpen(true)}
-                    className="w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface text-primary outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer"
-                  >
-                    <span className="truncate">
-                      {selectedDate
-                        ? new Intl.DateTimeFormat("pt-BR").format(
-                            new Date(`${selectedDate}T12:00:00`),
-                          )
-                        : "Selecione..."}
-                    </span>
-                    <CalendarIcon size={16} className="text-muted shrink-0" />
-                  </button>
-                  {errors.next_billing_date && (
-                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                      {errors.next_billing_date.message}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                    <Building size={13} className="text-muted shrink-0" />
-                    <span className="truncate">Conta *</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsAccountModalOpen(true)}
-                    className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-3.5 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-xs sm:text-sm font-semibold shadow-2xs cursor-pointer ${!selectedAccountId ? "text-muted" : "text-primary"}`}
-                  >
-                    <span className="truncate pr-2">{selectedAccountName}</span>
-                    <ChevronDown size={16} className="text-muted shrink-0" />
-                  </button>
-                  {errors.account_id && (
-                    <span className="text-red-500 text-xs font-semibold mt-1 pl-1 block">
-                      {errors.account_id.message}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
-                  <Tag size={13} className="text-muted" />
-                  <span>Categoria</span>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  <CalendarDays size={13} className="text-muted" />
+                  <span>Dia de Vencimento *</span>
                 </label>
                 <button
                   type="button"
-                  onClick={() => setIsCategoryModalOpen(true)}
-                  className={`w-full flex items-center justify-between rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 hover:bg-surface outline-none transition-all text-sm font-semibold shadow-2xs cursor-pointer ${!selectedCategoryId ? "text-muted" : "text-primary"}`}
+                  onClick={() => setIsDueDayPickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    currentDueDay ? "text-primary" : "text-muted"
+                  }`}
                 >
-                  <span className="truncate pr-2">{selectedCategoryName}</span>
+                  <span className="truncate">
+                    {currentDueDay
+                      ? `Dia ${currentDueDay}`
+                      : "Selecionar dia..."}
+                  </span>
+                  <ChevronDown size={16} className="text-muted shrink-0" />
+                </button>
+                {errors.due_day && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.due_day.message}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  <Tag size={13} className="text-muted" />
+                  <span>Categoria *</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryPickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    currentCategoryId ? "text-primary" : "text-muted"
+                  }`}
+                >
+                  <span className="truncate">{selectedCategoryName}</span>
+                  <ChevronDown size={16} className="text-muted shrink-0" />
+                </button>
+                {errors.category_id && (
+                  <span className="text-danger text-xs font-semibold mt-1 pl-1 block">
+                    {errors.category_id.message}
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                  Periodicidade
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsFrequencyPickerOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer text-primary"
+                >
+                  <span>
+                    {currentFrequency === "yearly" ? "Anual" : "Mensal"}
+                  </span>
                   <ChevronDown size={16} className="text-muted shrink-0" />
                 </button>
               </div>
-            </form>
-          </div>
+            </div>
 
-          <div className="shrink-0 sticky bottom-0 p-4 sm:p-6 bg-surface border-t border-subtle/20 flex gap-3 z-10">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shadow-2xs"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              form="create-subscription-form"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-2.5 sm:py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-xs sm:text-sm font-bold shadow-sm transition-all duration-200 cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? "Salvando..." : "Criar Assinatura"}
-            </button>
-          </div>
-        </div>
-      </div>
+            <div className="pt-2 border-t border-subtle/20 space-y-3">
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary pl-1">
+                Fonte de Cobrança Padrão
+              </label>
+
+              <div className="grid grid-cols-2 gap-3 p-1 bg-elevated/60 rounded-2xl border border-subtle/20">
+                <label className="flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="account"
+                    {...register("payment_method")}
+                    className="peer sr-only"
+                    onChange={(e) => {
+                      setValue(
+                        "payment_method",
+                        e.target.value as "account" | "card",
+                      );
+                      setValue("card_id", undefined);
+                    }}
+                  />
+                  <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
+                    <Building
+                      size={16}
+                      className={
+                        paymentMethod === "account"
+                          ? "text-brand"
+                          : "text-muted"
+                      }
+                    />
+                    <span>Conta Bancária</span>
+                  </div>
+                </label>
+                <label className="flex-1 cursor-pointer">
+                  <input
+                    type="radio"
+                    value="card"
+                    {...register("payment_method")}
+                    className="peer sr-only"
+                    onChange={(e) => {
+                      setValue(
+                        "payment_method",
+                        e.target.value as "account" | "card",
+                      );
+                      setValue("account_id", undefined);
+                    }}
+                  />
+                  <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all">
+                    <CreditCard
+                      size={16}
+                      className={
+                        paymentMethod === "card" ? "text-brand" : "text-muted"
+                      }
+                    />
+                    <span>Cartão de Crédito</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentPickerOpen(true)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border border-subtle/30 bg-elevated/40 hover:bg-surface transition-all text-sm font-semibold shadow-2xs cursor-pointer ${
+                    (paymentMethod === "account" && currentAccountId) ||
+                    (paymentMethod === "card" && currentCardId)
+                      ? "text-primary"
+                      : "text-muted"
+                  }`}
+                >
+                  <span className="truncate">{selectedPaymentName}</span>
+                  <ChevronDown size={16} className="text-muted shrink-0" />
+                </button>
+              </div>
+            </div>
+          </ModalBody>
+
+          <ModalFooter>
+            <div className="flex gap-3 w-full">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-3 rounded-xl border border-subtle/30 bg-elevated hover:bg-subtle/40 text-secondary text-sm font-bold transition-all shadow-2xs cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isPending}
+                form="create-subscription-form"
+                className="flex-1 px-4 py-3 rounded-xl bg-brand hover:bg-brand-light text-white text-sm font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center"
+              >
+                {isPending ? (
+                  <span className="animate-pulse">A Guardar...</span>
+                ) : (
+                  "Guardar Assinatura"
+                )}
+              </button>
+            </div>
+          </ModalFooter>
+        </form>
+      </Modal>
 
       <PickerModal
-        isOpen={isFrequencyModalOpen}
-        onClose={() => setIsFrequencyModalOpen(false)}
-        title="Frequência de Cobrança"
-        selectedValue={selectedFrequency}
-        onSelect={(val) =>
-          setValue("frequency", val as "monthly" | "yearly" | "weekly", {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
-        }
+        isOpen={isCategoryPickerOpen}
+        onClose={() => setIsCategoryPickerOpen(false)}
+        title="Selecione a Categoria"
+        options={categoryOptions}
+        selectedValue={currentCategoryId || ""}
+        onSelect={(val) => {
+          setValue("category_id", String(val), { shouldValidate: true });
+          setIsCategoryPickerOpen(false);
+        }}
+      />
+
+      <PickerModal
+        isOpen={isFrequencyPickerOpen}
+        onClose={() => setIsFrequencyPickerOpen(false)}
+        title="Periodicidade"
         options={[
-          {
-            label: "Mensal",
-            value: "monthly",
-            subtitle: "Cobra 1 vez a cada mês",
-          },
-          { label: "Anual", value: "yearly", subtitle: "Cobra 1 vez por ano" },
-          {
-            label: "Semanal",
-            value: "weekly",
-            subtitle: "Cobra a cada 7 dias",
-          },
+          { label: "Mensal", value: "monthly" },
+          { label: "Anual", value: "yearly" },
         ]}
+        selectedValue={currentFrequency || ""}
+        onSelect={(val) => {
+          setValue("frequency", String(val) as "monthly" | "yearly", {
+            shouldValidate: true,
+          });
+          setIsFrequencyPickerOpen(false);
+        }}
       />
 
       <PickerModal
-        isOpen={isAccountModalOpen}
-        onClose={() => setIsAccountModalOpen(false)}
-        title="Onde será debitado?"
-        selectedValue={selectedAccountId}
-        onSelect={(val) =>
-          setValue("account_id", val as string, {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
-        }
-        options={accounts.map((acc: AccountData) => ({
-          label: acc.name,
-          value: acc.id,
-        }))}
+        isOpen={isDueDayPickerOpen}
+        onClose={() => setIsDueDayPickerOpen(false)}
+        title="Dia de Vencimento"
+        options={daysOptions}
+        selectedValue={currentDueDay ? String(currentDueDay) : ""}
+        onSelect={(val) => {
+          setValue("due_day", Number(val), { shouldValidate: true });
+          setIsDueDayPickerOpen(false);
+        }}
       />
 
       <PickerModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        title="Categoria da Assinatura"
-        selectedValue={selectedCategoryId || ""}
-        onSelect={(val) =>
-          setValue("category_id", val as string, {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
+        isOpen={isPaymentPickerOpen}
+        onClose={() => setIsPaymentPickerOpen(false)}
+        title={
+          paymentMethod === "account" ? "Selecionar Conta" : "Selecionar Cartão"
         }
-        options={[
-          { label: "Sem categoria", value: "" },
-          ...expenseCategories.map((cat: CategoryData) => ({
-            label: cat.name,
-            value: cat.id,
-          })),
-        ]}
-      />
+        options={paymentOptions}
+        selectedValue={
+          paymentMethod === "account"
+            ? currentAccountId || ""
+            : currentCardId || ""
+        }
+        onSelect={(val) => {
+          // 🔍 RASTREADOR 1: Ver o que foi clicado no Modal
+          console.log("CONTA ESCOLHIDA", val);
 
-      <DatePickerModal
-        isOpen={isDateModalOpen}
-        onClose={() => setIsDateModalOpen(false)}
-        title="Próximo Vencimento"
-        selectedDate={selectedDate}
-        onSelectDate={(date) =>
-          setValue("next_billing_date", date, {
-            shouldValidate: true,
-            shouldDirty: true,
-          })
-        }
+          if (paymentMethod === "account") {
+            setValue("account_id", String(val), {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true,
+            });
+            setValue("card_id", undefined);
+          } else {
+            setValue("card_id", String(val), {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true,
+            });
+            setValue("account_id", undefined);
+          }
+          setIsPaymentPickerOpen(false);
+
+          // 🔍 RASTREADOR 1B: Ver o que ficou na memória
+          console.log(getValues());
+        }}
       />
     </>
   );

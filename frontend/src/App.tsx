@@ -9,6 +9,7 @@ import { Dashboard } from "./pages/Dashboard/index";
 import { Transactions } from "./pages/Transactions";
 import { CreditCards } from "./pages/CreditCards";
 import { Accounts } from "./pages/Accounts/index";
+import { Categories } from "./pages/Categories";
 import { Settings } from "./pages/Settings";
 import { Register } from "./pages/Register";
 import { Wallets } from "./pages/Wallets";
@@ -51,6 +52,7 @@ export default function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/transactions" element={<Transactions />} />
                   <Route path="/subscriptions" element={<Subscriptions />} />
+                  <Route path="/categories" element={<Categories />} />
                   <Route path="/cards" element={<CreditCards />} />
                   <Route path="/accounts" element={<Accounts />} />
                   <Route path="/settings" element={<Settings />} />

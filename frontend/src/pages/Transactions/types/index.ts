@@ -68,6 +68,7 @@ export interface FinancialEventDTO {
     cardName?: string;
     subscriptionId?: string;
     nextBillingDate?: string;
+    dueDay?: number;
     destinationAccountId?: string;
     destinationAccountName?: string;
   };

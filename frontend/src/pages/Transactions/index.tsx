@@ -11,6 +11,9 @@ import { useTransactionFilters } from "./hooks/useTransactionFilters";
 import { useFinancialEvents } from "./hooks/useFinancialEvents";
 import type { FinancialEventDTO } from "./types";
 
+// ✨ NOVO: Importamos o modal específico de assinaturas já existente
+import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
+
 export function Transactions() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -18,7 +21,10 @@ export function Transactions() {
     null,
   );
 
-  const queryClient = useQueryClient(); // ✨ Instanciamos o gestor de cache do React Query
+  // ✨ NOVO: Estado para controlar a abertura do modal de pagamento de assinatura
+  const [isPaySubModalOpen, setIsPaySubModalOpen] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const { filters, setFilters, searchInput, setSearchInput, clearAllFilters } =
     useTransactionFilters();
@@ -31,16 +37,18 @@ export function Transactions() {
     return data.pages.flatMap((page) => page.items || []);
   }, [data]);
 
-  // ✨ FUNÇÃO REAL DE "DAR BAIXA"
   const handleMarkAsPaid = async (eventId: string) => {
+    // ✨ NOVO: INTERCEPTAÇÃO DA REGRA DE NEGÓCIO
+    // Se for uma assinatura, abrimos o modal que exige a conta (account_id) e paramos a execução aqui.
+    if (selectedEvent?.type === "subscription") {
+      setIsPaySubModalOpen(true);
+      return;
+    }
+
+    // Fluxo genérico (original) mantido intacto para Transações e Parcelas
     try {
-      // 1. Chama a nova rota do backend que acabámos de criar
       await api.patch(`/financial-events/${eventId}/pay`);
-
-      // 2. Invalida o cache para que a Timeline atualize instantaneamente com o novo status
       await queryClient.invalidateQueries({ queryKey: ["financial-events"] });
-
-      // 3. Fecha o painel da Matrioska
       setSelectedEvent(null);
     } catch (error) {
       console.error("Erro ao dar baixa no lançamento:", error);
@@ -51,21 +59,23 @@ export function Transactions() {
   return (
     <>
       <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-10">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-6 sm:pt-0">
+        {/* 🚀 REGRA UX #04: HIERARQUIA DE CONTEXTO */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
-              Central Financeira
+              Caixa Central
             </h1>
             <p className="text-xs sm:text-sm font-medium text-muted mt-1">
-              Consulte e pesquise toda a sua vida financeira
+              Visualize todas as entradas e saídas em ordem cronológica.
             </p>
           </div>
 
           <button
             onClick={() => setIsNewModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-95"
           >
-            <Plus size={18} /> Novo Lançamento
+            <Plus size={18} />
+            <span>Novo Lançamento</span>
           </button>
         </div>
 
@@ -106,12 +116,24 @@ export function Transactions() {
         isOpen={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onEdit={() => setIsNewModalOpen(true)}
-        onMarkAsPaid={handleMarkAsPaid} // ✨ Injetado com sucesso!
+        onMarkAsPaid={handleMarkAsPaid}
       />
 
       <NewTransactionModal
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
+      />
+
+      {/* ✨ NOVO: O Modal de Pagamento de Assinaturas plugado na página */}
+      <PaySubscriptionModal
+        isOpen={isPaySubModalOpen}
+        onClose={() => {
+          setIsPaySubModalOpen(false);
+          setSelectedEvent(null); // Fecha o painel lateral simultaneamente
+          // Como o hook da assinatura atualizou o saldo, garantimos que a query geral do Caixa recarregue para espelhar a baixa:
+          queryClient.invalidateQueries({ queryKey: ["financial-events"] });
+        }}
+        subscriptionId={selectedEvent?.id || null}
       />
     </>
   );

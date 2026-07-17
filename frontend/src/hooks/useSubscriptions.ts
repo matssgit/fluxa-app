@@ -25,6 +25,7 @@ export function useCreateSubscription() {
     mutationFn: createSubscription,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Caixa atualiza na hora
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -38,6 +39,7 @@ export function useUpdateSubscriptionStatus() {
     mutationFn: updateSubscriptionStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Sincronização do Caixa
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -51,6 +53,7 @@ export function useDeleteSubscription() {
     mutationFn: deleteSubscription,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Sincronização do Caixa
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -67,6 +70,7 @@ export function usePaySubscription() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Resolve o Bug 1 do pagamento
     },
   });
 }

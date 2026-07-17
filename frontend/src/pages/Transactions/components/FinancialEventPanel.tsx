@@ -38,12 +38,38 @@ export function FinancialEventPanel({
     }).format(new Date(dateString));
   };
 
+  const getSmartDueDate = () => {
+    const explicitDueDay = (event.context as { dueDay?: number })?.dueDay;
+    const dateString = event.context?.nextBillingDate || event.date;
+
+    const dueDay =
+      explicitDueDay ||
+      (dateString
+        ? parseInt(dateString.split("T")[0].split("-")[2], 10)
+        : new Date().getDate());
+
+    if (event.status === "completed") {
+      const paymentDate = new Date(event.createdAt || event.date);
+      return new Date(
+        paymentDate.getFullYear(),
+        paymentDate.getMonth(),
+        dueDay,
+      ).toISOString();
+    } else {
+      const today = new Date();
+      const currentDay = today.getDate();
+      const monthOffset = dueDay >= currentDay ? 0 : 1;
+      return new Date(
+        today.getFullYear(),
+        today.getMonth() + monthOffset,
+        dueDay,
+      ).toISOString();
+    }
+  };
+
   const isIncome = event.flow === "income";
   const colorClass = isIncome ? "text-emerald-500" : "text-red-500";
 
-  // ============================================================================
-  // RENDER: PARCELAMENTOS
-  // ============================================================================
   const renderInstallmentContext = () => {
     const ctx = event.context;
     if (!ctx || !ctx.installmentNumber || !ctx.totalInstallments) return null;
@@ -101,7 +127,6 @@ export function FinancialEventPanel({
             Linha do Tempo
           </h3>
           <div className="relative pl-3 border-l-2 border-subtle/20 space-y-5 sm:space-y-6 ml-2">
-            {/* Parcela Anterior */}
             {ctx.installmentNumber > 1 && (
               <div className="relative">
                 <div className="absolute -left-4.25 top-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-surface" />
@@ -116,7 +141,6 @@ export function FinancialEventPanel({
               </div>
             )}
 
-            {/* Parcela Atual */}
             <div className="relative">
               <div className="absolute -left-5.25 top-0 w-5 h-5 rounded-full bg-brand ring-4 ring-surface flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-white" />
@@ -138,7 +162,6 @@ export function FinancialEventPanel({
               </div>
             </div>
 
-            {/* Parcela Futura */}
             {ctx.installmentNumber < ctx.totalInstallments && (
               <div className="relative">
                 <div className="absolute -left-4.25 top-1 w-3 h-3 rounded-full bg-subtle/30 ring-4 ring-surface" />
@@ -158,33 +181,50 @@ export function FinancialEventPanel({
     );
   };
 
-  // ============================================================================
-  // RENDER: ASSINATURAS E RECORRÊNCIAS
-  // ============================================================================
   const renderSubscriptionContext = () => {
-    const ctx = event.context;
+    const isCompleted = event.status === "completed";
+
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-brand/5 border border-brand/10">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
-            <Repeat size={20} className="sm:w-6 sm:h-6" />
+        {isCompleted ? (
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="p-4 rounded-2xl bg-surface border border-subtle/20 flex flex-col justify-center text-center sm:text-left">
+              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-muted mb-1.5 flex justify-center sm:justify-start items-center gap-1.5">
+                <Calendar size={12} /> Vencimento
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-primary">
+                {formatDate(getSmartDueDate())}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex flex-col justify-center text-center sm:text-left">
+              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 mb-1.5 flex justify-center sm:justify-start items-center gap-1.5">
+                <CheckCircle2 size={12} /> Pago em
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-emerald-700">
+                {formatDate(event.createdAt || event.date)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand mb-1">
-              Próxima Cobrança
-            </p>
-            <p className="text-xs sm:text-sm font-bold text-primary">
-              {formatDate(ctx?.nextBillingDate || event.date)}
-            </p>
+        ) : (
+          <div className="flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-brand/5 border border-brand/10">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0">
+              <Repeat size={20} className="sm:w-6 sm:h-6" />
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand mb-1">
+                Próxima Cobrança
+              </p>
+              <p className="text-xs sm:text-sm font-bold text-primary">
+                {formatDate(getSmartDueDate())}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
-  // ============================================================================
-  // RENDER: TRANSAÇÃO SIMPLES À VISTA
-  // ============================================================================
   const renderTransactionContext = () => {
     return (
       <div className="space-y-4 animate-fade-in">
@@ -204,19 +244,12 @@ export function FinancialEventPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0 sm:justify-end">
-      {/* Overlay Escuro */}
       <div
         className="absolute inset-0 bg-surface/80 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
-      {/* ✨ O SEGREDO ESTÁ AQUI: max-h-[80dvh]
-          Isto garante que o modal no Mobile NUNCA ultrapassa 80% da altura da tela, 
-          deixando 10% de folga em cima (Header) e 10% em baixo (Sidebar). 
-          No Desktop (sm:), ele volta a assumir h-dvh (100%) como um painel lateral clássico. 
-      */}
       <div className="relative w-full max-w-md sm:max-w-none sm:w-120 max-h-[80dvh] sm:max-h-none sm:h-dvh bg-surface rounded-3xl sm:rounded-none border border-subtle/20 sm:border-0 sm:border-l shadow-2xl flex flex-col animate-scale-in sm:animate-slide-in-right overflow-hidden">
-        {/* TOP BAR */}
         <div className="flex items-center justify-between px-5 py-3 sm:px-6 sm:py-4 border-b border-subtle/20 bg-elevated/30 shrink-0">
           <button
             onClick={onClose}
@@ -234,11 +267,7 @@ export function FinancialEventPanel({
           </button>
         </div>
 
-        {/* ✨ ÁREA COM ROLAGEM INTERNA (overflow-y-auto) 
-            Se o conteúdo (timeline de 24 parcelas, por exemplo) for maior que os 80% de limite, 
-            é AQUI dentro que vai scrollar, mantendo o modal imóvel e dentro dos limites. */}
         <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col">
-          {/* HEADER RESUMO */}
           <div className="px-5 pt-6 pb-5 sm:px-8 sm:pt-8 sm:pb-6 border-b border-subtle/10 flex flex-col items-center text-center shrink-0">
             <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-elevated flex items-center justify-center text-primary border border-subtle/20 mb-3 sm:mb-4 shadow-sm">
               {event.type === "installment" && (
@@ -263,9 +292,14 @@ export function FinancialEventPanel({
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
+              {/* ✨ CORREÇÃO AQUI: O card de data superior agora usa o cálculo inteligente para assinaturas pendentes */}
               <span className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-elevated border border-subtle/20 text-[10px] sm:text-xs font-bold text-secondary">
                 <Calendar size={10} className="sm:w-3 sm:h-3 text-muted" />
-                {formatDate(event.date)}
+                {formatDate(
+                  event.type === "subscription" && event.status === "pending"
+                    ? getSmartDueDate()
+                    : event.date,
+                )}
               </span>
               <span className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-elevated border border-subtle/20 text-[10px] sm:text-xs font-bold text-secondary">
                 <CreditCard size={10} className="sm:w-3 sm:h-3 text-muted" />
@@ -284,12 +318,11 @@ export function FinancialEventPanel({
             </div>
           </div>
 
-          {/* BOTÃO DAR BAIXA */}
           {event.status === "pending" && (
             <div className="px-5 py-4 sm:px-8 sm:py-5 border-b border-subtle/10 bg-surface shrink-0">
               <button
                 onClick={() => onMarkAsPaid(event.id)}
-                className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-2xl bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md hover:bg-emerald-600 transition-colors active:scale-95"
+                className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-2xl bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md hover:bg-emerald-600 transition-colors active:scale-95 cursor-pointer"
               >
                 <CheckCircle2 size={18} className="sm:w-5 sm:h-5" />
                 Dar baixa no pagamento
@@ -297,8 +330,7 @@ export function FinancialEventPanel({
             </div>
           )}
 
-          {/* BODY: CONTEXTO */}
-          <div className="p-5 sm:p-8 bg-surface shrink-0">
+          <div className="p-5 sm:p-8 bg-surface shrink-0 flex-1">
             {event.type === "installment" && renderInstallmentContext()}
             {event.type === "subscription" && renderSubscriptionContext()}
             {event.type === "transaction" && renderTransactionContext()}

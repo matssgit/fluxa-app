@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, Plus } from "lucide-react";
 
 export interface PickerOption<T> {
   label: string;
@@ -16,6 +16,8 @@ interface PickerModalProps<T> {
   options: PickerOption<T>[];
   selectedValue: T;
   onSelect: (value: T) => void;
+  actionLabel?: string; // 🚀 Adicionado para Inline Creation
+  onAction?: () => void; // 🚀 Função de disparo
 }
 
 export function PickerModal<T extends string | number>({
@@ -25,16 +27,19 @@ export function PickerModal<T extends string | number>({
   options,
   selectedValue,
   onSelect,
+  actionLabel,
+  onAction,
 }: PickerModalProps<T>) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-page/80 backdrop-blur-md animate-fade-in">
       <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-xs sm:max-w-sm max-h-[70vh] flex flex-col overflow-hidden border border-subtle/30 animate-in zoom-in-95 duration-200">
-        
         {/* Cabeçalho Compacto */}
         <div className="p-4 sm:p-5 border-b border-subtle/20 flex justify-between items-center shrink-0">
-          <h3 className="font-bold text-primary text-sm sm:text-base tracking-tight">{title}</h3>
+          <h3 className="font-bold text-primary text-sm sm:text-base tracking-tight">
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -64,14 +69,20 @@ export function PickerModal<T extends string | number>({
               >
                 <div className="flex items-center gap-3 truncate pr-2">
                   {option.icon && (
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
-                      isSelected ? "bg-brand/15 text-brand" : "bg-elevated text-muted"
-                    }`}>
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 ${
+                        isSelected
+                          ? "bg-brand/15 text-brand"
+                          : "bg-elevated text-muted"
+                      }`}
+                    >
                       {option.icon}
                     </div>
                   )}
                   <div className="truncate">
-                    <span className="text-xs sm:text-sm block truncate">{option.label}</span>
+                    <span className="text-xs sm:text-sm block truncate">
+                      {option.label}
+                    </span>
                     {option.subtitle && (
                       <span className="text-[10px] text-muted font-medium block mt-0.5 truncate">
                         {option.subtitle}
@@ -86,13 +97,31 @@ export function PickerModal<T extends string | number>({
                       {option.badge}
                     </span>
                   )}
-                  {isSelected && <Check size={16} className="text-brand stroke-3 shrink-0" />}
+                  {isSelected && (
+                    <Check size={16} className="text-brand stroke-3 shrink-0" />
+                  )}
                 </div>
               </button>
             );
           })}
-        </div>
 
+          {/* 🚀 BOTÃO INLINE CREATION */}
+          {actionLabel && onAction && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose(); // Fecha o seletor
+                onAction(); // Abre a modal alvo
+              }}
+              className="w-full p-3 mt-1 rounded-2xl text-left flex items-center gap-3 text-brand hover:bg-brand/10 font-bold transition-all cursor-pointer group"
+            >
+              <div className="w-8 h-8 rounded-xl bg-brand/10 text-brand flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                <Plus size={18} />
+              </div>
+              <span className="text-xs sm:text-sm">{actionLabel}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
