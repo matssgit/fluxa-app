@@ -29,7 +29,7 @@ export function FeatureIntroduction({
   return (
     <div className="w-full max-w-2xl mx-auto mt-4 sm:mt-8 animate-fade-in">
       <div className="bg-surface border border-subtle/30 rounded-3xl p-6 sm:p-10 shadow-sm text-left relative overflow-hidden">
-        {/* Efeito de fundo sutil para parecer um card Premium */}
+        {/* Efeito de fundo sutil para parecer um card premium */}
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
           <Icon size={160} />
         </div>

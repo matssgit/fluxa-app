@@ -3,7 +3,6 @@ import {
   getSubscriptions,
   createSubscription,
   updateSubscriptionStatus,
-  deleteSubscription,
   paySubscription,
   getSubscriptionAnalytics,
 } from "../services/subscriptions";
@@ -13,7 +12,7 @@ export function useSubscriptions() {
   return useQuery({
     queryKey: ["subscriptions"],
     queryFn: getSubscriptions,
-    staleTime: 1000 * 60 * 5, // 5 minutos de cache
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -25,7 +24,7 @@ export function useCreateSubscription() {
     mutationFn: createSubscription,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Caixa atualiza na hora
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -39,21 +38,7 @@ export function useUpdateSubscriptionStatus() {
     mutationFn: updateSubscriptionStatus,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Sincronização do Caixa
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    },
-  });
-}
-
-// Hook para excluir definitivamente
-export function useDeleteSubscription() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: deleteSubscription,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Sincronização do Caixa
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -70,7 +55,7 @@ export function usePaySubscription() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-events"] }); // ✨ Resolve o Bug 1 do pagamento
+      queryClient.invalidateQueries({ queryKey: ["financial-events"] });
     },
   });
 }
@@ -80,6 +65,6 @@ export function useSubscriptionAnalytics() {
   return useQuery({
     queryKey: ["subscriptions", "analytics"],
     queryFn: getSubscriptionAnalytics,
-    staleTime: 1000 * 60 * 5, // Cache de 5 minutos
+    staleTime: 1000 * 60 * 5,
   });
 }

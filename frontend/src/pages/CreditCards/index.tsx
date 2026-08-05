@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { CardsList } from "../../components/features/cards/CardsList";
 import { Plus, ShoppingBag, CreditCard } from "lucide-react";
 import { useCards, useDeleteCard } from "../../hooks/useCredit";
-import { CreateCardModal } from "../../components/cards/CreateCardModal";
-import { CreatePurchaseModal } from "../../components/cards/CreatePurchaseModal";
-import { EditCardModal } from "../../components/cards/EditCardModal";
-import { CardDetailsModal } from "../../components/cards/CardDetailsModal";
+import { EditCardModal } from "../../components/features/cards/EditCardModal";
+import { CreateCardModal } from "../../components/features/cards/CreateCardModal";
+import { CardDetailsModal } from "../../components/features/cards/CardDetailsModal";
 import { DeleteActionModal } from "../../components/transactions/DeleteActionModal";
-import { CardsList } from "../../components/cards/CardsList";
+import { CreatePurchaseModal } from "../../components/features/cards/CreatePurchaseModal";
 import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
+
+import { CreditCardsTour } from "./CreditCardsTour";
 
 export function CreditCards() {
   const { data: cards = [], isLoading: isLoadingCards } = useCards();
@@ -40,7 +42,8 @@ export function CreditCards() {
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-20 sm:pb-8">
-      {/* 🚀 REGRA DE UX #04: O Respiro e o Contexto (Exibido se já existirem cartões) */}
+      {!isLoadingCards && cards.length > 0 && <CreditCardsTour />}
+
       {!isLoadingCards && cards.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
@@ -54,17 +57,19 @@ export function CreditCards() {
 
           {/* Botões de Ação integrados hierarquicamente */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            {/* Botão Novo Cartão */}
             <button
               onClick={() => setIsNewCardModalOpen(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-2xs border border-subtle/30 cursor-pointer"
+              className="tour-credit-add-card w-full sm:w-auto flex items-center justify-center gap-2 bg-elevated hover:bg-subtle/40 text-primary px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-2xs border border-subtle/30 cursor-pointer"
             >
               <Plus size={16} className="text-brand" />
               <span>Novo Cartão</span>
             </button>
 
+            {/* Botão Nova Compra */}
             <button
               onClick={() => setIsPurchaseModalOpen(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
+              className="tour-credit-add-purchase w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer active:scale-95"
             >
               <ShoppingBag size={16} />
               <span>Lançar Compra</span>
@@ -73,7 +78,6 @@ export function CreditCards() {
         </div>
       )}
 
-      {/* UX EDUCACIONAL SE ESTIVER VAZIO */}
       {!isLoadingCards && cards.length === 0 ? (
         <FeatureIntroduction
           icon={CreditCard}
@@ -91,15 +95,17 @@ export function CreditCards() {
           onAction={() => setIsNewCardModalOpen(true)}
         />
       ) : (
-        <CardsList
-          cards={cards}
-          isLoading={isLoadingCards}
-          onSelectCard={(card) => handleOpenDetails(card.id)}
-          onNewCardClick={() => setIsNewCardModalOpen(true)}
-        />
+        /* Container do Resumo de Crédito e Lista */
+        <div className="tour-credit-summary">
+          <CardsList
+            cards={cards}
+            isLoading={isLoadingCards}
+            onSelectCard={(card) => handleOpenDetails(card.id)}
+            onNewCardClick={() => setIsNewCardModalOpen(true)}
+          />
+        </div>
       )}
 
-      {/* MODAIS DO ECOSSISTEMA DE CRÉDITO */}
       <CreateCardModal
         isOpen={isNewCardModalOpen}
         onClose={() => setIsNewCardModalOpen(false)}

@@ -1,27 +1,25 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 export async function checkAuth(request: FastifyRequest, reply: FastifyReply) {
-   try {
-      // Tenta validar o JWT
-      const payload = await request.jwtVerify<{ sub: string }>();
+  try {
+    const payload = await request.jwtVerify<{
+      sub: string;
+      type?: "access" | "2fa_partial";
+    }>();
 
-      request.user = {
-         sub: payload.sub,
-         id: payload.sub,
-      };
-   } catch (err) {
-      // LOG DE ERRO REAL: Isso vai aparecer no seu terminal backend!
-      console.error("🔥 ERRO DE AUTENTICAÇÃO:", err);
+    if (payload.type === "2fa_partial") {
+      return reply.status(401).send({
+        error: "Unauthorized. 2FA verification required.",
+      });
+    }
 
-      const sessionId = request.cookies.sessionId;
-      if (!sessionId) {
-         return reply.status(401).send({
-            error: "Unauthorized. Token or Session missing.",
-            details: err,
-         });
-      }
-
-      // Se tiver sessionId, você poderia implementar a lógica de sessão aqui
-      // mas como estamos mudando para JWT, o ideal é focar no erro do Token.
-   }
+    request.user = {
+      sub: payload.sub,
+      id: payload.sub,
+    };
+  } catch (err) {
+    return reply.status(401).send({
+      error: "Unauthorized. Token invalid or missing.",
+    });
+  }
 }

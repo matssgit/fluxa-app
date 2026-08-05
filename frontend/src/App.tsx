@@ -1,21 +1,23 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { PrivacyProvider } from "./contexts/PrivacyProvider";
-import { ThemeProvider } from "./contexts/ThemeProvider";
-import { DefaultLayout } from "./layouts/DefaultLayout";
-import { AuthProvider } from "./contexts/AuthProvider";
-import { Subscriptions } from "./pages/Subscriptions";
-import { Dashboard } from "./pages/Dashboard/index";
-import { Transactions } from "./pages/Transactions";
-import { CreditCards } from "./pages/CreditCards";
-import { Accounts } from "./pages/Accounts/index";
-import { Categories } from "./pages/Categories";
-import { Settings } from "./pages/Settings";
-import { Register } from "./pages/Register";
-import { Wallets } from "./pages/Wallets";
+import { Login } from "./pages/Login";
 import { useAuth } from "./hooks/useAuth";
 import { Toaster } from "react-hot-toast";
-import { Login } from "./pages/Login";
+import { Wallets } from "./pages/Wallets";
+import { Register } from "./pages/Register";
+import { Settings } from "./pages/Settings";
+import { Categories } from "./pages/Categories";
+import { Accounts } from "./pages/Accounts/index";
+import { VerifyEmail } from "./pages/VerifyEmail";
+import { CreditCards } from "./pages/CreditCards";
+import { Transactions } from "./pages/Transactions";
+import { Dashboard } from "./pages/Dashboard/index";
+import { Subscriptions } from "./pages/Subscriptions";
+import { AuthProvider } from "./contexts/auth/AuthProvider";
+import { DefaultLayout } from "./layouts/DefaultLayout";
+import { ThemeProvider } from "./contexts/theme/ThemeProvider";
+import { VerifyEmailPending } from "./pages/VerifyEmailPending";
+import { PrivacyProvider } from "./contexts/privacy/PrivacyProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,11 @@ export default function App() {
                 {/* Rotas Públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route
+                  path="/verify-email-pending"
+                  element={<VerifyEmailPending />}
+                />
 
                 {/* Rotas Privadas Agrupadas no Layout */}
                 <Route

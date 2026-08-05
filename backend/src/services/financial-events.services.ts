@@ -3,7 +3,7 @@ import type {
   FinancialEventFilter,
   PaginatedResponse,
   FinancialEventDTO,
-} from "../@types/financial-events.js";
+} from "../types/financial-events.js";
 
 export class FinancialEventsService {
   private repository: FinancialEventsRepository;
@@ -16,7 +16,6 @@ export class FinancialEventsService {
     userId: string,
     filters: FinancialEventFilter,
   ): Promise<PaginatedResponse<FinancialEventDTO>> {
-    // Assegurar paginação padrão
     const safeFilters: FinancialEventFilter = {
       ...filters,
       page: filters.page && filters.page > 0 ? Number(filters.page) : 1,

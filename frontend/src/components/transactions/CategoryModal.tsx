@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { z } from "zod";
 import { X } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useCategories } from "../../hooks/useCategories";
-
 import { Modal, ModalBody, ModalFooter } from "../ui/Modal";
 
 const categorySchema = z.object({

@@ -30,7 +30,6 @@ export function useAccounts() {
     isLoading: query.isLoading,
     createAccount: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
-    // ✨ AQUI: Expondo a edição para o Modal!
     updateAccount: updateMutation.mutateAsync,
     isUpdating: updateMutation.isPending,
   };

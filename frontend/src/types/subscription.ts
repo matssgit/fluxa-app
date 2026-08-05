@@ -8,9 +8,8 @@ export interface Subscription {
   amount: number;
   due_day: number;
   frequency: "monthly" | "yearly";
-  status: "active" | "paused" | "cancelled";
+  status?: "active" | "paused" | "cancelled" | "deleted";
 
-  // Dados vindos dos JOINs
   category_name?: string;
   category_color?: string;
   account_name?: string;
@@ -35,7 +34,6 @@ export interface UpdateSubscriptionStatusData {
   status: "active" | "paused" | "cancelled";
 }
 
-// ✨ AQUI: O motor do nosso Centro de Controle!
 export interface SubscriptionAnalytics {
   monthlyTotal: number;
   yearlyProjection: number;

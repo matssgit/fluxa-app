@@ -1,17 +1,14 @@
-import { db as knex } from "../database.js";
+import { db as knex } from "../database/database.js";
 import type {
   FinancialEventFilter,
   FinancialEventDTO,
-} from "../@types/financial-events.js";
+} from "../types/financial-events.js";
 
 export class FinancialEventsRepository {
   async getEvents(
     userId: string,
     filters: FinancialEventFilter,
   ): Promise<{ items: FinancialEventDTO[]; total: number }> {
-    // -------------------------------------------------------------------------
-    // 1. DOMÍNIO: TRANSAÇÕES À VISTA
-    // -------------------------------------------------------------------------
     const transactionsQuery = knex("transactions as t")
       .select(
         "t.id",
@@ -22,7 +19,6 @@ export class FinancialEventsRepository {
         ),
         "t.status",
         "t.created_at as date",
-        // ✨ A CAMUFLAGEM: Se tiver subscription_id, veste-se de assinatura
         knex.raw(
           "CASE WHEN t.subscription_id IS NOT NULL THEN 'subscription' ELSE 'transaction' END as type",
         ),
@@ -32,23 +28,25 @@ export class FinancialEventsRepository {
         "cat.name as category",
         "t.account_id as accountId",
         "acc.name as account",
-        knex.raw("NULL::text as card_name"), // Cast explícito para UNION
-        // ✨ O CONTEXTO: Injeta o ID da assinatura original para o ícone e UI funcionarem
+        knex.raw("NULL::text as card_name"),
         knex.raw(`
           CASE WHEN t.subscription_id IS NOT NULL 
-          THEN jsonb_build_object('subscriptionId', t.subscription_id)
+          THEN jsonb_build_object(
+            'subscriptionId', t.subscription_id,
+            'dueDay', sub.due_day,
+            'nextBillingDate', sub.next_billing_date,
+            'subscriptionStatus', sub.status
+          )
           ELSE '{}'::jsonb END as context
         `),
         "t.created_at as createdAt",
-        knex.raw('NULL::timestamp as "updatedAt"'), // Correção: Transações não têm updated_at
+        knex.raw('NULL::timestamp as "updatedAt"'),
       )
       .leftJoin("categories as cat", "t.category_id", "cat.id")
       .leftJoin("accounts as acc", "t.account_id", "acc.id")
+      .leftJoin("subscriptions as sub", "t.subscription_id", "sub.id")
       .where("t.user_id", userId);
 
-    // -------------------------------------------------------------------------
-    // 2. DOMÍNIO: PARCELAMENTOS
-    // -------------------------------------------------------------------------
     const installmentsQuery = knex("installments as i")
       .select(
         "i.id",
@@ -56,13 +54,13 @@ export class FinancialEventsRepository {
         "i.amount",
         knex.raw("'expense' as flow"),
         "i.status",
-        knex.raw("i.expected_date::timestamp as date"), // Cast para equiparar com created_at
+        knex.raw("i.expected_date::timestamp as date"),
         knex.raw("'installment' as type"),
         "p.store as merchant",
         "p.observation as notes",
         "p.category_id as categoryId",
         "cat.name as category",
-        knex.raw('NULL::uuid as "accountId"'), // Cast explícito para UNION
+        knex.raw('NULL::uuid as "accountId"'),
         knex.raw("NULL::text as account"),
         "c.name as card_name",
         knex.raw(`jsonb_build_object(
@@ -72,17 +70,14 @@ export class FinancialEventsRepository {
           'cardId', p.card_id,
           'cardName', c.name
         ) as context`),
-        knex.raw('p.purchase_date::timestamp as "createdAt"'), // Correção: Installments não têm created_at
-        knex.raw('NULL::timestamp as "updatedAt"'), // Correção: Installments não têm updated_at
+        knex.raw('p.purchase_date::timestamp as "createdAt"'),
+        knex.raw('NULL::timestamp as "updatedAt"'),
       )
       .join("credit_purchases as p", "i.purchase_id", "p.id")
       .leftJoin("categories as cat", "p.category_id", "cat.id")
       .leftJoin("cards as c", "p.card_id", "c.id")
       .where("p.user_id", userId);
 
-    // -------------------------------------------------------------------------
-    // 3. DOMÍNIO: ASSINATURAS
-    // -------------------------------------------------------------------------
     const subscriptionsQuery = knex("subscriptions as s")
       .select(
         "s.id",
@@ -104,16 +99,16 @@ export class FinancialEventsRepository {
         knex.raw(`jsonb_build_object(
           'subscriptionId', s.id,
           'dueDay', s.due_day,
-          'nextBillingDate', s.next_billing_date
+          'nextBillingDate', s.next_billing_date,
+          'subscriptionStatus', s.status
         ) as context`),
         "s.created_at as createdAt",
         "s.updated_at as updatedAt",
       )
       .leftJoin("categories as cat", "s.category_id", "cat.id")
-      .leftJoin("accounts as acc", "s.account_id", "acc.id") // Correção de JOIN: Faltava o relacionamento da conta
+      .leftJoin("accounts as acc", "s.account_id", "acc.id")
       .leftJoin("cards as c", "s.card_id", "c.id")
       .where("s.user_id", userId)
-      // ✨ A OCULTAÇÃO: Esconde a assinatura pendente se já houver transação paga neste mês
       .whereNotExists(function () {
         this.select(1)
           .from("transactions as t")
@@ -126,9 +121,6 @@ export class FinancialEventsRepository {
           );
       });
 
-    // -------------------------------------------------------------------------
-    // 4. THE MASTER QUERY
-    // -------------------------------------------------------------------------
     const mainQuery = knex
       .with("transactions_events", transactionsQuery)
       .with("installment_events", installmentsQuery)
@@ -143,9 +135,6 @@ export class FinancialEventsRepository {
       ) as all_events`),
       );
 
-    // -------------------------------------------------------------------------
-    // 5. FILTROS
-    // -------------------------------------------------------------------------
     if (filters.query) {
       const searchTerms = filters.query.trim().split(/\s+/);
       searchTerms.forEach((term) => {
@@ -182,9 +171,6 @@ export class FinancialEventsRepository {
     if (filters.startDate) mainQuery.where("date", ">=", filters.startDate);
     if (filters.endDate) mainQuery.where("date", "<=", filters.endDate);
 
-    // -------------------------------------------------------------------------
-    // 6. EXECUÇÃO
-    // -------------------------------------------------------------------------
     const page = filters.page || 1;
     const pageSize = filters.pageSize || 50;
 
@@ -226,7 +212,6 @@ export class FinancialEventsRepository {
       .limit(pageSize)
       .offset((page - 1) * pageSize);
 
-    // Remove campos que eram necessários no filtro/SQL mas que o DTO não pede na raiz (como card_name)
     const cleanedItems = items.map(({ card_name, ...rest }) => rest);
 
     return {

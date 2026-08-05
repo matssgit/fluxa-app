@@ -4,7 +4,6 @@ import type { FinancialEventFilters } from "../types";
 
 export function useFinancialEvents(filters: FinancialEventFilters) {
   return useInfiniteQuery({
-    // A QueryKey agora inclui os filtros! Se o filtro mudar, o React Query refaz a busca automaticamente.
     queryKey: ["financial-events", filters],
     queryFn: ({ pageParam = 1 }) =>
       fetchFinancialEvents({

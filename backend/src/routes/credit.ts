@@ -1,8 +1,7 @@
-// backend/src/routes/credit.ts
-import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
-import { db } from "../database.js";
+import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
 
 export async function creditRoutes(app: FastifyInstance) {
@@ -21,8 +20,9 @@ export async function creditRoutes(app: FastifyInstance) {
       const body = createCardSchema.parse(request.body);
       const userId = (request.user as any)?.sub;
 
-      if (!userId)
+      if (!userId) {
         return reply.status(401).send({ message: "Usuário não autenticado." });
+      }
 
       const [novoCartao] = await db("cards")
         .insert({
@@ -39,15 +39,17 @@ export async function creditRoutes(app: FastifyInstance) {
 
       return reply.status(201).send(novoCartao);
     } catch (error) {
-      console.error("🔥 Erro ao cadastrar cartão:", error);
+      console.error("Erro ao cadastrar cartão:", error);
       return reply.status(500).send({ message: "Erro interno", error });
     }
   });
 
   app.get("/cards", async (request, reply) => {
     const userId = (request.user as any)?.sub;
-    if (!userId)
+
+    if (!userId) {
       return reply.status(401).send({ message: "Usuário não autenticado." });
+    }
 
     const cards = await db("cards")
       .select("*")
@@ -100,7 +102,7 @@ export async function creditRoutes(app: FastifyInstance) {
 
       return reply.status(204).send();
     } catch (error) {
-      console.error("🚨 Erro ao editar cartão:", error);
+      console.error("Erro ao editar cartão:", error);
       return reply
         .status(500)
         .send({ message: "Erro ao editar cartão", error });
@@ -123,15 +125,27 @@ export async function creditRoutes(app: FastifyInstance) {
       const body = createPurchaseSchema.parse(request.body);
       const userId = (request.user as any)?.sub;
 
-      if (!userId)
+      if (!userId) {
         return reply.status(401).send({ message: "Não autenticado." });
+      }
 
       const card = await db("cards")
         .where({ id: body.card_id, user_id: userId })
         .first();
 
-      if (!card)
+      if (!card) {
         return reply.status(404).send({ message: "Cartão não encontrado." });
+      }
+
+      const category = await db("categories")
+        .where({ id: body.category_id, user_id: userId })
+        .first();
+
+      if (!category) {
+        return reply
+          .status(403)
+          .send({ message: "Categoria inválida ou não pertence a você." });
+      }
 
       const totalAmountToDeduct = Number(body.total_amount);
       const availableLimit = Number(card.available_limit);
@@ -165,6 +179,8 @@ export async function creditRoutes(app: FastifyInstance) {
 
         const baseInstallmentAmount =
           Math.floor((body.total_amount / body.total_installments) * 100) / 100;
+
+        // Direciona o resto da divisão para a última parcela para garantir o fechamento exato dos centavos
         const remainder =
           Math.round(
             (body.total_amount -
@@ -204,7 +220,7 @@ export async function creditRoutes(app: FastifyInstance) {
 
       return reply.status(201).send();
     } catch (error) {
-      console.error("🚨 ERRO AO LANÇAR COMPRA:", error);
+      console.error("Erro ao lançar compra:", error);
       return reply
         .status(500)
         .send({ message: "Erro ao processar compra", error });
@@ -244,62 +260,94 @@ export async function creditRoutes(app: FastifyInstance) {
     const paramsSchema = z.object({ id: z.string().uuid() });
     const bodySchema = z.object({ account_id: z.string().uuid() });
 
-    const { id } = paramsSchema.parse(request.params);
-    const { account_id } = bodySchema.parse(request.body);
-    const userId = (request.user as any)?.sub;
-
-    await db.transaction(async (trx) => {
-      const installment = await trx("installments")
-        .join(
-          "credit_purchases",
-          "installments.purchase_id",
-          "credit_purchases.id",
-        )
-        .where("installments.id", id)
-        .where("credit_purchases.user_id", userId)
-        .select(
-          "installments.*",
-          "credit_purchases.category_id",
-          "credit_purchases.title",
-          "credit_purchases.card_id",
-        )
-        .first();
-
-      if (!installment)
-        return reply.status(404).send({ message: "Parcela não encontrada." });
-      if (installment.status === "paid")
-        return reply.status(400).send({ message: "Já paga." });
-
-      const today = new Date().toISOString().split("T")[0];
-
-      await trx("installments").where({ id }).update({
-        status: "paid",
-        completed_date: today,
-      });
+    try {
+      const { id } = paramsSchema.parse(request.params);
+      const { account_id } = bodySchema.parse(request.body);
+      const userId = (request.user as any)?.sub;
 
       if (account_id) {
-        await trx("transactions").insert({
-          id: randomUUID(),
-          user_id: userId,
-          account_id: account_id,
-          category_id: installment.category_id,
-          title: `Fatura: ${installment.title} (${installment.installment_number}/${installment.total_installments})`,
-          amount: -Math.abs(installment.amount),
-          status: "completed",
-        });
+        const account = await db("accounts")
+          .where({ id: account_id, user_id: userId })
+          .first();
+
+        if (!account) {
+          return reply.status(403).send({
+            message:
+              "Operação negada. A conta selecionada não pertence a você.",
+          });
+        }
       }
 
-      await trx("cards")
-        .where({ id: installment.card_id })
-        .increment("available_limit", Number(installment.amount));
-    });
+      await db.transaction(async (trx) => {
+        // Utiliza row-level lock (FOR UPDATE) para evitar race conditions no pagamento duplo da mesma parcela
+        const installment = await trx("installments")
+          .where({ id, user_id: userId })
+          .forUpdate()
+          .first();
 
-    return reply.status(204).send();
+        if (!installment) throw new Error("INSTALLMENT_NOT_FOUND");
+        if (installment.status === "paid") throw new Error("ALREADY_PAID");
+
+        const purchase = await trx("credit_purchases")
+          .where({ id: installment.purchase_id, user_id: userId })
+          .first();
+
+        if (!purchase) throw new Error("PURCHASE_NOT_FOUND");
+
+        const today = new Date().toISOString().split("T")[0];
+
+        await trx("installments").where({ id }).update({
+          status: "paid",
+          completed_date: today,
+        });
+
+        if (account_id) {
+          const amountToDeduct = Math.abs(Number(installment.amount));
+
+          await trx("transactions").insert({
+            id: randomUUID(),
+            user_id: userId,
+            account_id: account_id,
+            category_id: purchase.category_id,
+            title: `Fatura: ${purchase.title} (${installment.installment_number}/${installment.total_installments})`,
+            amount: -amountToDeduct,
+            status: "completed",
+          });
+        }
+
+        await trx("cards")
+          .where({ id: purchase.card_id })
+          .increment("available_limit", Number(installment.amount));
+      });
+
+      return reply.status(204).send();
+    } catch (error: any) {
+      if (error.message === "INSTALLMENT_NOT_FOUND") {
+        return reply.status(404).send({ message: "Parcela não encontrada." });
+      }
+      if (error.message === "PURCHASE_NOT_FOUND") {
+        return reply
+          .status(404)
+          .send({ message: "Compra vinculada não encontrada." });
+      }
+      if (error.message === "ALREADY_PAID") {
+        return reply.status(400).send({ message: "Já paga." });
+      }
+
+      console.error("Erro no pagamento da fatura:", error);
+      return reply.status(500).send({ message: "Erro interno", error });
+    }
   });
 
   app.delete("/cards/:id", async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
-    const userId = (request.user as any)?.sub;
+    const userId = (request.user as any).sub;
+
+    const card = await db("cards").where({ id, user_id: userId }).first();
+
+    if (!card) {
+      return reply.status(404).send({ message: "Cartão não encontrado." });
+    }
 
     const pendingObligations = await db("installments")
       .join(
@@ -318,7 +366,7 @@ export async function creditRoutes(app: FastifyInstance) {
       });
     }
 
-    await db("cards").where({ id, user_id: userId }).delete();
+    await db("cards").where({ id }).delete();
     return reply.status(204).send();
   });
 
@@ -372,7 +420,7 @@ export async function creditRoutes(app: FastifyInstance) {
 
       return reply.status(204).send();
     } catch (error) {
-      console.error("🚨 Erro ao cancelar compra:", error);
+      console.error("Erro ao cancelar compra:", error);
       return reply
         .status(500)
         .send({ message: "Erro interno ao processar cancelamento." });

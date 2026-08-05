@@ -1,19 +1,27 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:3333",
-  withCredentials: true, // Mantém o cookie funcionando
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3333",
+  withCredentials: true,
 });
 
-// Tratamento de erros global
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const requestUrl = error.config?.url;
+
+    const isAuthRoute =
+      requestUrl?.includes("/login") ||
+      requestUrl?.includes("/register") ||
+      requestUrl?.includes("/2fa/");
+
     if (error.response) {
       const status = error.response.status;
-      if (status === 400)
+
+      if (status === 400 && !isAuthRoute)
         console.error("Erro de validação nos dados enviados.");
-      if (status === 401) console.error("Não autorizado. Sessão inválida.");
+      if (status === 401 && !isAuthRoute)
+        console.error("Não autorizado. Sessão inválida.");
       if (status === 404) console.error("Recurso não encontrado.");
       if (status >= 500) console.error("Erro interno do servidor backend.");
     } else {
@@ -23,7 +31,6 @@ api.interceptors.response.use(
   },
 );
 
-// Interceptor para injetar o Token em todas as requisições
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("@FinanceApp:token");
 

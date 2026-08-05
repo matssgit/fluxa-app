@@ -94,7 +94,6 @@ export function TransactionToolbar({
         </button>
 
         <div className="flex items-center ml-auto gap-1">
-          {/* ✨ Botão "Limpar" aparece dinamicamente se houver filtros ativos */}
           {activeCount > 0 && (
             <button
               onClick={onClearFilters}

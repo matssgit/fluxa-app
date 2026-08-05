@@ -1,9 +1,7 @@
-import React from "react";
-
 interface SectionTitleProps {
   title: string;
   subtitle?: string;
-  eyebrow?: string; // <-- Nova propriedade de ergonomia visual!
+  eyebrow?: string;
   className?: string;
 }
 
@@ -15,7 +13,6 @@ export function SectionTitle({
 }: SectionTitleProps) {
   return (
     <div className={`space-y-1 ${className}`}>
-      {/* Âncora Visual (Eyebrow Tracker) - Destaque executivo para rolagem mobile */}
       {eyebrow && (
         <span className="inline-block text-[11px] font-extrabold uppercase tracking-[0.2em] text-brand bg-brand/10 px-2.5 py-0.5 rounded-md mb-1 border border-brand/15">
           {eyebrow}

@@ -1,14 +1,17 @@
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
+import { Sidebar } from "../components/layout/Sidebar";
 import { BottomNav } from "../components/layout/BottomNav";
-import { useNotificationSystem } from "../hooks/useNotificationSystem"; // ✨ IMPORTADO
+import { ProductTour } from "../components/ui/ProductTour";
+import { useNotificationSystem } from "../hooks/useNotificationSystem";
 
 export function DefaultLayout() {
   useNotificationSystem();
 
   return (
     <div className="min-h-screen bg-background text-primary flex selection:bg-brand/30 selection:text-brand-light transition-colors duration-300">
+      <ProductTour />
+
       <Sidebar />
       <div className="flex-1 flex flex-col min-[1400px]:ml-64 w-full relative">
         <Header />

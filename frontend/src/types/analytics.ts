@@ -1,9 +1,9 @@
 export interface FinancialHealth {
-  score: number; // 0 a 100
+  score: number;
   status: "excellent" | "good" | "attention" | "critical";
-  savings_rate: number; // Porcentagem da renda direcionada para reservas
-  commitment_rate: number; // Porcentagem comprometida com custos fixos/assinaturas
-  liquidity_months: number; // Quantos meses o usuário sobrevive com o saldo atual
+  savings_rate: number;
+  commitment_rate: number;
+  liquidity_months: number;
 }
 
 export interface Insight {
@@ -20,13 +20,12 @@ export interface Recommendation {
   title: string;
   description: string;
   action_label: string;
-  action_url?: string; // Rota interna para acionar a melhoria (ex: "/subscriptions")
-  impact_estimate?: string; // ex: "Economia estimada de R$ 45,00/mês"
+  action_url?: string;
+  impact_estimate?: string;
 }
 
-// Estrutura para os futuros gráficos (Sprint 6.1)
 export interface CashFlowDataPoint {
-  month: string; // Ex: "Jan", "Fev" ou "2026-07"
+  month: string;
   income: number;
   expense: number;
   balance: number;
@@ -40,7 +39,6 @@ export interface CategoryDistributionPoint {
   color?: string;
 }
 
-// O Payload Executivo Global (Consumido pelo Dashboard)
 export interface DashboardMetrics {
   total_balance: number;
   monthly_income: number;

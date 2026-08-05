@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
+import type { FinancialEventFilter } from "../types/financial-events.js";
 import { FinancialEventsService } from "../services/financial-events.services.js";
 import { FinancialEventCommandService } from "../services/financial-events.command.service.js";
-import type { FinancialEventFilter } from "../@types/financial-events.js";
 
 export async function financialEventsRoutes(app: FastifyInstance) {
   const service = new FinancialEventsService();

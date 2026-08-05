@@ -1,4 +1,4 @@
-// 1. DOMÍNIOS LITERAIS
+// DOMÍNIOS LITERAIS
 export type FinancialEventStatus =
   | "pending"
   | "completed"
@@ -20,7 +20,7 @@ export type EventSort =
   | "next_billing"
   | "updated_at_desc";
 
-// 2. FINANCIAL EVENT FILTERS (O Contrato da Super Omnibox)
+// FINANCIAL EVENT FILTERS (O Contrato da Super Omnibox)
 export interface FinancialEventFilters {
   query?: string;
 
@@ -43,7 +43,7 @@ export interface FinancialEventFilters {
   pageSize?: number;
 }
 
-// 3. FINANCIAL EVENT DTO (O Contrato da UI)
+// FINANCIAL EVENT DTO 
 export interface FinancialEventDTO {
   id: string;
   title: string;
@@ -77,7 +77,7 @@ export interface FinancialEventDTO {
   updatedAt?: string;
 }
 
-// 4. PAGINAÇÃO
+// PAGINAÇÃO
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;

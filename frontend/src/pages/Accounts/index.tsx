@@ -1,4 +1,9 @@
 import { useState } from "react";
+import { Skeleton } from "../../components/ui";
+import { useAccounts } from "../../hooks/useAccounts";
+import { AccountModal } from "../../components/features/accounts/AccountModal";
+import { DeleteAccountModal } from "../../components/features/accounts/DeleteAccountModal";
+import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 import {
   Plus,
   Landmark,
@@ -8,13 +13,6 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useAccounts } from "../../hooks/useAccounts";
-import { AccountModal } from "../../components/accounts/AccountModal";
-import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
-import { Skeleton } from "../../components/ui";
-
-// ✨ IMPORTAMOS O NOVO COMPONENTE EDUCACIONAL (substituindo EmptyState genérico)
-import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
 interface AccountData {
   id: string;
@@ -78,7 +76,6 @@ export function Accounts() {
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-fade-in">
-      {/* Exibe o Header e o botão apenas se existirem contas. Se estiver vazio, a FeatureIntroduction brilha. */}
       {accounts.length > 0 && !isLoading && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -108,7 +105,6 @@ export function Accounts() {
       )}
 
       {!isLoading && accounts.length === 0 ? (
-        // 🚀 O NOVO ONBOARDING EDUCACIONAL ENTRA AQUI
         <FeatureIntroduction
           icon={Landmark}
           title="Contas"

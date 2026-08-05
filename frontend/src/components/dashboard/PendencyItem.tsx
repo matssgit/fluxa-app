@@ -1,5 +1,5 @@
-import { Calendar, ArrowRight, Check } from "lucide-react";
 import { formatCurrency } from "../../utils/formatters";
+import { Calendar, ArrowRight, Check } from "lucide-react";
 
 interface PendencyItemProps {
   title: string;
@@ -33,7 +33,6 @@ export function PendencyItem({
         </div>
       </div>
 
-      {/* ✨ BOTÃO RESOLVER: Verde Semântico + Glow Suave + Pulso Discreto */}
       <button
         type="button"
         onClick={onAction}

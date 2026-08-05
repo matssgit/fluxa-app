@@ -1,7 +1,7 @@
 services:
-   - type: web
-     name: finance-app-backend
-     env: node
-     rootDir: backend
-     buildCommand: npm install && npm run build && npm run knex -- migrate:latest
-     startCommand: npm start
+  - type: web
+    name: fluxa-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm run build && npm run db:migrate
+    startCommand: npm start

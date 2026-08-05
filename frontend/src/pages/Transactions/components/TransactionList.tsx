@@ -1,3 +1,5 @@
+import type { FinancialEventDTO } from "../types";
+import { PrivacyMask } from "../../../components/ui/PrivacyMask";
 import {
   CheckCircle2,
   Clock,
@@ -8,8 +10,6 @@ import {
   CreditCard,
   Store,
 } from "lucide-react";
-import { PrivacyMask } from "../../../components/ui/PrivacyMask";
-import type { FinancialEventDTO } from "../types";
 
 interface TransactionListProps {
   transactions: FinancialEventDTO[];
@@ -25,7 +25,6 @@ interface TransactionListProps {
   fetchNextPage?: () => unknown;
 }
 
-// ✨ FUNÇÃO REAPROVEITADA: A mesma inteligência de cálculo de data aplicada no painel lateral
 function getSmartDueDate(event: FinancialEventDTO): Date {
   const explicitDueDay = (event.context as { dueDay?: number })?.dueDay;
   const dateString = event.context?.nextBillingDate || event.date;
@@ -37,11 +36,9 @@ function getSmartDueDate(event: FinancialEventDTO): Date {
       : new Date().getDate());
 
   if (event.status === "completed") {
-    // 🛡️ HISTÓRICO: Ancoramos o vencimento ao mês em que o pagamento de facto ocorreu
     const paymentDate = new Date(event.createdAt || event.date);
     return new Date(paymentDate.getFullYear(), paymentDate.getMonth(), dueDay);
   } else {
-    // ⏱️ CAIXA ATUAL: Dinâmico - Se o dia já passou, joga pro mês que vem
     const today = new Date();
     const currentDay = today.getDate();
     const monthOffset = dueDay >= currentDay ? 0 : 1;
@@ -225,7 +222,6 @@ export function TransactionList({
                           </span>
                         )}
 
-                        {/* ✨ CORREÇÃO AQUI: Lista Principal reflete a data correta para Assinaturas */}
                         {event.type === "subscription" && (
                           <span className="flex items-center gap-1.5">
                             💳 {event.account || "Geral"} •{" "}

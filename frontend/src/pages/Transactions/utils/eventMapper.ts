@@ -1,30 +1,45 @@
 import type { Transaction } from "../../../types/transaction";
-import type { FinancialEventDTO, FinancialEventType } from "../types"; // ✨ Corrigido o import
+import type { FinancialEventDTO, FinancialEventType } from "../types";
+
+type MasterQueryPayload = Transaction & Partial<FinancialEventDTO>;
 
 export function mapToFinancialEvents(
-  transactions: Transaction[],
+  transactions: MasterQueryPayload[],
 ): FinancialEventDTO[] {
-  // ✨ Corrigido o retorno
   return transactions.map((tx) => {
-    // 🧪 Heurística temporária para simular o polimorfismo
-    // Na Etapa 7, o backend fará isto de forma nativa e precisa.
+    // Captura os dados reais e precisos vindos da Master Query
+    const realType = tx.type;
+    const realContext = tx.context;
+
+    if (realType && realContext) {
+      return {
+        id: tx.id,
+        title: tx.title,
+        amount: tx.amount,
+        flow: tx.flow || (tx.amount >= 0 ? "income" : "expense"),
+        status: tx.status === "completed" ? "completed" : "pending",
+        date: tx.date || tx.created_at || new Date().toISOString(),
+        type: realType,
+        category: tx.category || tx.category_name,
+        account: tx.account || tx.account_name,
+        context: realContext,
+      } as FinancialEventDTO;
+    }
+
     let eventType: FinancialEventType = "transaction";
-    let contextProps: FinancialEventDTO["context"] = {}; // ✨ Usando o context do DTO
+    let contextProps: FinancialEventDTO["context"] = {};
 
-    const titleLower = tx.title.toLowerCase();
+    const titleLower = tx.title?.toLowerCase() || "";
 
-    // Simula uma parcela se encontrar "x/y" ou a palavra "parcela"
     if (titleLower.includes("parcela") || titleLower.match(/\d+\/\d+/)) {
       eventType = "installment";
       contextProps = {
         purchaseId: `purchase-${tx.id}`,
-        installmentNumber: 1, // Simulado
-        totalInstallments: 12, // Simulado
+        installmentNumber: 1,
+        totalInstallments: 12,
         cardName: tx.account_name || "Cartão",
       };
-    }
-    // Simula uma assinatura para serviços conhecidos
-    else if (
+    } else if (
       titleLower.includes("netflix") ||
       titleLower.includes("spotify") ||
       titleLower.includes("amazon")
@@ -43,12 +58,12 @@ export function mapToFinancialEvents(
       title: tx.title,
       amount: tx.amount,
       flow: tx.amount >= 0 ? "income" : "expense",
-      status: tx.status === "completed" ? "completed" : "pending", // ✨ A nossa correção do Bug 2
+      status: tx.status === "completed" ? "completed" : "pending",
       date: tx.created_at || new Date().toISOString(),
-      type: eventType, // ✨ O DTO espera 'type' em vez de 'eventType'
-      category: tx.category_name, // ✨ O DTO espera 'category'
-      account: tx.account_name, // ✨ O DTO espera 'account'
-      context: contextProps, // ✨ O DTO isola os dados extras aqui
+      type: eventType,
+      category: tx.category_name,
+      account: tx.account_name,
+      context: contextProps,
     } as FinancialEventDTO;
   });
 }

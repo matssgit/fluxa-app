@@ -1,176 +1,207 @@
+````markdown
+# Fluxa
+
+<div align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+</div>
+
+<br>
+
+<div align="center">
+  <h3>🚀 <strong>Deploy:</strong> <a href="https://COLOQUE-SEU-LINK-AQUI.com">Acessar a Aplicação ao Vivo</a></h3>
+</div>
+
+<br>
+
+**Fluxa** é uma aplicação Full Stack de gestão financeira pessoal e patrimonial desenvolvida do zero. O sistema vai muito além de um simples rastreador de despesas, unificando o controle de fluxo de caixa, cartões de crédito, compras parceladas, carteiras de metas e assinaturas recorrentes em uma única plataforma moderna e segura.
+
+![Fluxa Demo](./docs/assets/demo.gif)
+_(Substitua o caminho acima por um GIF do sistema em uso)_
+
+---
+
+## 🎯 Objetivo do Projeto
+
+O Fluxa nasceu da necessidade de ter uma ferramenta financeira realmente simples, rápida e confiável para o controle das finanças pessoais. Ao longo do desenvolvimento, o projeto deixou de ser apenas um gerenciador financeiro e passou a servir também como laboratório para aplicação de boas práticas de arquitetura de software, autenticação, segurança, banco de dados e experiência do usuário (UX).
+
+O projeto foi construído com dois propósitos principais:
+
+- **Demonstrar capacidade técnica:** Construir uma aplicação robusta que vá muito além de um CRUD tradicional. O projeto explora arquitetura limpa, modelagem de domínio complexa, transações ACID, consistência de dados, testes automatizados e desenvolvimento de uma interface responsiva focada em atrito zero.
+- **Resolver uma necessidade real:** Criar uma solução financeira diária sem anúncios, assinaturas obrigatórias ou funcionalidades desnecessárias, adaptada à realidade do controle financeiro.
+
+---
+
+## 🧠 Destaques Técnicos
+
+O Fluxa se diferencia por resolver problemas críticos de engenharia financeira de forma estruturada:
+
+- **Isolamento de Dados (Ownership):** O backend determina a propriedade dos dados exclusivamente através da identidade criptografada no token JWT (`user_id`). A API valida internamente o escopo de cada requisição, garantindo proteção contra ataques IDOR (Insecure Direct Object Reference).
+- **Separação de Domínios (Caixa vs. Crédito):** A arquitetura blinda o dinheiro real (saldo) do dinheiro virtual (limite). Compras no crédito geram obrigações temporais, e o fluxo de caixa só sofre impacto no momento exato do pagamento da fatura/parcela.
+- **Precisão Monetária (Centavos):** Os valores monetários são normalizados e persistidos em centavos inteiros no banco de dados, evitando problemas críticos de precisão com _floating points_. Algoritmos determinísticos garantem que o arredondamento de dízimas em parcelamentos bata exatamente com o valor original.
+- **Controle de Concorrência (ACID):** Operações críticas, como a dedução do limite de um cartão ou aportes em carteiras, são envolvidas em transações SQL isoladas via Knex. Isso previne _race conditions_ em requisições simultâneas.
+- **Validação _Fail-Fast_:** A biblioteca Zod valida e normaliza os payloads no momento em que entram na rota, rejeitando requisições malformadas antes que alcancem as camadas de regra de negócio.
+
+---
+
+## ✨ Funcionalidades
+
+### 🔐 Segurança
+
+- **Autenticação JWT:** Cadastro, Login e verificação segura de sessões.
+- **Autenticação em Dois Fatores (2FA):** Camada adicional de segurança via aplicativo autenticador.
+- **Recuperação de Acesso:** Fluxo completo de redefinição de senha com tokens de e-mail limitados por tempo.
+
+### 💰 Fluxo de Caixa
+
+- **Contas e Categorias:** Gestão de múltiplas contas bancárias e categorização personalizada (CRUD completo).
+- **Transações:** Registro de movimentações com status dinâmico (Pendente / Concluído).
+
+### 💳 Cartões e Crédito
+
+- **Controle de Limites:** Acompanhamento automático do limite total e disponível.
+- **Parcelamentos:** Motor de projeção de parcelas futuras que se ajustam organicamente ao calendário.
+
+### 🔄 Assinaturas e 🎯 Carteiras
+
+- **Assinaturas:** Acompanhamento de serviços recorrentes com aviso de data da próxima cobrança.
+- **Wallets (Metas):** Organização de liquidez através de transferências diretas entre a conta corrente e carteiras de objetivo patrimonial.
+
+### 📊 Dashboard e UX
+
+- **Inteligência Financeira:** Painel central com indicadores de saldo, despesas e distribuição por categorias atualizados em tempo real (React Query).
+- **Modo Privacidade:** Censura rápida de valores financeiros sensíveis em tela.
+- **Design Responsivo:** Layout _Mobile-First_ projetado para uso ergonômico, com suporte nativo a _Light_ e _Dark Mode_.
+
+---
+
+## 📸 Demonstração Visual
+
+### Dashboard Executivo
+
+![Dashboard](./docs/assets/dashboard.png)
+_(Substitua o caminho acima por uma screenshot do seu Dashboard)_
+
+### Gestão de Cartões e Parcelamentos
+
+![Cartões](./docs/assets/cartoes.png)
+_(Substitua o caminho acima por uma screenshot da tela de cartões)_
+
+---
+
+## 🛠️ Stack Tecnológica
+
+A arquitetura Cliente-Servidor foi desenvolvida mantendo as frentes desacopladas, limpas e com responsabilidades bem definidas.
+
+### Frontend
+
+- **Core:** React, TypeScript, Vite.
+- **Estilização:** Tailwind CSS (Design System Pine & Sage customizado).
+- **Gestão de Estado & Cache:** TanStack Query (React Query).
+- **Componentes & Ícones:** Modais nativos, Lucide React.
+
+### Backend
+
+- **Core:** Node.js, Fastify, TypeScript.
+- **Banco de Dados:** PostgreSQL (Produção), SQLite (Ambiente Local/Dev).
+- **Query Builder:** Knex.js.
+- **Validação & Segurança:** Zod, JWT, Bcrypt.
+- **Testes:** Vitest (Testes de concorrência, ownership e hardening).
+
+### Infraestrutura
+
+- **Deploy:** Vercel (Frontend) & Render/Railway (Backend).
+- **Contêineres:** Docker & Docker Compose.
+
+---
+
+## 🚀 Como Executar Localmente (Quick Start)
+
+O ambiente de desenvolvimento local foi configurado para ser executado de maneira simples utilizando o **SQLite** como banco de dados padrão para evitar a necessidade imediata de containers pesados no seu primeiro teste.
+
+**Pré-requisitos:** Node.js (v18+) e NPM/Yarn instalados.
+
+**1. Clone o repositório:**
+
+```bash
+git clone [https://github.com/matssgit/fluxa.git](https://github.com/matssgit/fluxa.git)
+cd fluxa
+```
+````
+
+**2. Configure e inicie o Backend:**
+
+```bash
+cd backend
+
+# Instale as dependências
+npm install
+
+# Crie o arquivo de variáveis de ambiente
+cp .env.example .env
+# IMPORTANTE: Abra o arquivo .env e certifique-se de que a variável JWT_SECRET está preenchida com qualquer hash seguro.
+
+# Execute as migrations para gerar a estrutura do banco SQLite local
+npm run knex -- migrate:latest
+
+# (Opcional) Popule o banco com dados/categorias base para testes
+npm run knex -- seed:run
+
+# Inicie o servidor da API (rodará em http://localhost:3333)
+npm run dev
 
 ```
-finance-app-beta-v2
-├─ backend
-│  ├─ .env
-│  ├─ .env.example
-│  ├─ .env.test
-│  ├─ .env.test.example
-│  ├─ .eslintignore
-│  ├─ .eslintrc.json
-│  ├─ db
-│  │  └─ migrations
-│  │     ├─ 20260616175526_create-transactions.ts
-│  │     ├─ 20260616185406_add-session-id-to-transactions.ts
-│  │     ├─ 20260622233134_create_users.ts
-│  │     ├─ 20260622233138_add_user_id_to_transactions.ts
-│  │     ├─ 20260623163630_create_accounts.ts
-│  │     ├─ 20260623163747_create_categories.ts
-│  │     ├─ 20260623175309_add_account_and_category_to_transactions.ts
-│  │     ├─ 20260623185742_apply_v1_architecture.ts
-│  │     ├─ 20260624012148_add_is_default_to_categories.ts
-│  │     ├─ 20260624012149_create_cards.ts
-│  │     ├─ 20260624012150_create_credit_purchases.ts
-│  │     ├─ 20260624012151_create_installments.ts
-│  │     ├─ 20260625005711_optimize_database_indexes.ts
-│  │     ├─ 20260625194144_alter_cards_limits.ts
-│  │     ├─ 20260626004855_add_status_to_purchases.ts
-│  │     ├─ 20260626011822_update_installments_status_check.ts
-│  │     ├─ 20260626113806_add_color_to_cards.ts
-│  │     ├─ 20260701142000_add_type_to_transactions.ts
-│  │     ├─ 20260701190000_alter_transactions_subscription_id.ts
-│  │     └─ 20260701204237_create_subscriptions.ts
-│  ├─ dist
-│  │  ├─ @types
-│  │  │  └─ knex.d.cjs
-│  │  ├─ app.cjs
-│  │  ├─ database.cjs
-│  │  ├─ env
-│  │  │  └─ index.cjs
-│  │  ├─ middlewares
-│  │  │  └─ check-session-id-exists.cjs
-│  │  ├─ routes
-│  │  │  └─ transactions.cjs
-│  │  ├─ server.cjs
-│  │  └─ test
-│  │     └─ transactions.spec.cjs
-│  ├─ docker-compose.yml
-│  ├─ knexfile.ts
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ README_PROJECT.md
-│  ├─ seeds
-│  │  ├─ 001_clear_data.ts
-│  │  └─ seed-initial-transactions.ts
-│  ├─ src
-│  │  ├─ @types
-│  │  │  ├─ credit.ts
-│  │  │  ├─ dashboard.types.ts
-│  │  │  ├─ fastify-jwt.d.ts
-│  │  │  └─ knex.d.ts
-│  │  ├─ app.ts
-│  │  ├─ database.ts
-│  │  ├─ env
-│  │  │  └─ index.ts
-│  │  ├─ middlewares
-│  │  │  ├─ check-auth.ts
-│  │  │  └─ check-session-id-exists.ts
-│  │  ├─ routes
-│  │  │  ├─ accounts.ts
-│  │  │  ├─ categories.ts
-│  │  │  ├─ credit.ts
-│  │  │  ├─ dashboard.ts
-│  │  │  ├─ subscriptions.ts
-│  │  │  ├─ transactions.ts
-│  │  │  └─ users.ts
-│  │  ├─ server.ts
-│  │  └─ tests
-│  │     ├─ credit.spec.ts
-│  │     ├─ setup.ts
-│  │     ├─ transactions.spec.ts
-│  │     ├─ validate-payment.ts
-│  │     ├─ validate-phase1.ts
-│  │     ├─ validate-phase2.ts
-│  │     ├─ validate-phase3.ts
-│  │     └─ validate-phase4.ts
-│  ├─ tsconfig.json
-│  └─ vitest.config.ts
-├─ BACKEND_ROADMAP.md
-├─ frontend
-│  ├─ eslint.config.js
-│  ├─ index.html
-│  ├─ package-lock.json
-│  ├─ package.json
-│  ├─ postcss.config.js
-│  ├─ src
-│  │  ├─ api
-│  │  │  └─ client.ts
-│  │  ├─ App.tsx
-│  │  ├─ components
-│  │  │  ├─ AccountModal.tsx
-│  │  │  ├─ CancelPurchaseModal.tsx
-│  │  │  ├─ CardDetailsModal.tsx
-│  │  │  ├─ CardItem.tsx
-│  │  │  ├─ CategoryModal.tsx
-│  │  │  ├─ CreateCardModal.tsx
-│  │  │  ├─ CreatePurchaseModal.tsx
-│  │  │  ├─ DeleteActionModal.tsx
-│  │  │  ├─ EditCardModal.tsx
-│  │  │  ├─ Header.tsx
-│  │  │  ├─ InstallmentsList.tsx
-│  │  │  ├─ NewTransactionModal.tsx
-│  │  │  ├─ PayInstallmentModal.tsx
-│  │  │  ├─ PaySubscriptionModal.tsx
-│  │  │  ├─ PurchaseDetailsModal.tsx
-│  │  │  ├─ PurchasesList.tsx
-│  │  │  ├─ Sidebar.tsx
-│  │  │  ├─ SummaryCard.tsx
-│  │  │  ├─ TransactionForm.tsx
-│  │  │  ├─ TransactionTable.tsx
-│  │  │  └─ ui
-│  │  │     ├─ CardsList.tsx
-│  │  │     └─ Skeleton.tsx
-│  │  ├─ contexts
-│  │  │  ├─ AuthContext.tsx
-│  │  │  └─ AuthProvider.tsx
-│  │  ├─ hooks
-│  │  │  ├─ useAccounts.ts
-│  │  │  ├─ useAuth.ts
-│  │  │  ├─ useCategories.ts
-│  │  │  ├─ useCredit.ts
-│  │  │  ├─ useDashBoard.ts
-│  │  │  ├─ useSubscriptions.ts
-│  │  │  └─ useTransactions.ts
-│  │  ├─ index.css
-│  │  ├─ layouts
-│  │  │  └─ DefaultLayout.tsx
-│  │  ├─ main.tsx
-│  │  ├─ pages
-│  │  │  ├─ Accounts
-│  │  │  │  └─ index.tsx
-│  │  │  ├─ CreditCards.tsx
-│  │  │  ├─ Dashboard
-│  │  │  │  └─ index.tsx
-│  │  │  ├─ Login.tsx
-│  │  │  ├─ Register.tsx
-│  │  │  ├─ Settings.tsx
-│  │  │  └─ Subscriptions
-│  │  │     ├─ CreateSubscriptionModal.tsx
-│  │  │     └─ index.tsx
-│  │  ├─ schemas
-│  │  │  └─ transactionSchema.ts
-│  │  ├─ services
-│  │  │  ├─ accounts.ts
-│  │  │  ├─ auth.ts
-│  │  │  ├─ categories.ts
-│  │  │  ├─ subscriptions.ts
-│  │  │  └─ transactions.ts
-│  │  ├─ types
-│  │  │  ├─ dashboard.ts
-│  │  │  ├─ subscription.ts
-│  │  │  └─ transaction.ts
-│  │  └─ utils
-│  │     ├─ cardColors.ts
-│  │     ├─ currency.ts
-│  │     └─ date.ts
-│  ├─ tailwind.config.js
-│  ├─ tsconfig.app.json
-│  ├─ tsconfig.json
-│  ├─ tsconfig.node.json
-│  └─ vite.config.ts
-├─ FRONTEND_ROADMAP.md
-├─ PROJECT_ROADMAP.md
-├─ render.yaml
-└─ SYSTEM_ARCHITECTURE.md
+
+**3. Configure e inicie o Frontend:**
+Em um novo terminal, retorne para a pasta raiz e acesse o frontend:
+
+```bash
+cd frontend
+
+# Instale as dependências
+npm install
+
+# Inicie o servidor de desenvolvimento
+npm run dev
 
 ```
+
+Acesse `http://localhost:5173` no seu navegador para utilizar a aplicação.
+
+**4. Executando os Testes Automatizados:**
+Para atestar a garantia do isolamento de segurança e cálculos do sistema, acesse a pasta do backend e execute a suíte de testes:
+
+```bash
+cd backend
+npm run test
+
+```
+
+---
+
+## 📚 Documentação Técnica
+
+O Fluxa conta com farta documentação técnica. Para compreender a fundo as decisões de design, _feature slicing_ e regras de negócio, consulte a pasta `docs/` do repositório:
+
+- 🏛️ [Arquitetura do Sistema](https://www.google.com/search?q=./docs/architecture/SYSTEM_ARCHITECTURE.md)
+- 🎨 [Design System](https://www.google.com/search?q=./docs/architecture/DESIGN_SYSTEM.md)
+- ⚙️ [Roadmap do Backend](https://www.google.com/search?q=./docs/development/BACKEND_ROADMAP.md)
+- 💻 [Roadmap do Frontend](https://www.google.com/search?q=./docs/development/FRONTEND_ROADMAP.md)
+
+---
+
+## 👨‍💻 Desenvolvido Por
+
+O Fluxa coroa meu esforço de consolidação técnica em Engenharia de Software. Este projeto consolida a união entre uma interface front-end focada em uma ótima experiência para o usuário final e o desenvolvimento de um back-end sólido, seguro, testado e escalável.
+
+**Matheus Santana**
+
+Desenvolvedor Full Stack
+
+- 🐙 **GitHub:** [@matssgit](https://github.com/matssgit)
+- 💼 **LinkedIn:** [Matheus Santana](https://www.google.com/search?q=https://linkedin.com/in/matheussantanadev)
+
+---

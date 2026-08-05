@@ -10,7 +10,7 @@ interface DatePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  selectedDate: string; // Formato YYYY-MM-DD
+  selectedDate: string;
   onSelectDate: (date: string) => void;
 }
 
@@ -30,7 +30,7 @@ export function DatePickerModal({
   if (!isOpen) return null;
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Domingo
+  const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
 
   const monthNames = [
     "Janeiro",

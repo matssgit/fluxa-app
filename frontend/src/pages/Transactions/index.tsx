@@ -1,18 +1,19 @@
-import { useState, useMemo } from "react";
 import { Plus } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import { TransactionToolbar } from "./components/TransactionToolbar";
-import { TransactionList } from "./components/TransactionList";
-import { NewTransactionModal } from "../../components/transactions/NewTransactionModal";
-import { AdvancedFiltersDrawer } from "./components/AdvancedFiltersDrawer";
-import { FinancialEventPanel } from "./components/FinancialEventPanel";
-import { useTransactionFilters } from "./hooks/useTransactionFilters";
-import { useFinancialEvents } from "./hooks/useFinancialEvents";
+import { useState, useMemo } from "react";
 import type { FinancialEventDTO } from "./types";
-
-// ✨ NOVO: Importamos o modal específico de assinaturas já existente
-import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
+import { TransactionsTour } from "./TransactionsTour";
+import { useQueryClient } from "@tanstack/react-query";
+import { useDashboard } from "../../hooks/useDashboard";
+import { TransactionList } from "./components/TransactionList";
+import { useFinancialEvents } from "./hooks/useFinancialEvents";
+import { TransactionToolbar } from "./components/TransactionToolbar";
+import { useTransactionFilters } from "./hooks/useTransactionFilters";
+import { FinancialEventPanel } from "./components/FinancialEventPanel";
+import { TransactionsSummary } from "./components/TransactionsSummary";
+import { AdvancedFiltersDrawer } from "./components/AdvancedFiltersDrawer";
+import { NewTransactionModal } from "../../components/transactions/NewTransactionModal";
+import { PaySubscriptionModal } from "../../components/features/subscriptions/PaySubscriptionModal";
 
 export function Transactions() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,8 +21,6 @@ export function Transactions() {
   const [selectedEvent, setSelectedEvent] = useState<FinancialEventDTO | null>(
     null,
   );
-
-  // ✨ NOVO: Estado para controlar a abertura do modal de pagamento de assinatura
   const [isPaySubModalOpen, setIsPaySubModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -32,23 +31,25 @@ export function Transactions() {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFinancialEvents(filters);
 
+  const { data: dashboardData } = useDashboard();
+
   const events: FinancialEventDTO[] = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flatMap((page) => page.items || []);
   }, [data]);
 
   const handleMarkAsPaid = async (eventId: string) => {
-    // ✨ NOVO: INTERCEPTAÇÃO DA REGRA DE NEGÓCIO
-    // Se for uma assinatura, abrimos o modal que exige a conta (account_id) e paramos a execução aqui.
     if (selectedEvent?.type === "subscription") {
       setIsPaySubModalOpen(true);
       return;
     }
 
-    // Fluxo genérico (original) mantido intacto para Transações e Parcelas
     try {
       await api.patch(`/financial-events/${eventId}/pay`);
-      await queryClient.invalidateQueries({ queryKey: ["financial-events"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["financial-events"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+      ]);
       setSelectedEvent(null);
     } catch (error) {
       console.error("Erro ao dar baixa no lançamento:", error);
@@ -59,7 +60,8 @@ export function Transactions() {
   return (
     <>
       <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-10">
-        {/* 🚀 REGRA UX #04: HIERARQUIA DE CONTEXTO */}
+        {!isLoading && <TransactionsTour />}
+
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
@@ -72,35 +74,50 @@ export function Transactions() {
 
           <button
             onClick={() => setIsNewModalOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+            className="tour-transactions-add w-full sm:w-auto flex items-center justify-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <Plus size={18} />
             <span>Novo Lançamento</span>
           </button>
         </div>
 
-        <TransactionToolbar
-          searchTerm={searchInput}
-          filters={filters}
-          onSearchChange={setSearchInput}
-          onFilterChange={setFilters}
-          onClearFilters={clearAllFilters}
-          onOpenAdvancedFilters={() => setIsDrawerOpen(true)}
-        />
+        {dashboardData && dashboardData.summary && dashboardData.projection && (
+          <TransactionsSummary
+            summary={{
+              income: dashboardData.summary.totalIncome,
+              expense: dashboardData.summary.totalExpenses,
+              amount: dashboardData.summary.currentBalance,
+              projection: dashboardData.projection.projectedBalance,
+            }}
+          />
+        )}
 
-        <TransactionList
-          transactions={events}
-          isLoading={isLoading}
-          isSearching={!!filters.query}
-          isFiltering={Object.keys(filters).length > (filters.query ? 1 : 0)}
-          searchTerm={filters.query}
-          onClearFilters={clearAllFilters}
-          onNewTransaction={() => setIsNewModalOpen(true)}
-          onEventClick={setSelectedEvent}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={isFetchingNextPage}
-          fetchNextPage={() => fetchNextPage()}
-        />
+        <div className="tour-transactions-filters">
+          <TransactionToolbar
+            searchTerm={searchInput}
+            filters={filters}
+            onSearchChange={setSearchInput}
+            onFilterChange={setFilters}
+            onClearFilters={clearAllFilters}
+            onOpenAdvancedFilters={() => setIsDrawerOpen(true)}
+          />
+        </div>
+
+        <div className="tour-transactions-list">
+          <TransactionList
+            transactions={events}
+            isLoading={isLoading}
+            isSearching={!!filters.query}
+            isFiltering={Object.keys(filters).length > (filters.query ? 1 : 0)}
+            searchTerm={filters.query}
+            onClearFilters={clearAllFilters}
+            onNewTransaction={() => setIsNewModalOpen(true)}
+            onEventClick={setSelectedEvent}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={() => fetchNextPage()}
+          />
+        </div>
       </div>
 
       <AdvancedFiltersDrawer
@@ -124,14 +141,15 @@ export function Transactions() {
         onClose={() => setIsNewModalOpen(false)}
       />
 
-      {/* ✨ NOVO: O Modal de Pagamento de Assinaturas plugado na página */}
       <PaySubscriptionModal
         isOpen={isPaySubModalOpen}
         onClose={() => {
           setIsPaySubModalOpen(false);
-          setSelectedEvent(null); // Fecha o painel lateral simultaneamente
-          // Como o hook da assinatura atualizou o saldo, garantimos que a query geral do Caixa recarregue para espelhar a baixa:
-          queryClient.invalidateQueries({ queryKey: ["financial-events"] });
+          setSelectedEvent(null);
+          Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["financial-events"] }),
+            queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+          ]);
         }}
         subscriptionId={selectedEvent?.id || null}
       />

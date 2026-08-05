@@ -1,128 +1,124 @@
-import { expect, it, beforeAll, afterAll, describe, beforeEach } from "vitest";
-import { execSync } from "node:child_process";
-import request from "supertest";
 import { app } from "../app.js";
+import { db } from "../database/database.js";
+import { randomUUID } from "node:crypto";
+import { expect, it, beforeAll, afterAll, describe, beforeEach } from "vitest";
 
 describe("Transactions routes", () => {
-   // Antes de rodar qualquer teste, aguardo a aplicação (Fastify) terminar de inicializar
-   beforeAll(async () => {
-      await app.ready();
-   });
+  let token: string;
+  let userId: string;
+  let accountId: string;
 
-   // Após todos os testes finalizarem, fecho a aplicação para não deixar processos pendentes
-   afterAll(async () => {
-      await app.close();
-   });
+  beforeAll(async () => {
+    await app.ready();
 
-   /**
-    * Para garantir testes isolados (E2E) e confiáveis, limpo o banco de dados
-    * e rodo as migrations do zero antes de cada teste. Isso evita que o estado
-    * de um teste interfira no resultado do outro.
-    */
-   beforeEach(() => {
-      execSync("npm run knex migrate:rollback --all");
-      execSync("npm run knex migrate:latest");
-   });
+    userId = randomUUID();
 
-   it("should be able to create a new transaction", async () => {
-      // Faço a chamada HTTP p/ criar uma nova transação e espero um status 201 (Created)
-      await request(app.server)
-         .post("/transactions")
-         .send({
-            title: "New transaction",
-            amount: 5000,
-            type: "credit",
-         })
-         .expect(201);
-   });
+    await db("users").insert({
+      id: userId,
+      name: "Usuário das Transações",
+      email: `trans-${randomUUID()}@finance.com`,
+      password_hash: "hash_seguro_123",
+    });
 
-   it("should be able to list all transactions", async () => {
-      const createTransactionResponse = await request(app.server)
-         .post("/transactions")
-         .send({
-            title: "New transaction",
-            amount: 5000,
-            type: "credit",
-         });
+    token = app.jwt.sign({ sub: userId });
+  });
 
-      // Capturo o cookie gerado na criação para simular a sessão do usuário
-      const cookies = createTransactionResponse.get("Set-Cookie") ?? [];
+  afterAll(async () => {
+    await app.close();
+  });
 
-      const listTransactionsReponse = await request(app.server)
-         .get("/transactions")
-         .set("Cookie", cookies)
-         .expect(200);
+  beforeEach(async () => {
+    accountId = randomUUID();
+    await db("accounts").insert({
+      id: accountId,
+      user_id: userId,
+      name: "Conta Principal",
+    });
+  });
 
-      // Verifico se a listagem retorna um array contendo o objeto criado
-      expect(listTransactionsReponse.body.transactions).toEqual([
-         expect.objectContaining({
-            title: "New transaction",
-            amount: 5000,
-         }),
-      ]);
-   });
+  it("should be able to create a new transaction", async () => {
+    const response = await app.inject({
+      method: "POST",
+      url: "/transactions",
+      headers: { Authorization: `Bearer ${token}` },
+      payload: {
+        title: "New transaction",
+        amount: 5000,
+        type: "income",
+        account_id: accountId,
+      },
+    });
 
-   it("should be able to get a specific transaction", async () => {
-      const createTransactionResponse = await request(app.server)
-         .post("/transactions")
-         .send({
-            title: "New transaction",
-            amount: 5000,
-            type: "credit",
-         });
+    expect(response.statusCode).toBe(201);
+  });
 
-      const cookies = createTransactionResponse.get("Set-Cookie") ?? [];
+  it("should be able to list all transactions", async () => {
+    await app.inject({
+      method: "POST",
+      url: "/transactions",
+      headers: { Authorization: `Bearer ${token}` },
+      payload: {
+        title: "New transaction",
+        amount: 5000,
+        type: "income",
+        account_id: accountId,
+      },
+    });
 
-      const listTransactionsReponse = await request(app.server)
-         .get("/transactions")
-         .set("Cookie", cookies)
-         .expect(200);
+    const listResponse = await app.inject({
+      method: "GET",
+      url: "/transactions",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const transactionId = listTransactionsReponse.body.transactions[0].id;
+    expect(listResponse.statusCode).toBe(200);
+    const body = JSON.parse(listResponse.body);
+    expect(body.transactions).toEqual([
+      expect.objectContaining({
+        title: "New transaction",
+        amount: "5000.00",
+      }),
+    ]);
+  });
 
-      const getTransactionsReponse = await request(app.server)
-         .get(`/transactions/${transactionId}`)
-         .set("Cookie", cookies)
-         .expect(200);
+  it("should be able to get the summary", async () => {
+    await app.inject({
+      method: "POST",
+      url: "/transactions",
+      headers: { Authorization: `Bearer ${token}` },
+      payload: {
+        title: "Income transaction",
+        amount: 5000,
+        type: "income",
+        account_id: accountId,
+      },
+    });
 
-      // Garanto que a busca por ID traz exatamente a transação correta
-      expect(getTransactionsReponse.body.transaction).toEqual(
-         expect.objectContaining({
-            title: "New transaction",
-            amount: 5000,
-         }),
-      );
-   });
+    await app.inject({
+      method: "POST",
+      url: "/transactions",
+      headers: { Authorization: `Bearer ${token}` },
+      payload: {
+        title: "Expense transaction",
+        amount: 2000,
+        type: "expense",
+        account_id: accountId,
+      },
+    });
 
-   it("should be able to get the summary", async () => {
-      const createTransactionResponse = await request(app.server)
-         .post("/transactions")
-         .send({
-            title: "Credit transaction",
-            amount: 5000,
-            type: "credit",
-         });
+    const summaryResponse = await app.inject({
+      method: "GET",
+      url: "/transactions/summary",
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const cookies = createTransactionResponse.get("Set-Cookie") ?? [];
+    expect(summaryResponse.statusCode).toBe(200);
+    const bodySummary = JSON.parse(summaryResponse.body);
 
-      // Crio uma segunda transação (débito) usando a mesma sessão
-      await request(app.server)
-         .post("/transactions")
-         .set("Cookie", cookies)
-         .send({
-            title: "Debit transaction",
-            amount: 2000,
-            type: "debit",
-         });
-
-      const summaryResponse = await request(app.server)
-         .get("/transactions/summary")
-         .set("Cookie", cookies)
-         .expect(200);
-
-      // O resumo deve ser a soma exata: 5000 (crédito) - 2000 (débito) = 3000
-      expect(summaryResponse.body.summary).toEqual({
-         amount: 3000,
-      });
-   });
+    expect(bodySummary.summary).toEqual({
+      amount: 3000,
+      income: 5000,
+      expense: 2000,
+    });
+  });
 });

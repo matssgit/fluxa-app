@@ -3,7 +3,7 @@ import { Knex } from "knex";
 export async function up(knex: Knex): Promise<void> {
    await knex.schema.createTable("accounts", (table) => {
       table.uuid("id").primary();
-      table.string("name").notNullable(); // Ex: "Nubank", "Carteira", "Itaú"
+      table.string("name").notNullable(); 
 
       // Isolamento: liga a conta ao usuário logado
       table

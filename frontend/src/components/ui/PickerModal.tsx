@@ -16,8 +16,8 @@ interface PickerModalProps<T> {
   options: PickerOption<T>[];
   selectedValue: T;
   onSelect: (value: T) => void;
-  actionLabel?: string; // 🚀 Adicionado para Inline Creation
-  onAction?: () => void; // 🚀 Função de disparo
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function PickerModal<T extends string | number>({
@@ -105,13 +105,13 @@ export function PickerModal<T extends string | number>({
             );
           })}
 
-          {/* 🚀 BOTÃO INLINE CREATION */}
+          {/* BOTÃO INLINE CREATION */}
           {actionLabel && onAction && (
             <button
               type="button"
               onClick={() => {
-                onClose(); // Fecha o seletor
-                onAction(); // Abre a modal alvo
+                onClose();
+                onAction();
               }}
               className="w-full p-3 mt-1 rounded-2xl text-left flex items-center gap-3 text-brand hover:bg-brand/10 font-bold transition-all cursor-pointer group"
             >

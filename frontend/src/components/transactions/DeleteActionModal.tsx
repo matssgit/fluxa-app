@@ -22,7 +22,6 @@ export function DeleteActionModal({
   const [confirmText, setConfirmText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // AQUI ESTÁ A CORREÇÃO: Limpamos os espaços e ignoramos Case Sensitivity
   const isTypingCorrect = confirmText.trim().toUpperCase() === "EXCLUIR";
 
   async function handleConfirm() {
@@ -30,7 +29,7 @@ export function DeleteActionModal({
     try {
       setIsSubmitting(true);
       await onConfirm();
-      setConfirmText(""); // Limpa o input
+      setConfirmText("");
       onClose();
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
@@ -64,7 +63,7 @@ export function DeleteActionModal({
             </div>
           )}
 
-          {/* Campo de confirmação estilo GitHub */}
+          {/* Campo de confirmação */}
           <label className="block text-sm font-medium text-primary mb-2 text-center">
             Para confirmar, digite{" "}
             <strong className="text-danger select-none">EXCLUIR</strong> abaixo:

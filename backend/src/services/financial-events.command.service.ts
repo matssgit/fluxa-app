@@ -1,9 +1,6 @@
-import { db as knex } from "../database.js";
+import { db as knex } from "../database/database.js";
 
 export class FinancialEventCommandService {
-  /**
-   * Padrão Command: Executa a ação de pagamento e delega para o agregado correto.
-   */
   async markAsPaid(eventId: string, userId: string): Promise<void> {
     const eventMeta = await this.resolveEventType(eventId, userId);
 

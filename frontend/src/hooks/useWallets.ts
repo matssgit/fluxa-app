@@ -1,4 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+  UpdateWalletData,
+  UpdateWalletProgressData,
+} from "../types/wallet";
 import {
   getWallets,
   getWalletById,
@@ -7,10 +11,6 @@ import {
   deleteWallet,
   updateWalletProgress,
 } from "../services/wallets";
-import type {
-  UpdateWalletData,
-  UpdateWalletProgressData,
-} from "../types/wallet";
 
 export function useWallets() {
   return useQuery({
@@ -67,7 +67,6 @@ export function useUpdateWalletProgress() {
   return useMutation({
     mutationFn: (data: UpdateWalletProgressData) => updateWalletProgress(data),
     onSuccess: () => {
-      // Invalida APENAS as metas, poupando a API de recarregar contas à toa!
       queryClient.invalidateQueries({ queryKey: ["wallets"] });
     },
   });

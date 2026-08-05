@@ -1,7 +1,7 @@
-import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { db as knex } from "../database.js";
+import { db as knex } from "../database/database.js";
+import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
 
 interface AuthUser {
@@ -11,7 +11,6 @@ interface AuthUser {
 export async function subscriptionsRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
 
-  // ****** 1. ANALYTICS ******
   app.get("/analytics", async (request) => {
     const userId = (request.user as AuthUser).sub;
 
@@ -87,14 +86,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     };
   });
 
-  // ****** 2. CRIAR ASSINATURAS ******
   app.post("/", async (request, reply) => {
-    // LOG DE SEGURANÇA: Ver o que está a chegar EXATAMENTE antes de validar
-    console.log(
-      "⚡ RECEBIDO NO BACKEND:",
-      JSON.stringify(request.body, null, 2),
-    );
-
     try {
       const createSubscriptionSchema = z.object({
         title: z.string().min(1),
@@ -102,25 +94,52 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
         due_day: z.number().min(1).max(31).optional(),
         next_billing_date: z.string().optional(),
         frequency: z.enum(["monthly", "yearly"]),
-        category_id: z.string().nullable().optional(), // Relaxado
-        account_id: z.string().nullable().optional(), // Relaxado
-        card_id: z.string().nullable().optional(), // Relaxado
+        category_id: z.string().nullable().optional(),
+        account_id: z.string().nullable().optional(),
+        card_id: z.string().nullable().optional(),
+        status: z.enum(["active", "paused", "cancelled", "deleted"]).optional(),
       });
 
       const body = createSubscriptionSchema.parse(request.body);
-
-      // LOG DE SEGURANÇA: Verificar se os IDs estão nulos
-      console.log("🛠️ DADOS PROCESSADOS:", {
-        acc: body.account_id,
-        card: body.card_id,
-        cat: body.category_id,
-      });
 
       if (!body.account_id && !body.card_id) {
         throw new Error("A assinatura precisa de uma Conta ou Cartão!");
       }
 
       const userId = (request.user as AuthUser).sub;
+
+      if (body.account_id) {
+        const acc = await knex("accounts")
+          .where({ id: body.account_id, user_id: userId })
+          .first();
+        if (!acc) {
+          return reply
+            .status(403)
+            .send({ detail: "Conta inválida ou não pertence a você." });
+        }
+      }
+
+      if (body.card_id) {
+        const card = await knex("cards")
+          .where({ id: body.card_id, user_id: userId })
+          .first();
+        if (!card) {
+          return reply
+            .status(403)
+            .send({ detail: "Cartão inválido ou não pertence a você." });
+        }
+      }
+
+      if (body.category_id) {
+        const cat = await knex("categories")
+          .where({ id: body.category_id, user_id: userId })
+          .first();
+        if (!cat) {
+          return reply
+            .status(403)
+            .send({ detail: "Categoria inválida ou não pertence a você." });
+        }
+      }
 
       const calculatedDueDay =
         body.due_day ||
@@ -144,7 +163,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
       return reply.status(201).send();
     } catch (error: unknown) {
-      console.error("🔥 ERRO FATAL:", error);
+      console.error("Erro ao criar assinatura:", error);
       return reply.status(400).send({
         message: "Erro de validação",
         detail: error instanceof Error ? error.message : "Erro desconhecido",
@@ -152,77 +171,6 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     }
   });
 
-  // ****** 3. LISTAR ASSINATURAS ******
-  app.get("/", async (request) => {
-    const userId = (request.user as AuthUser).sub;
-
-    const subscriptions = await knex("subscriptions")
-      .leftJoin("categories", "subscriptions.category_id", "categories.id")
-      .leftJoin("accounts", "subscriptions.account_id", "accounts.id")
-      .leftJoin("cards", "subscriptions.card_id", "cards.id")
-      .where("subscriptions.user_id", userId)
-      .select(
-        "subscriptions.*",
-        "categories.name as category_name",
-        "categories.color as category_color",
-        "accounts.name as account_name",
-        "cards.name as card_name",
-      )
-      .orderBy("subscriptions.title", "asc");
-
-    return { subscriptions };
-  });
-
-  // ****** 4. ALTERAR STATUS DA ASSINATURA ******
-  app.patch("/:id/status", async (request, reply) => {
-    const updateParamsSchema = z.object({
-      id: z.string().uuid("ID inválido"),
-    });
-
-    const updateBodySchema = z.object({
-      status: z.enum(["active", "paused", "cancelled"]),
-    });
-
-    const { id } = updateParamsSchema.parse(request.params);
-    const { status } = updateBodySchema.parse(request.body);
-    const userId = (request.user as AuthUser).sub;
-
-    const subscription = await knex("subscriptions")
-      .where({ id, user_id: userId })
-      .first();
-
-    if (!subscription) {
-      return reply.status(404).send({ message: "Assinatura não encontrada." });
-    }
-
-    await knex("subscriptions").where({ id }).update({ status });
-
-    return reply.status(204).send();
-  });
-
-  // ****** 5. EXCLUIR ASSINATURA ******
-  app.delete("/:id", async (request, reply) => {
-    const deleteParamsSchema = z.object({
-      id: z.string().uuid("ID inválido"),
-    });
-
-    const { id } = deleteParamsSchema.parse(request.params);
-    const userId = (request.user as AuthUser).sub;
-
-    const subscription = await knex("subscriptions")
-      .where({ id, user_id: userId })
-      .first();
-
-    if (!subscription) {
-      return reply.status(404).send({ message: "Assinatura não encontrada." });
-    }
-
-    await knex("subscriptions").where({ id }).delete();
-
-    return reply.status(204).send();
-  });
-
-  // ****** 6. PAGAR/BAIXAR ASSINATURA DO MÊS ******
   app.post("/:id/pay", async (request, reply) => {
     const payParamsSchema = z.object({
       id: z.string().uuid("ID inválido"),
@@ -235,6 +183,16 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     const { id } = payParamsSchema.parse(request.params);
     const { account_id } = payBodySchema.parse(request.body);
     const userId = (request.user as AuthUser).sub;
+
+    const account = await knex("accounts")
+      .where({ id: account_id, user_id: userId })
+      .first();
+
+    if (!account) {
+      return reply.status(403).send({
+        message: "Operação negada. Conta inválida ou não pertence a você.",
+      });
+    }
 
     const subscription = await knex("subscriptions")
       .where({ id, user_id: userId })
@@ -258,5 +216,76 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     });
 
     return reply.status(201).send();
+  });
+
+  app.get("/", async (request) => {
+    const userId = (request.user as AuthUser).sub;
+
+    const subscriptions = await knex("subscriptions")
+      .leftJoin("categories", "subscriptions.category_id", "categories.id")
+      .leftJoin("accounts", "subscriptions.account_id", "accounts.id")
+      .leftJoin("cards", "subscriptions.card_id", "cards.id")
+      .where("subscriptions.user_id", userId)
+      .whereNot("subscriptions.status", "deleted")
+      .select(
+        "subscriptions.*",
+        "categories.name as category_name",
+        "categories.color as category_color",
+        "accounts.name as account_name",
+        "cards.name as card_name",
+      )
+      .orderBy("subscriptions.title", "asc");
+
+    return { subscriptions };
+  });
+
+  app.patch("/:id/status", async (request, reply) => {
+    const updateParamsSchema = z.object({
+      id: z.string().uuid("ID inválido"),
+    });
+
+    const updateBodySchema = z.object({
+      // Impede a alteração manual para "deleted" por esta rota (reservado para soft delete)
+      status: z.enum(["active", "paused", "cancelled"]),
+    });
+
+    const { id } = updateParamsSchema.parse(request.params);
+    const { status } = updateBodySchema.parse(request.body);
+    const userId = (request.user as AuthUser).sub;
+
+    const subscription = await knex("subscriptions")
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!subscription) {
+      return reply.status(404).send({ message: "Assinatura não encontrada." });
+    }
+
+    await knex("subscriptions").where({ id }).update({ status });
+
+    return reply.status(204).send();
+  });
+
+  app.delete("/:id", async (request, reply) => {
+    const deleteParamsSchema = z.object({
+      id: z.string().uuid("ID inválido"),
+    });
+
+    const { id } = deleteParamsSchema.parse(request.params);
+    const userId = (request.user as AuthUser).sub;
+
+    const subscription = await knex("subscriptions")
+      .where({ id, user_id: userId })
+      .first();
+
+    if (!subscription) {
+      return reply.status(404).send({ message: "Assinatura não encontrada." });
+    }
+
+    await knex("subscriptions").where({ id }).update({
+      status: "deleted",
+    });
+
+    return reply.status(204).send();
   });
 }

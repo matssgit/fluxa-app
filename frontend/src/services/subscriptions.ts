@@ -3,7 +3,7 @@ import type {
   Subscription,
   CreateSubscriptionData,
   UpdateSubscriptionStatusData,
-  SubscriptionAnalytics, // ✨ AQUI: Adicionamos a tipagem do Analytics
+  SubscriptionAnalytics,
 } from "../types/subscription";
 
 export async function getSubscriptions(): Promise<Subscription[]> {
@@ -37,7 +37,6 @@ export async function paySubscription(
   await api.post(`/subscriptions/${id}/pay`, { account_id });
 }
 
-// ✨ AQUI: A nova função que conecta o Frontend ao nosso novo endpoint de BI do Backend!
 export async function getSubscriptionAnalytics(): Promise<SubscriptionAnalytics> {
   const { data } = await api.get<SubscriptionAnalytics>(
     "/subscriptions/analytics",

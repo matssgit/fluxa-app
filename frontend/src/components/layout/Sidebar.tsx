@@ -47,7 +47,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto tour-sidebar-nav">
         <div className="px-4 pb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-muted select-none">
           Menu principal
         </div>

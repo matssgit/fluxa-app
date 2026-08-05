@@ -18,7 +18,6 @@ export async function up(knex: Knex): Promise<void> {
     table.date("deadline").nullable();
     table.string("color").defaultTo("brand");
 
-    // Status do cultivo: 'active' (em crescimento), 'completed' (pronta para colheita), 'paused' (em repouso)
     table.string("status").defaultTo("active").notNullable();
 
     table.timestamps(true, true);

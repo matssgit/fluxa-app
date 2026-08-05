@@ -1,5 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // --- INTERFACES ---
 export interface Card {
@@ -136,7 +136,6 @@ export const usePayInstallment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // Agora recebemos um objeto com o ID da parcela e o ID da conta
     mutationFn: async ({
       installmentId,
       accountId,
@@ -176,7 +175,6 @@ export const useDeleteCard = () => {
   return useMutation({
     mutationFn: (id: string) => api.delete(`/credit/cards/${id}`),
     onSuccess: () => {
-      // ✨ Invalidação profunda para limpar qualquer resíduo na tela!
       queryClient.invalidateQueries({ queryKey: ["cards"] });
       queryClient.invalidateQueries({ queryKey: ["purchases"] });
       queryClient.invalidateQueries({ queryKey: ["installments"] });

@@ -1,3 +1,5 @@
+import type { FinancialEventDTO } from "../types";
+import { PrivacyMask } from "../../../components/ui/PrivacyMask";
 import {
   X,
   Edit2,
@@ -9,8 +11,6 @@ import {
   Clock,
   Check,
 } from "lucide-react";
-import { PrivacyMask } from "../../../components/ui/PrivacyMask";
-import type { FinancialEventDTO } from "../types";
 
 interface FinancialEventPanelProps {
   event: FinancialEventDTO | null;
@@ -183,9 +183,16 @@ export function FinancialEventPanel({
 
   const renderSubscriptionContext = () => {
     const isCompleted = event.status === "completed";
+    // Pegando o status da assinatura de origem via master query
+    const subStatus = (
+      event.context as {
+        subscriptionStatus?: "active" | "paused" | "cancelled";
+      }
+    )?.subscriptionStatus;
 
     return (
       <div className="space-y-6 animate-fade-in">
+        {/* Bloco Superior Original: Datas e Valores */}
         {isCompleted ? (
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div className="p-4 rounded-2xl bg-surface border border-subtle/20 flex flex-col justify-center text-center sm:text-left">
@@ -218,6 +225,56 @@ export function FinancialEventPanel({
               <p className="text-xs sm:text-sm font-bold text-primary">
                 {formatDate(getSmartDueDate())}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* Bloco de Separação de Status */}
+        {subStatus && (
+          <div className="pt-5 border-t border-subtle/20 flex flex-col gap-5">
+            <div className="grid grid-cols-2 gap-4">
+              {/* STATUS DO PAGAMENTO (Domínio Financeiro) */}
+              <div className="flex flex-col gap-2 border-r border-subtle/20">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted">
+                  Pagamento
+                </span>
+                <div>
+                  {isCompleted ? (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
+                      <CheckCircle2 size={14} /> Concluído
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm">
+                      <Clock size={14} /> Pendente
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* STATUS DA ASSINATURA DE ORIGEM (Domínio Recorrente) */}
+              <div className="flex flex-col gap-2 pl-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted">
+                  Status
+                </span>
+                <div>
+                  {subStatus === "active" && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-brand/10 text-brand border border-brand/20 shadow-sm">
+                      <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />{" "}
+                      Ativa
+                    </span>
+                  )}
+                  {subStatus === "paused" && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 border border-amber-500/20 shadow-sm">
+                      🟡 Pausada
+                    </span>
+                  )}
+                  {subStatus === "cancelled" && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-danger/10 text-danger border border-danger/20 shadow-sm">
+                      🔴 Cancelada
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -292,7 +349,6 @@ export function FinancialEventPanel({
             </div>
 
             <div className="flex flex-wrap justify-center gap-2">
-              {/* ✨ CORREÇÃO AQUI: O card de data superior agora usa o cálculo inteligente para assinaturas pendentes */}
               <span className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-elevated border border-subtle/20 text-[10px] sm:text-xs font-bold text-secondary">
                 <Calendar size={10} className="sm:w-3 sm:h-3 text-muted" />
                 {formatDate(

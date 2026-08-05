@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Tag, TrendingUp, TrendingDown, Edit2, Trash2 } from "lucide-react";
 import { useCategories } from "../../hooks/useCategories";
 import { CategoryModal } from "../../components/transactions/CategoryModal";
+import { Tag, TrendingUp, TrendingDown, Edit2, Trash2 } from "lucide-react";
 import { DeleteActionModal } from "../../components/transactions/DeleteActionModal";
 import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
@@ -12,7 +12,6 @@ interface CategoryData {
 }
 
 export function Categories() {
-  // ✨ CORREÇÃO: Removido o 'isDeleting' que não estava sendo utilizado
   const { categories = [], isLoading, deleteCategory } = useCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
 

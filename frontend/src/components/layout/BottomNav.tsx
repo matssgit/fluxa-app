@@ -17,7 +17,6 @@ interface MobileNavItem {
   isPrimary?: boolean;
 }
 
-// OS 7 PILARES DO FLUXA - Ordem solicitada
 const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { label: "Início", path: "/dashboard", icon: Home },
   { label: "Contas", path: "/accounts", icon: Wallet },
@@ -37,13 +36,13 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="min-[1400px]:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/60 dark:bg-surface/70 backdrop-blur-xl border-t border-white/40 dark:border-subtle/30 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] px-1 sm:px-2 py-2.5 transition-all duration-300">
+    <nav className="min-[1400px]:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/60 dark:bg-surface/70 backdrop-blur-xl border-t border-white/40 dark:border-subtle/30 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] px-1 sm:px-2 py-2.5 transition-all duration-300 tour-bottom-nav">
       <div className="flex items-center justify-around transition-all duration-300 max-w-lg mx-auto">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname.startsWith(item.path);
 
-          // Renderização do Botão Principal Destacado (CAIXA)
+          // Renderização do Botão Principal (CAIXA)
           if (item.isPrimary) {
             return (
               <Link

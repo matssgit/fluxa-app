@@ -1,6 +1,3 @@
-/* --------------------------------------------------------------------------
-     2. CARDS (Efeito Metalizado Flutuante Premium - Light & Dark Safe)
-     -------------------------------------------------------------------------- */
 .card {
   @apply rounded-2xl transition-all duration-300;
 }
@@ -27,7 +24,7 @@
   @apply p-6 rounded-2xl transition-all duration-300 dark:bg-none dark:bg-elevated dark:border-subtle/20;
 }
 
-/* Card interativo ganha física de gravidade: eleva-se na direção do usuário no hover */
+/* Card interativo ganha física de gravidade */
 .card-interactive {
   background: linear-gradient(
     135deg,

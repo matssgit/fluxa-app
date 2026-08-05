@@ -1,4 +1,13 @@
+import { z } from "zod";
 import { useState } from "react";
+import { api } from "../../api/client";
+import { PickerModal } from "../ui/PickerModal";
+import { useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAccounts } from "../../hooks/useAccounts";
+import { useQueryClient } from "@tanstack/react-query";
+import { DatePickerModal } from "../ui/DatePickerModal";
+import { useCategories } from "../../hooks/useCategories";
 import {
   X,
   ArrowUpCircle,
@@ -8,18 +17,7 @@ import {
   Tag,
   ChevronDown,
 } from "lucide-react";
-import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAccounts } from "../../hooks/useAccounts";
-import { useCategories } from "../../hooks/useCategories";
-import { api } from "../../api/client";
-// Importando a nossa nova infraestrutura de UX
-import { PickerModal } from "../ui/PickerModal";
-import { DatePickerModal } from "../ui/DatePickerModal";
 
-// ✨ TIPAGEM ESTRITA PARA O LINTER
 interface AccountData {
   id: string;
   name: string;
@@ -58,7 +56,6 @@ export function NewTransactionModal({
 
   const today = new Date().toISOString().split("T")[0];
 
-  // ✨ ESTADOS DE CONTROLE DOS MODAIS DE UX
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
@@ -68,7 +65,7 @@ export function NewTransactionModal({
     register,
     handleSubmit,
     reset,
-    control, // <-- Adicione o control e remova o watch
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<TransactionForm>({
@@ -80,20 +77,17 @@ export function NewTransactionModal({
     },
   });
 
-  // ✨ OBSERVADORES DE ESTADO (React Compiler Safe)
   const selectedType = useWatch({ control, name: "type" });
   const selectedStatus = useWatch({ control, name: "status" });
   const selectedDate = useWatch({ control, name: "date" });
   const selectedAccountId = useWatch({ control, name: "account_id" });
   const selectedCategoryId = useWatch({ control, name: "category_id" });
-  // Filtros 100% tipados (Zero 'any')
   const filteredCategories = categories.filter(
     (cat: CategoryData) =>
       cat.type === (selectedType === "income" ? "entrada" : "saida") ||
       cat.type === selectedType,
   );
 
-  // Helpers para exibir os nomes corretos nos botões (Zero 'any')
   const selectedAccountName =
     accounts.find((a: AccountData) => a.id === selectedAccountId)?.name ||
     "Selecione onde...";
@@ -165,7 +159,7 @@ export function NewTransactionModal({
             onSubmit={handleSubmit(onSubmit)}
             className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1"
           >
-            {/* Seletor Tipo (Receita/Despesa) Neumórfico */}
+            {/* Seletor Tipo (Receita/Despesa) */}
             <div className="flex gap-2 p-1.5 bg-elevated/60 rounded-2xl border border-subtle/20 shrink-0">
               <label className="flex-1 cursor-pointer">
                 <input
@@ -243,7 +237,7 @@ export function NewTransactionModal({
                       : "Vencimento"}
                   </span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Data */}
+                {/* Data */}
                 <button
                   type="button"
                   onClick={() => setIsDateModalOpen(true)}
@@ -269,7 +263,7 @@ export function NewTransactionModal({
                 <label className="block text-xs font-extrabold uppercase tracking-widest text-secondary mb-1.5 pl-1">
                   Situação
                 </label>
-                {/* ✨ TRIGGER BUTTON: Situação */}
+                {/* Situação */}
                 <button
                   type="button"
                   onClick={() => setIsStatusModalOpen(true)}
@@ -292,7 +286,7 @@ export function NewTransactionModal({
                   <Building size={13} className="text-muted" />
                   <span>Conta *</span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Conta */}
+                {/* Conta */}
                 <button
                   type="button"
                   onClick={() => setIsAccountModalOpen(true)}
@@ -313,7 +307,7 @@ export function NewTransactionModal({
                   <Tag size={13} className="text-muted" />
                   <span>Categoria</span>
                 </label>
-                {/* ✨ TRIGGER BUTTON: Categoria */}
+                {/* Categoria */}
                 <button
                   type="button"
                   onClick={() => setIsCategoryModalOpen(true)}
@@ -346,10 +340,6 @@ export function NewTransactionModal({
           </div>
         </div>
       </div>
-
-      {/* ========================================= */}
-      {/* 🚀 MODAIS DE INFRAESTRUTURA UX (OVERLAYS) */}
-      {/* ========================================= */}
 
       <DatePickerModal
         isOpen={isDateModalOpen}

@@ -1,7 +1,3 @@
-/* ==========================================================================
-   LEVEL 3: ANIMATIONS & MOTION (Micro-interações minimalistas e fluidas)
-   ========================================================================== */
-
 @keyframes fadeIn {
   from {
     opacity: 0;

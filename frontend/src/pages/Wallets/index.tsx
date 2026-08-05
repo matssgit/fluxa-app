@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { Plus, Target } from "lucide-react";
-import { useWallets } from "../../hooks/useWallets";
 import type { Wallet } from "../../types/wallet";
-
-// Componentes da Página
-import { WalletsSummary } from "../../components/wallets/WalletsSummary";
-import { WalletCard } from "../../components/wallets/WalletCard";
-import { WalletsSkeleton } from "../../components/wallets/WalletsSkeleton";
-
-// Os 4 Modais do Ecossistema de Metas
-import { CreateWalletModal } from "../../components/wallets/CreateWalletModal";
-import { TransferWalletModal } from "../../components/wallets/TransferWalletModal";
-import { EditWalletModal } from "../../components/wallets/EditWalletModal";
-import { DeleteWalletModal } from "../../components/wallets/DeleteWalletModal";
-
-// ✨ IMPORTAMOS O NOVO COMPONENTE EDUCACIONAL
+import { useWallets } from "../../hooks/useWallets";
+import { WalletCard } from "../../components/features/wallets/WalletCard";
+import { WalletsSummary } from "../../components/features/wallets/WalletsSummary";
+import { WalletsSkeleton } from "../../components/features/wallets/WalletsSkeleton";
+import { EditWalletModal } from "../../components/features/wallets/EditWalletModal";
+import { CreateWalletModal } from "../../components/features/wallets/CreateWalletModal";
+import { DeleteWalletModal } from "../../components/features/wallets/DeleteWalletModal";
+import { TransferWalletModal } from "../../components/features/wallets/TransferWalletModal";
 import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
 export function Wallets() {
@@ -64,7 +58,7 @@ export function Wallets() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in pb-20 sm:pb-8">
-      {/* 1. Header (Escondido se a página estiver vazia para dar foco à introdução) */}
+      {/* Header */}
       {!isLoading && wallets.length > 0 && (
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
           <div>
@@ -85,11 +79,10 @@ export function Wallets() {
         </div>
       )}
 
-      {/* 2. Conteúdo Principal */}
+      {/* Conteúdo Principal */}
       {isLoading ? (
         <WalletsSkeleton />
       ) : wallets.length === 0 ? (
-        // 🚀 O NOVO ONBOARDING EDUCACIONAL ENTRA AQUI
         <FeatureIntroduction
           icon={Target}
           title="Metas e Objetivos"
@@ -129,7 +122,7 @@ export function Wallets() {
         </div>
       )}
 
-      {/* 3. Renderização dos Modais */}
+      {/* Renderização dos Modais */}
       <CreateWalletModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}

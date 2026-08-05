@@ -1,5 +1,5 @@
+import { db as knex } from "../database/database.js";
 import type { FastifyInstance } from "fastify";
-import { db as knex } from "../database.js";
 import { checkAuth } from "../middlewares/check-auth.js";
 import { endOfMonth, startOfMonth, format } from "date-fns";
 
@@ -12,7 +12,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
     const monthReference = format(now, "yyyy-MM");
 
-    // 1. SALDO GERAL (Soma algébrica de todas as transações concluídas)
     const balanceResult = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
       .select("amount", "type");
@@ -21,7 +20,8 @@ export async function dashboardRoutes(app: FastifyInstance) {
     balanceResult.forEach((t) => {
       const num = Number(t.amount || 0);
       const typeStr = String(t.type || "").toLowerCase();
-      // Inteligência relacional: Se type for nulo/antigo, julga pelo sinal matemático (> 0 é receita)
+
+      // Inteligência relacional de legado: Se type for nulo/antigo, infere receita caso amount seja > 0
       if (
         typeStr === "entrada" ||
         typeStr === "income" ||
@@ -34,7 +34,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       }
     });
 
-    // 2. ENTRADAS E SAÍDAS DO MÊS
     const completedMonthTransactions = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
       .where(function () {
@@ -62,7 +61,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       }
     });
 
-    // BUSCA DE ASSINATURAS ATIVAS
     const allActiveSubscriptions = await knex("subscriptions").where({
       user_id: userId,
       status: "active",
@@ -89,7 +87,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       0,
     );
 
-    // 3. PROJEÇÃO DO FIM DO MÊS
     const pendingMonthTransactions = await knex("transactions")
       .where({ user_id: userId, status: "pending" })
       .where(function () {
@@ -135,7 +132,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const projectedBalance =
       currentBalance + expectedIncome - expectedExpenses - pendingInstallments;
 
-    // 4. PENDÊNCIAS (RADAR DE VENCIMENTOS) COM DATA EM PT-BR E TÍTULO CORRIGIDO
     const formatDueDateBR = (dateVal: unknown): string => {
       if (!dateVal) return "Mês atual";
       const d = new Date(String(dateVal));
@@ -143,7 +139,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       return format(d, "dd/MM/yyyy");
     };
 
-    // ✨ CORREÇÃO FORENSE: Seleciona "title" como principal e traz "description" como fallback
     const pendingTransactionsList = await knex("transactions")
       .where({ user_id: userId, status: "pending" })
       .where(function () {
@@ -194,7 +189,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
       ...filteredPendingExpenses.map((t) => ({
         id: t.id,
         type: "transaction" as const,
-        title: t.title || t.description || "Despesa pendente", // <-- ✨ AGORA MOSTRA "INTERNET"!
+        title: t.title || t.description || "Despesa pendente",
         amount: Math.abs(Number(t.amount || 0)),
         dueDate: formatDueDateBR(t.dueDate),
         info: `Vence dia ${formatDueDateBR(t.dueDate).substring(0, 2)}`,
@@ -217,7 +212,6 @@ export async function dashboardRoutes(app: FastifyInstance) {
       })),
     ];
 
-    // 5. TIMELINE
     const timeline = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
       .orderBy("created_at", "desc")

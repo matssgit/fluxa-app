@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FinancialEventFilters } from "../types";
 import {
   X,
   SlidersHorizontal,
@@ -6,7 +7,6 @@ import {
   Check,
   DollarSign,
 } from "lucide-react";
-import type { FinancialEventFilters } from "../types";
 
 interface AdvancedFiltersDrawerProps {
   isOpen: boolean;
@@ -113,7 +113,6 @@ export function AdvancedFiltersDrawer({
   };
 
   return (
-    // ✨ WRAPPER RESPONSIVO: P-4 cria as margens (Safe Area) no mobile, impedindo que o modal toque nas bordas
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0 sm:justify-end">
       {/* Overlay Escuro */}
       <div
@@ -121,8 +120,6 @@ export function AdvancedFiltersDrawer({
         onClick={onClose}
       />
 
-      {/* ✨ O PAINEL: max-h-[80dvh] impede que o modal estoure a tela. 
-          flex e flex-col garantem que o cabeçalho e rodapé fiquem fixos enquanto o miolo rola. */}
       <div className="relative w-full max-w-md sm:max-w-none sm:w-100 max-h-[80dvh] sm:max-h-none sm:h-dvh bg-surface rounded-3xl sm:rounded-none border border-subtle/20 sm:border-0 sm:border-l shadow-2xl flex flex-col animate-scale-in sm:animate-slide-in-right overflow-hidden">
         {/* HEADER (Fixo - shrink-0) */}
         <div className="flex items-center justify-between px-5 py-4 sm:px-6 sm:py-5 border-b border-subtle/20 bg-elevated/30 shrink-0">
@@ -315,7 +312,7 @@ export function AdvancedFiltersDrawer({
           </div>
         </div>
 
-        {/* FOOTER (Fixo - shrink-0) - Os botões nunca mais sumirão! */}
+        {/* FOOTER (Fixo - shrink-0) */}
         <div className="p-5 sm:p-6 border-t border-subtle/20 bg-elevated/30 flex gap-3 shrink-0">
           <button
             onClick={onClear}

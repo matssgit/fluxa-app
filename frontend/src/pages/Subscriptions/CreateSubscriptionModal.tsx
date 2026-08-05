@@ -1,4 +1,12 @@
+import { z } from "zod";
 import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { useCards } from "../../hooks/useCredit";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAccounts } from "../../hooks/useAccounts";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCategories } from "../../hooks/useCategories";
+import { useCreateSubscription } from "../../hooks/useSubscriptions";
 import {
   DollarSign,
   Tag,
@@ -6,14 +14,6 @@ import {
   CreditCard,
   CalendarDays,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateSubscription } from "../../hooks/useSubscriptions";
-import { useAccounts } from "../../hooks/useAccounts";
-import { useCategories } from "../../hooks/useCategories";
-import { useCards } from "../../hooks/useCredit";
-import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Modal,
@@ -75,9 +75,9 @@ export function CreateSubscriptionModal({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
-    getValues, // ✨ Adicionado para leitura segura
+    getValues,
     reset,
     formState: { errors },
   } = useForm<SubscriptionForm>({
@@ -85,12 +85,14 @@ export function CreateSubscriptionModal({
     defaultValues: { frequency: "monthly", payment_method: "account" },
   });
 
-  const paymentMethod = watch("payment_method");
-  const currentCategoryId = watch("category_id");
-  const currentFrequency = watch("frequency");
-  const currentAccountId = watch("account_id");
-  const currentCardId = watch("card_id");
-  const currentDueDay = watch("due_day");
+  const {
+    payment_method: paymentMethod,
+    category_id: currentCategoryId,
+    frequency: currentFrequency,
+    account_id: currentAccountId,
+    card_id: currentCardId,
+    due_day: currentDueDay,
+  } = useWatch({ control });
 
   const filteredCategories = (categories as Category[]).filter(
     (c) => c.type === "expense" || c.type === "saida",
@@ -109,7 +111,6 @@ export function CreateSubscriptionModal({
   if (!isOpen) return null;
 
   async function onSubmit(data: SubscriptionForm): Promise<void> {
-    // 🛡️ Extração blindada diretamente da memória do React Hook Form
     const formData = getValues();
     const finalAccountId =
       formData.payment_method === "account" ? formData.account_id : undefined;
@@ -168,7 +169,6 @@ export function CreateSubscriptionModal({
         <ModalHeader title="Nova Assinatura Recorrente" onClose={onClose} />
 
         <form id="create-subscription-form" onSubmit={handleSubmit(onSubmit)}>
-          {/* ✨ CORREÇÃO 1: Inputs ocultos para o formulário não perder os IDs */}
           <input type="hidden" {...register("account_id")} />
           <input type="hidden" {...register("card_id")} />
 
@@ -285,7 +285,6 @@ export function CreateSubscriptionModal({
 
               <div className="grid grid-cols-2 gap-3 p-1 bg-elevated/60 rounded-2xl border border-subtle/20">
                 <label className="flex-1 cursor-pointer">
-                  {/* ✨ CORREÇÃO 2: Removido o onChange manual que destruía o register */}
                   <input
                     type="radio"
                     value="account"
@@ -424,7 +423,6 @@ export function CreateSubscriptionModal({
             : currentCardId || ""
         }
         onSelect={(val) => {
-          // ✨ LIMPEZA CORRETA AO SELECIONAR A OPÇÃO
           if (paymentMethod === "account") {
             setValue("account_id", String(val), { shouldValidate: true });
             setValue("card_id", undefined);

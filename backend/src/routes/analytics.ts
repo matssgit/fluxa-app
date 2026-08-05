@@ -1,6 +1,6 @@
-import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { db as knex } from "../database.js";
+import { db as knex } from "../database/database.js";
+import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
 import { endOfMonth, startOfMonth, format } from "date-fns";
 
@@ -28,14 +28,12 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const monthStartStr = format(startOfMonth(targetDate), "yyyy-MM-dd");
     const monthEndStr = format(endOfMonth(targetDate), "yyyy-MM-dd");
 
-    // 1. PATRIMÔNIO LÍQUIDO
     const accounts = await knex("accounts").where({ user_id: userId });
     const totalBalance = accounts.reduce(
       (acc, curr) => acc + (Number(curr.balance) || 0),
       0,
     );
 
-    // 2. TRANSAÇÕES CONCLUÍDAS DO MÊS
     const currentTransactions = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
       .where(function () {
@@ -65,7 +63,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
     const netSavings = monthlyIncome - monthlyExpenses;
 
-    // 3. CUSTOS FIXOS (Assinaturas)
     const activeSubscriptions = await knex("subscriptions").where({
       user_id: userId,
       status: "active",
@@ -76,7 +73,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
       return acc + (sub.frequency === "yearly" ? val / 12 : val);
     }, 0);
 
-    // 4. ALGORITMO DE SAÚDE FINANCEIRA
     const savingsRate =
       monthlyIncome > 0
         ? Math.max(0, Math.round((netSavings / monthlyIncome) * 100))
@@ -107,7 +103,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
     else if (score >= 40) status = "attention";
     else status = "critical";
 
-    // 5. DISTRIBUIÇÃO POR CATEGORIA
     const categories = await knex("categories").where({ user_id: userId });
     const categoryMap = new Map(
       categories.map((c) => [
@@ -162,7 +157,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
     categoryDistribution.sort((a, b) => b.amount - a.amount);
 
-    // 6. EVOLUÇÃO DE FLUXO DE CAIXA (6 Meses)
     const sixMonthsAgo = new Date(currentYear, currentMonthIndex - 5, 1);
     const sixMonthsAgoStr = format(sixMonthsAgo, "yyyy-MM-dd");
 
@@ -234,7 +228,6 @@ export async function analyticsRoutes(app: FastifyInstance) {
       });
     }
 
-    // 7. INSIGHTS E RECOMENDAÇÕES
     const insights = [];
     const recommendations = [];
 
@@ -290,12 +283,72 @@ export async function analyticsRoutes(app: FastifyInstance) {
       });
     }
 
+    const pendingMonthTransactions = await knex("transactions")
+      .where({ user_id: userId, status: "pending" })
+      .whereBetween("expected_date", [monthStartStr, monthEndStr])
+      .select("type", "amount");
+
+    let expectedIncome = 0;
+    let pendingExpensesOnly = 0;
+
+    pendingMonthTransactions.forEach((t) => {
+      const num = Number(t.amount || 0);
+      const val = Math.abs(num);
+      const typeStr = String(t.type || "").toLowerCase();
+      if (
+        typeStr === "entrada" ||
+        typeStr === "income" ||
+        typeStr === "receita" ||
+        (typeStr === "" && num > 0)
+      ) {
+        expectedIncome += val;
+      } else {
+        pendingExpensesOnly += val;
+      }
+    });
+
+    const installmentsPending = await knex("installments")
+      .join(
+        "credit_purchases",
+        "installments.purchase_id",
+        "credit_purchases.id",
+      )
+      .join("cards", "credit_purchases.card_id", "cards.id")
+      .where({ "cards.user_id": userId, "installments.status": "pending" })
+      .whereBetween("installments.expected_date", [monthStartStr, monthEndStr])
+      .sum("installments.amount as total")
+      .first<{ total: number | null }>();
+
+    const pendingInstallmentsVal = Number(installmentsPending?.total || 0);
+
+    // Considera apenas assinaturas ativas cujo dia de vencimento cai neste mês e ainda não foram pagas
+    const paidSubscriptionsThisMonth = await knex("transactions")
+      .where({ user_id: userId, status: "completed" })
+      .whereNotNull("subscription_id")
+      .whereBetween("completed_date", [monthStartStr, monthEndStr])
+      .select("subscription_id");
+
+    const paidSubIds = paidSubscriptionsThisMonth.map((t) => t.subscription_id);
+    const pendingSubscriptions = activeSubscriptions.filter(
+      (sub) => !paidSubIds.includes(sub.id),
+    );
+
+    const pendingSubscriptionsAmount = pendingSubscriptions.reduce(
+      (acc, sub) => acc + Number(sub.amount || 0),
+      0,
+    );
+
+    const expectedExpenses = pendingExpensesOnly + pendingSubscriptionsAmount;
+    const projectedBalance =
+      totalBalance + expectedIncome - expectedExpenses - pendingInstallmentsVal;
+
     return {
       metrics: {
         total_balance: totalBalance,
         monthly_income: monthlyIncome,
         monthly_expenses: monthlyExpenses,
         net_savings: netSavings,
+        projected_balance: projectedBalance,
         health: {
           score,
           status,

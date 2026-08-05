@@ -1,4 +1,16 @@
 import { useState } from "react";
+import { DashboardTour } from "./DashboardTour";
+import { EmptyState, Card } from "../../components/ui";
+import { useDashboard } from "../../hooks/useDashboard";
+import { formatCurrency } from "../../utils/formatters";
+import { SummaryCard } from "../../components/dashboard/SummaryCard";
+import { SectionTitle } from "../../components/dashboard/SectionTitle";
+import { PendencyItem } from "../../components/dashboard/PendencyItem";
+import { InsightsWidget } from "../../components/dashboard/InsightsWidgets";
+import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton";
+import { CreditSummaryWidget } from "../../components/dashboard/CreditSummaryWidget";
+import { PayInstallmentModal } from "../../components/features/cards/PayInstallmentModal";
+import { PaySubscriptionModal } from "../../components/features/subscriptions/PaySubscriptionModal";
 import {
   ArrowUpCircle,
   ArrowDownCircle,
@@ -11,21 +23,6 @@ import {
   Zap,
   PieChart,
 } from "lucide-react";
-import { useDashboard } from "../../hooks/useDashboard";
-import { PayInstallmentModal } from "../../components/cards/PayInstallmentModal";
-import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
-import { CreditSummaryWidget } from "../../components/dashboard/CreditSummaryWidget";
-import { InsightsWidget } from "../../components/dashboard/InsightsWidgets";
-import { formatCurrency } from "../../utils/formatters";
-
-// UI Library
-import { EmptyState, Card } from "../../components/ui";
-
-// Componentes de Domínio
-import { SummaryCard } from "../../components/dashboard/SummaryCard";
-import { PendencyItem } from "../../components/dashboard/PendencyItem";
-import { SectionTitle } from "../../components/dashboard/SectionTitle";
-import { DashboardSkeleton } from "../../components/dashboard/DashboardSkeleton";
 
 function extractMetric(source: unknown, keys: string[]): number {
   if (!source || typeof source !== "object") return 0;
@@ -167,7 +164,7 @@ export function Dashboard() {
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-fade-in pb-10">
-      {/* 🚀 REGRA UX #04: HIERARQUIA DE CONTEXTO */}
+      <DashboardTour />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
@@ -178,9 +175,8 @@ export function Dashboard() {
           </p>
         </div>
       </div>
-
       {/* BANNER DE SAÚDE FINANCEIRA */}
-      <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand rounded-3xl">
+      <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand rounded-3xl tour-dash-health">
         <div className="flex items-center gap-4">
           <div
             className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
@@ -210,9 +206,8 @@ export function Dashboard() {
           </div>
         </div>
       </div>
-
-      {/* GRID SUPERIOR: CARDS DE RESUMO */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* CARDS DE RESUMO */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 tour-dashboard-summary">
         <SummaryCard
           title="Entradas do Mês"
           value={totalIncome}
@@ -238,13 +233,12 @@ export function Dashboard() {
           variant="projection"
         />
       </section>
-
-      {/* GRID CENTRAL: TELEMETRIA + RADAR */}
+      {/* TELEMETRIA + RADAR */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col">
           <Card
             variant="default"
-            className="flex-1 flex flex-col justify-between p-6 sm:p-8"
+            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-telemetry"
           >
             <div>
               <SectionTitle
@@ -321,7 +315,7 @@ export function Dashboard() {
         <div className="flex flex-col">
           <Card
             variant="default"
-            className="flex-1 flex flex-col justify-between p-6 sm:p-8"
+            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-radar"
           >
             <div>
               <SectionTitle
@@ -359,7 +353,6 @@ export function Dashboard() {
           </Card>
         </div>
       </section>
-
       {/* GRID INFERIOR */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
         <CreditSummaryWidget />
@@ -371,7 +364,6 @@ export function Dashboard() {
           burnRatePercentage={burnRatePercentage}
         />
       </section>
-
       <PayInstallmentModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}

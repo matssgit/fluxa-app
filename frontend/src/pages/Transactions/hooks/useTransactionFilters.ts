@@ -5,7 +5,6 @@ export function useTransactionFilters() {
   const [filters, setFilters] = useState<FinancialEventFilters>({});
   const [searchInput, setSearchInput] = useState("");
 
-  // Debounce: Aguarda 500ms após o utilizador parar de digitar para atualizar a Query
   useEffect(() => {
     const handler = setTimeout(() => {
       setFilters((prev) => ({

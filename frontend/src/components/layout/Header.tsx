@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useTheme } from "../../hooks/useTheme";
+import { useState, useRef, useEffect } from "react";
 import {
   LogOut,
   ShieldCheck,
@@ -10,8 +12,6 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
-import { useTheme } from "../../hooks/useTheme";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -40,7 +40,6 @@ export function Header() {
 
   return (
     <header className="h-20 w-full bg-surface/75 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-      {/* 🚀 REGRA UX #04: HEADER FIXO (IDENTIDADE VISUAL DA APLICAÇÃO) */}
       <div className="space-y-0.5 min-w-0 pr-4 select-none">
         <div className="flex items-center gap-2">
           <h1 className="text-xl sm:text-2xl font-black text-primary tracking-tight leading-none uppercase">

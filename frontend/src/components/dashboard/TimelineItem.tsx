@@ -1,5 +1,5 @@
-import { CreditCard, Receipt } from "lucide-react";
 import { Card, Badge } from "../ui";
+import { CreditCard, Receipt } from "lucide-react";
 
 interface TimelineItemProps {
   title: string;
@@ -25,7 +25,6 @@ export function TimelineItem({
       className="flex items-center justify-between p-3.5"
     >
       <div className="flex items-center gap-3.5 min-w-0 flex-1">
-        {/* O Badge assume a cor de fundo e borda semântica sem definirmos bg-* ou border-* */}
         <Badge
           variant={type === "credit" ? "success" : "neutral"}
           className="flex items-center justify-center p-2 shrink-0"

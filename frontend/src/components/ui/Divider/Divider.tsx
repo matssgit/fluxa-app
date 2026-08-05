@@ -1,5 +1,3 @@
-import React from "react";
-
 export interface DividerProps {
   text?: string;
   className?: string;
@@ -12,11 +10,11 @@ export function Divider({ text, className = "" }: DividerProps) {
 
   return (
     <div className={`relative flex items-center my-6 ${className}`}>
-      <div className="flex-grow border-t border-subtle" />
-      <span className="flex-shrink mx-4 text-xs font-semibold text-muted uppercase tracking-wider">
+      <div className="grow border-t border-subtle" />
+      <span className="shrink mx-4 text-xs font-semibold text-muted uppercase tracking-wider">
         {text}
       </span>
-      <div className="flex-grow border-t border-subtle" />
+      <div className="grow border-t border-subtle" />
     </div>
   );
 }

@@ -6,20 +6,21 @@ import {
   TrendingUp,
   Wallet,
   PieChart,
+  EyeOff,
 } from "lucide-react";
 import {
   useSubscriptions,
   useSubscriptionAnalytics,
 } from "../../hooks/useSubscriptions";
+import { useHiddenSubscriptions } from "../../hooks/useHiddenSubscription";
 import { type Subscription } from "../../types/subscription";
 import { CreateSubscriptionModal } from "./CreateSubscriptionModal";
-import { PaySubscriptionModal } from "../../components/subscriptions/PaySubscriptionModal";
+import { PaySubscriptionModal } from "../../components/features/subscriptions/PaySubscriptionModal";
+import { CancelSubscriptionModal } from "../../components/features/subscriptions/CancelSubscriptionModal";
 import {
   SubscriptionsSkeleton,
   SubscriptionCard,
-} from "../../components/subscriptions";
-
-// ✨ IMPORTAMOS O NOVO COMPONENTE EDUCACIONAL
+} from "../../components/features/subscriptions";
 import { FeatureIntroduction } from "../../components/ui/EmptyState/FeatureIntroduction";
 
 export function Subscriptions() {
@@ -27,13 +28,24 @@ export function Subscriptions() {
   const { data: analytics, isLoading: isLoadingAnalytics } =
     useSubscriptionAnalytics();
 
+  // Se houver um sistema de autenticação no futuro, basta passar o ID real aqui.
+  const { hiddenIds, toggleHide } = useHiddenSubscriptions("default");
+
   const [isNewSubModalOpen, setIsNewSubModalOpen] = useState<boolean>(false);
   const [isPayModalOpen, setIsPayModalOpen] = useState<boolean>(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
+
   const [selectedSubId, setSelectedSubId] = useState<string | null>(null);
+  const [showHidden, setShowHidden] = useState<boolean>(false);
 
   function handleOpenPayModal(id: string): void {
     setSelectedSubId(id);
     setIsPayModalOpen(true);
+  }
+
+  function handleOpenCancelModal(id: string): void {
+    setSelectedSubId(id);
+    setIsCancelModalOpen(true);
   }
 
   const formatCurrency = (val: number): string =>
@@ -44,10 +56,18 @@ export function Subscriptions() {
 
   const isPageLoading = isLoading || isLoadingAnalytics;
 
+  // Filtragem e divisão de tela
+  const visibleSubs = (subscriptions as Subscription[]).filter(
+    (sub) => !hiddenIds.includes(sub.id),
+  );
+  const hiddenSubs = (subscriptions as Subscription[]).filter((sub) =>
+    hiddenIds.includes(sub.id),
+  );
+
   return (
     <>
       <div className="w-full space-y-6 sm:space-y-8 animate-fade-in">
-        {/* CABEÇALHO (Exibido apenas se já existirem assinaturas) */}
+        {/* CABEÇALHO */}
         {!isPageLoading && subscriptions.length > 0 && (
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -68,7 +88,6 @@ export function Subscriptions() {
           </div>
         )}
 
-        {/* ESTADOS DE CARGA E ERRO */}
         {isPageLoading && <SubscriptionsSkeleton />}
 
         {isError && !isPageLoading && (
@@ -84,7 +103,6 @@ export function Subscriptions() {
           </div>
         )}
 
-        {/* 🚀 O NOVO ONBOARDING EDUCACIONAL ENTRA AQUI */}
         {!isPageLoading && !isError && subscriptions.length === 0 ? (
           <FeatureIntroduction
             icon={Repeat}
@@ -108,15 +126,13 @@ export function Subscriptions() {
             onAction={() => setIsNewSubModalOpen(true)}
           />
         ) : (
-          /* VISÃO ANALÍTICA COM DADOS REAIS DO BACKEND */
           !isPageLoading &&
           !isError &&
           subscriptions.length > 0 &&
           analytics && (
             <div className="space-y-8">
-              {/* COCKPIT DE IMPACTO FINANCEIRO */}
+              {/* COCKPIT */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* O NÚMERO QUE ASSUSTA (Impacto Anual) */}
                 <div className="lg:col-span-2 card-default p-6 sm:p-8 flex flex-col justify-between border-l-4 border-l-brand bg-linear-to-br from-surface to-brand/5 relative overflow-hidden rounded-3xl">
                   <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-brand/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -146,7 +162,6 @@ export function Subscriptions() {
                   </p>
                 </div>
 
-                {/* KPIS RÁPIDOS */}
                 <div className="flex flex-col gap-4">
                   <div className="flex-1 card-default p-5 flex items-center gap-4 rounded-3xl">
                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
@@ -178,11 +193,11 @@ export function Subscriptions() {
                 </div>
               </div>
 
-              {/* RADAR E LISTAGEM DE SERVIÇOS */}
+              {/* LISTA DE ASSINATURAS VISÍVEIS */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-primary uppercase tracking-wider">
-                    Meus Compromissos ({subscriptions.length})
+                    Meus Compromissos ({visibleSubs.length})
                   </h3>
                   {analytics.upcomingNext7Days > 0 && (
                     <span className="text-xs font-bold text-gray-200 bg-amber-700/40 px-3 py-1.5 rounded-lg border border-amber-900/30 shadow-sm">
@@ -192,15 +207,46 @@ export function Subscriptions() {
                 </div>
 
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(subscriptions as Subscription[]).map((sub) => (
+                  {visibleSubs.map((sub) => (
                     <SubscriptionCard
                       key={sub.id}
                       subscription={sub}
                       onPay={handleOpenPayModal}
+                      onRequestCancel={handleOpenCancelModal}
+                      onToggleHide={toggleHide}
+                      isHidden={false}
                     />
                   ))}
                 </section>
               </div>
+
+              {/* SESSÃO DISCRETA DE ASSINATURAS OCULTAS */}
+              {hiddenSubs.length > 0 && (
+                <div className="pt-6 border-t border-subtle/20 flex flex-col items-center">
+                  <button
+                    onClick={() => setShowHidden(!showHidden)}
+                    className="flex items-center gap-2 text-xs font-bold text-muted hover:text-primary transition-colors cursor-pointer px-4 py-2 rounded-full bg-elevated/50 border border-subtle/20"
+                  >
+                    <EyeOff size={14} />
+                    Assinaturas ocultas ({hiddenSubs.length})
+                  </button>
+
+                  {showHidden && (
+                    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 w-full opacity-80 transition-all">
+                      {hiddenSubs.map((sub) => (
+                        <SubscriptionCard
+                          key={sub.id}
+                          subscription={sub}
+                          onPay={handleOpenPayModal}
+                          onRequestCancel={handleOpenCancelModal}
+                          onToggleHide={toggleHide}
+                          isHidden={true}
+                        />
+                      ))}
+                    </section>
+                  )}
+                </div>
+              )}
             </div>
           )
         )}
@@ -214,6 +260,12 @@ export function Subscriptions() {
       <PaySubscriptionModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
+        subscriptionId={selectedSubId}
+      />
+
+      <CancelSubscriptionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
         subscriptionId={selectedSubId}
       />
     </>

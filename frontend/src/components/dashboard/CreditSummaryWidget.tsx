@@ -1,7 +1,7 @@
-import { CreditCard, ArrowRight, ShieldAlert } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useCards } from "../../hooks/useCredit";
 import { Skeleton } from "../ui/Skeleton";
+import { useCards } from "../../hooks/useCredit";
+import { CreditCard, ArrowRight, ShieldAlert } from "lucide-react";
 
 export function CreditSummaryWidget() {
   const { data: cards = [], isLoading } = useCards();
@@ -16,7 +16,6 @@ export function CreditSummaryWidget() {
     );
   }
 
-  // Cálculos consolidados do ecossistema de crédito
   const totalLimit = cards.reduce(
     (acc, card) => acc + Number(card.total_limit || 0),
     0,
