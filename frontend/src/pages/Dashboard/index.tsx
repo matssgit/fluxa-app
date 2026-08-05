@@ -326,19 +326,27 @@ export function Dashboard() {
 
               <div className="space-y-3 mt-6">
                 {data.pendencies && data.pendencies.length > 0 ? (
-                  data.pendencies.map((pend) => (
-                    <PendencyItem
-                      key={pend.id}
-                      title={pend.title}
-                      amount={pend.amount}
-                      dueDate={pend.dueDate || "Mês atual"}
-                      onAction={() =>
-                        pend.type === "installment"
-                          ? handleOpenPayModal(pend.id)
-                          : handleOpenSubModal(pend.id)
-                      }
-                    />
-                  ))
+                  data.pendencies.map(
+                    (pend: {
+                      id: string;
+                      title: string;
+                      amount: number;
+                      dueDate?: string;
+                      type: string;
+                    }) => (
+                      <PendencyItem
+                        key={pend.id}
+                        title={pend.title}
+                        amount={pend.amount}
+                        dueDate={pend.dueDate || "Mês atual"}
+                        onAction={() =>
+                          pend.type === "installment"
+                            ? handleOpenPayModal(pend.id)
+                            : handleOpenSubModal(pend.id)
+                        }
+                      />
+                    ),
+                  )
                 ) : (
                   <div className="py-12">
                     <EmptyState
