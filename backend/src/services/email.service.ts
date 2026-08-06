@@ -2,20 +2,24 @@ import nodemailer from "nodemailer";
 
 const smtpConfig = {
   host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === "true",
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
   },
-  family: 4,
 };
 
 const transporter = nodemailer.createTransport(smtpConfig);
 
-transporter.verify().catch((error) => {
-  console.error("[SMTP INIT ERROR] Falha ao conectar:", error);
-});
+transporter
+  .verify()
+  .then(() => {
+    console.log("SMTP conectado com sucesso!");
+  })
+  .catch((error) => {
+    console.error("SMTP ERROR:", error);
+  });
 
 export const emailService = {
   async sendVerificationEmail(to: string, token: string): Promise<void> {
@@ -23,8 +27,8 @@ export const emailService = {
     const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
 
     try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Fluxa" <noreply@fluxa.com>',
+      const info = await transporter.sendMail({
+        from: process.env.EMAIL_FROM,
         to,
         subject: "Fluxa - Confirme seu endereço de e-mail",
         html: `
@@ -34,6 +38,7 @@ export const emailService = {
           <p>Se você não criou uma conta no Fluxa, desconsidere esta mensagem.</p>
         `,
       });
+      console.log("Email enviado:", info);
     } catch (error) {
       console.error("[SMTP ERROR] Falha ao enviar verificação:", error);
       throw error;
@@ -44,8 +49,8 @@ export const emailService = {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"Fluxa" <noreply@fluxa.com>',
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
       to,
       subject: "Fluxa - Redefinição de senha",
       html: `
@@ -55,5 +60,6 @@ export const emailService = {
         <p>Este link é válido por 30 minutos. Se você não solicitou esta alteração, desconsidere este e-mail.</p>
       `,
     });
+    console.log("Email enviado:", info);
   },
 };
