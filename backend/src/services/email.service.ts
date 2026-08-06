@@ -15,6 +15,12 @@ export const emailService = {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
 
+    console.log({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      user: process.env.SMTP_USER,
+    });
+
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Fluxa" <noreply@fluxa.com>',
       to,
@@ -26,6 +32,9 @@ export const emailService = {
         <p>Se você não criou uma conta no Fluxa, desconsidere esta mensagem.</p>
       `,
     });
+
+    await transporter.verify();
+    console.log("SMTP OK");
   },
 
   async sendPasswordReset(to: string, token: string): Promise<void> {
