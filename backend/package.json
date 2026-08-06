@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src",
+    "build": "tsup src --format esm",
     "start": "node dist/server.js",
     "migrate:make": "tsx ./node_modules/knex/bin/cli.js migrate:make -x ts",
     "migrate:latest": "tsx ./node_modules/knex/bin/cli.js migrate:latest",
