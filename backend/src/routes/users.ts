@@ -21,6 +21,27 @@ export async function usersRoutes(app: FastifyInstance) {
         .optional(),
     });
 
+    // Rota temporária para diagnóstico isolado
+    app.get("/test-email", async (request, reply) => {
+      console.log("[TEST-EMAIL] Rota de diagnóstico acionada.");
+      try {
+        await emailService.sendVerificationEmail(
+          "aronxmattheus@gmail.com",
+          "token_de_teste_123",
+        );
+        return reply
+          .status(200)
+          .send({
+            message: "Comando de envio executado. Verifique os logs do Render.",
+          });
+      } catch (error) {
+        console.error("[TEST-EMAIL] Falha capturada na rota de teste:", error);
+        return reply
+          .status(500)
+          .send({ error: "Falha no envio", details: String(error) });
+      }
+    });
+
     const { name, avatar_url } = updateProfileSchema.parse(request.body);
     const userId = request.user.sub;
 
