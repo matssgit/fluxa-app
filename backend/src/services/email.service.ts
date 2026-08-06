@@ -1,13 +1,6 @@
 import nodemailer from "nodemailer";
 
-console.log("[SMTP DIAGNOSTICS] Variáveis carregadas:", {
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  user: process.env.SMTP_USER,
-  senhaCarregada: !!process.env.SMTP_PASSWORD,
-});
-
-const transporter = nodemailer.createTransport({
+const smtpConfig = {
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
   secure: process.env.SMTP_SECURE === "true",
@@ -15,23 +8,19 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
   },
-});
+  family: 4,
+};
 
-transporter
-  .verify()
-  .then(() => {
-    console.log("[SMTP READY] Conexão com o Gmail estabelecida com sucesso!");
-  })
-  .catch((error) => {
-    console.error("[SMTP INIT ERROR] Falha ao conectar no Gmail:", error);
-  });
+const transporter = nodemailer.createTransport(smtpConfig);
+
+transporter.verify().catch((error) => {
+  console.error("[SMTP INIT ERROR] Falha ao conectar:", error);
+});
 
 export const emailService = {
   async sendVerificationEmail(to: string, token: string): Promise<void> {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
-
-    console.log(`[SMTP] Iniciando envio de e-mail para: ${to}`);
 
     try {
       await transporter.sendMail({
@@ -45,9 +34,8 @@ export const emailService = {
           <p>Se você não criou uma conta no Fluxa, desconsidere esta mensagem.</p>
         `,
       });
-      console.log("[SMTP] E-mail enviado com sucesso!");
     } catch (error) {
-      console.error("[SMTP FATAL ERROR] O provedor rejeitou o envio:", error);
+      console.error("[SMTP ERROR] Falha ao enviar verificação:", error);
       throw error;
     }
   },
