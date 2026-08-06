@@ -194,17 +194,17 @@ export function AboutTab() {
                 href="https://github.com/matssgit"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center gap-4 p-4 rounded-2xl bg-elevated/40 border border-subtle/30 hover:bg-surface hover:border-subtle/50 hover:shadow-sm transition-all group"
+                className="flex-1 min-w-0 flex items-center gap-4 p-4 rounded-2xl bg-elevated/40 border border-subtle/30 hover:bg-surface hover:border-subtle/50 hover:shadow-sm transition-all group"
               >
                 <GithubIcon
                   size={24}
-                  className="group-hover:scale-110 transition-transform text-primary"
+                  className="group-hover:scale-110 transition-transform text-primary shrink-0"
                 />
-                <div>
-                  <span className="block text-sm font-bold text-primary">
+                <div className="min-w-0">
+                  <span className="block text-sm font-bold text-primary truncate">
                     GitHub
                   </span>
-                  <span className="block text-[11px] font-medium text-muted">
+                  <span className="block text-[11px] font-medium text-muted truncate">
                     github.com/matssgit
                   </span>
                 </div>
@@ -214,17 +214,17 @@ export function AboutTab() {
                 href="https://linkedin.com/in/matheussantanadev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center gap-4 p-4 rounded-2xl bg-elevated/40 border border-subtle/30 hover:bg-surface hover:border-subtle/50 hover:shadow-sm transition-all group"
+                className="flex-1 min-w-0 flex items-center gap-4 p-4 rounded-2xl bg-elevated/40 border border-subtle/30 hover:bg-surface hover:border-subtle/50 hover:shadow-sm transition-all group"
               >
                 <LinkedinIcon
                   size={24}
-                  className="group-hover:scale-110 transition-transform text-primary"
+                  className="group-hover:scale-110 transition-transform text-primary shrink-0"
                 />
-                <div>
-                  <span className="block text-sm font-bold text-primary">
+                <div className="min-w-0">
+                  <span className="block text-sm font-bold text-primary truncate">
                     LinkedIn
                   </span>
-                  <span className="block text-[11px] font-medium text-muted">
+                  <span className="block text-[11px] font-medium text-muted truncate">
                     linkedin.com/in/matheussantanadev
                   </span>
                 </div>
@@ -239,9 +239,9 @@ export function AboutTab() {
             >
               <GithubIcon
                 size={18}
-                className="group-hover:scale-110 transition-transform"
+                className="group-hover:scale-110 transition-transform shrink-0"
               />
-              Ver projeto no GitHub
+              <span className="truncate">Ver projeto no GitHub</span>
             </a>
           </div>
         </div>

@@ -6,6 +6,10 @@ import { checkAuth } from "../middlewares/check-auth.js";
 import { totpService } from "../services/totp.service.js";
 import { emailService } from "../services/email.service.js";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
+import {
+  PASSWORD_REGEX,
+  PASSWORD_ERROR_MESSAGE,
+} from "../utils/password-policy.js";
 
 export async function usersRoutes(app: FastifyInstance) {
   app.put("/profile", { preHandler: [checkAuth] }, async (request, reply) => {
@@ -21,7 +25,6 @@ export async function usersRoutes(app: FastifyInstance) {
         .optional(),
     });
 
-    // Rota temporária para diagnóstico isolado
     app.get("/test-email", async (request, reply) => {
       console.log("[TEST-EMAIL] Rota de diagnóstico acionada.");
       try {
@@ -29,11 +32,9 @@ export async function usersRoutes(app: FastifyInstance) {
           "aronxmattheus@gmail.com",
           "token_de_teste_123",
         );
-        return reply
-          .status(200)
-          .send({
-            message: "Comando de envio executado. Verifique os logs do Render.",
-          });
+        return reply.status(200).send({
+          message: "Comando de envio executado. Verifique os logs do Render.",
+        });
       } catch (error) {
         console.error("[TEST-EMAIL] Falha capturada na rota de teste:", error);
         return reply
@@ -135,14 +136,25 @@ export async function usersRoutes(app: FastifyInstance) {
     const registerSchema = z.object({
       name: z.string(),
       email: z.string().email(),
-      password: z.string().min(6),
+      password: z
+        .string()
+        .regex(PASSWORD_REGEX, { message: PASSWORD_ERROR_MESSAGE }),
     });
 
-    const { name, email, password } = registerSchema.parse(request.body);
+    const parsed = registerSchema.safeParse(request.body);
+
+    if (!parsed.success) {
+      const errorMessage =
+        parsed.error.errors[0]?.message ||
+        "Erro de validação nos dados fornecidos.";
+      return reply.status(400).send({ error: errorMessage });
+    }
+
+    const { name, email, password } = parsed.data;
 
     const userExists = await db("users").where({ email }).first();
     if (userExists) {
-      return reply.status(400).send({ error: "User already exists" });
+      return reply.status(400).send({ error: "Este e-mail já está em uso." });
     }
 
     const password_hash = await bcrypt.hash(password, 8);
@@ -651,7 +663,9 @@ export async function usersRoutes(app: FastifyInstance) {
   app.post("/reset-password", async (request, reply) => {
     const resetPasswordSchema = z.object({
       token: z.string(),
-      password: z.string().min(6),
+      password: z
+        .string()
+        .regex(PASSWORD_REGEX, { message: PASSWORD_ERROR_MESSAGE }),
     });
 
     const { token, password } = resetPasswordSchema.parse(request.body);
@@ -684,7 +698,9 @@ export async function usersRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const changePasswordSchema = z.object({
         currentPassword: z.string().min(1),
-        newPassword: z.string().min(6),
+        newPassword: z
+          .string()
+          .regex(PASSWORD_REGEX, { message: PASSWORD_ERROR_MESSAGE }),
       });
 
       const { currentPassword, newPassword } = changePasswordSchema.parse(

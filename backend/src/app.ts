@@ -29,7 +29,7 @@ app.register(helmet, {
 app.register(rateLimit, {
   max: 100,
   timeWindow: "1 minute",
-  errorResponseBuilder: function (request, context) {
+  errorResponseBuilder: function (_request, _context) {
     return {
       statusCode: 429,
       error: "Too Many Requests",
@@ -52,15 +52,28 @@ app.setErrorHandler((error, request, reply) => {
     });
   }
 
-  console.error("🚨 [Global Error Handler]:", error);
+  console.error("[Global Error Handler]:", error);
 
   return reply.status(500).send({
     message: "Ocorreu um erro interno no servidor.",
   });
 });
 
+const rawOrigins = [env.FRONTEND_URL, env.CORS_ORIGIN]
+  .filter(Boolean)
+  .join(",");
+
+const allowedOrigins = Array.from(
+  new Set(
+    rawOrigins
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  ),
+);
+
 app.register(cors, {
-  origin: [env.FRONTEND_URL],
+  origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
@@ -72,7 +85,6 @@ app.register(fastifyJwt, {
   secret: env.JWT_SECRET,
 });
 
-// Health Check Endpoint
 app.get("/health", async () => {
   return { status: "ok" };
 });

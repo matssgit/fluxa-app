@@ -71,7 +71,7 @@ export function Settings() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto w-full p-0 sm:p-6 lg:p-8 animate-fade-in flex flex-col min-h-screen sm:min-h-0">
+    <div className="w-full animate-fade-in flex flex-col min-h-screen sm:min-h-0">
       <div className="pt-6 px-4 sm:px-0 sm:pt-0 mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
           Configurações
@@ -137,7 +137,7 @@ export function Settings() {
           </nav>
         </aside>
 
-        <main className="flex-1 bg-surface sm:rounded-3xl sm:shadow-sm sm:border sm:border-subtle/30 border-t border-subtle/20 sm:border-t-0 p-5 sm:p-8 min-h-[50vh]">
+        <main className="flex-1 min-w-0 bg-surface rounded-3xl shadow-sm border border-subtle/30 mx-4 sm:mx-0 mb-28 sm:mb-20 p-5 sm:p-8 min-h-[50vh]">
           {renderActiveTab()}
         </main>
       </div>

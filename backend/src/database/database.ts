@@ -1,22 +1,18 @@
 import "dotenv/config";
 import knex from "knex";
+import path from "node:path";
 import type { Knex } from "knex";
 import { env } from "../env/index.js";
 import { fileURLToPath } from "node:url";
-import path from "node:path";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL env not found.");
-}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isPg = (env.DATABASE_CLIENT || process.env.DATABASE_CLIENT) === "pg";
+const isPg = env.DATABASE_CLIENT === "pg";
 const isProduction = env.NODE_ENV === "production";
 
 export const config: Knex.Config = {
-  client: isPg ? "pg" : "sqlite",
+  client: env.DATABASE_CLIENT,
   connection: isPg
     ? {
         connectionString: env.DATABASE_URL,

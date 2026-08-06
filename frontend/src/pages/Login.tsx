@@ -3,7 +3,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ShieldAlert, KeyRound, MailWarning } from "lucide-react";
 import { api } from "../api/client";
@@ -33,6 +33,7 @@ type RecoveryForm = z.infer<typeof recoverySchema>;
 export function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [step, setStep] = useState<LoginStep>("credentials");
   const [tempToken, setTempToken] = useState<string | null>(null);
@@ -42,11 +43,20 @@ export function Login() {
   const [error, setError] = useState("");
   const [resendSuccess, setResendSuccess] = useState("");
 
+  const prefilledEmail = location.state?.email || "";
+
   const {
     register: registerLogin,
     handleSubmit: handleLoginSubmit,
+    getValues,
     formState: { errors: loginErrors },
-  } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: prefilledEmail,
+      password: "",
+    },
+  });
 
   const {
     register: registerTotp,
@@ -69,6 +79,14 @@ export function Login() {
     setResendSuccess("");
     resetTotp();
     resetRecovery();
+  };
+
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Botão clicado!"); // Adicione isso
+    const currentEmail = getValues("email");
+    console.log("E-mail capturado:", currentEmail); // Adicione isso
+    navigate("/forgot-password", { state: { email: currentEmail } });
   };
 
   const handleAuthError = (err: unknown) => {
@@ -274,10 +292,19 @@ export function Login() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-secondary">
-                  Senha
-                </label>
-                <div className="mt-1">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-secondary">
+                    Senha
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    className="text-xs font-medium text-brand hover:opacity-80 transition-opacity cursor-pointer"
+                  >
+                    Esqueci minha senha?
+                  </button>
+                </div>
+                <div>
                   <input
                     type="password"
                     {...registerLogin("password")}

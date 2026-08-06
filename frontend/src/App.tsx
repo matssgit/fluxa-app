@@ -8,11 +8,13 @@ import { Categories } from "./pages/Categories";
 import { Accounts } from "./pages/Accounts/index";
 import { VerifyEmail } from "./pages/VerifyEmail";
 import { CreditCards } from "./pages/CreditCards";
-import { Transactions } from "./pages/Transactions";
 import { Dashboard } from "./pages/Dashboard/index";
+import { Transactions } from "./pages/Transactions";
+import { ResetPassword } from "./pages/ResetPassword";
 import { Subscriptions } from "./pages/Subscriptions";
-import { AuthProvider } from "./contexts/auth/AuthProvider";
+import { ForgotPassword } from "./pages/ForgotPassword";
 import { DefaultLayout } from "./layouts/DefaultLayout";
+import { AuthProvider } from "./contexts/auth/AuthProvider";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
 import { VerifyEmailPending } from "./pages/VerifyEmailPending";
 import { PrivacyProvider } from "./contexts/privacy/PrivacyProvider";
@@ -43,6 +45,8 @@ export default function App() {
                   path="/verify-email-pending"
                   element={<VerifyEmailPending />}
                 />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Rotas Privadas Agrupadas no Layout */}
                 <Route

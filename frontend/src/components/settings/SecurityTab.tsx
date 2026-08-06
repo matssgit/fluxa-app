@@ -184,7 +184,7 @@ export function SecurityTab() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-2xl">
+    <div className="space-y-8 animate-fade-in w-full max-w-5xl">
       <div>
         <h2 className="text-lg font-bold text-primary">Segurança</h2>
         <p className="text-xs sm:text-sm text-muted mt-1">
@@ -256,7 +256,7 @@ export function SecurityTab() {
       </div>
 
       <div className="p-6 rounded-3xl bg-elevated/40 border border-subtle/30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row flex-wrap md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
               className={`p-3 rounded-2xl ${
@@ -287,7 +287,7 @@ export function SecurityTab() {
             <button
               onClick={handleStartSetup}
               disabled={is2FALoading}
-              className="w-full sm:w-auto px-5 py-2.5 bg-brand hover:bg-brand-light text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-70 shrink-0"
+              className="w-full md:w-auto px-5 py-2.5 bg-brand hover:bg-brand-light text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-70 shrink-0"
             >
               {is2FALoading
                 ? "Gerando..."
@@ -298,7 +298,7 @@ export function SecurityTab() {
           {step === "idle" && isCurrentlyEnabled && (
             <button
               onClick={() => setStep("disable_confirm")}
-              className="w-full sm:w-auto px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold rounded-xl transition-all shrink-0"
+              className="w-full md:w-auto px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold rounded-xl transition-all shrink-0"
             >
               Desativar
             </button>

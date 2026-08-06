@@ -1,12 +1,13 @@
 import nodemailer from "nodemailer";
+import { env } from "../env/index.js";
 
 const smtpConfig = {
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
+  host: env.SMTP_HOST,
+  port: env.SMTP_PORT,
   secure: false,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASSWORD,
   },
 };
 
@@ -23,12 +24,11 @@ transporter
 
 export const emailService = {
   async sendVerificationEmail(to: string, token: string): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const verificationLink = `${frontendUrl}/verify-email?token=${token}`;
+    const verificationLink = `${env.FRONTEND_URL}/verify-email?token=${token}`;
 
     try {
       const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
+        from: env.EMAIL_FROM,
         to,
         subject: "Fluxa - Confirme seu endereço de e-mail",
         html: `
@@ -46,11 +46,10 @@ export const emailService = {
   },
 
   async sendPasswordReset(to: string, token: string): Promise<void> {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+    const resetLink = `${env.FRONTEND_URL}/reset-password?token=${token}`;
 
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: env.EMAIL_FROM,
       to,
       subject: "Fluxa - Redefinição de senha",
       html: `
