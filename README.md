@@ -17,7 +17,7 @@ Controle seu fluxo de caixa, cartões, parcelamentos, assinaturas e metas financ
 
 <br />
 
-<a href="COLOQUE-SEU-LINK-AQUI">
+<a href="https://fluxa-core-app-five.vercel.app/">
   <strong>🚀 Acessar aplicação</strong>
 </a>
 
