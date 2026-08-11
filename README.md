@@ -1,18 +1,4 @@
-Com certeza! Antes de mergulharmos no problema do upload de imagens em produção, vamos deixar o seu `README.md` impecável.
-
-Eu analisei o documento atual e os arquivos de arquitetura do projeto. O seu `README.md` base já estava excelente, mas adicionei alguns refinamentos estratégicos para valorizar ainda mais o seu portfólio para recrutadores e líderes técnicos:
-
-1. **Destaque para o Design System e UX:** Adicionei menções claras ao seu Design System customizado (Pine & Sage) e à arquitetura Mobile-First, mostrando que você se importa com a experiência do usuário.
-
-2. **Ênfase na Qualidade de Software:** Destaquei os 31 testes automatizados (Vitest) que garantem a segurança contra _Race Conditions_ e _IDOR_, o que é um diferencial enorme para desenvolvedores juniores/plenos.
-
-3. **PWA explícito:** Coloquei a instalação PWA em evidência nas funcionalidades.
-
-4. **Limpeza da Stack:** Removi a menção ao "Railway" para focar 100% no Render e Vercel, que é a sua stack real.
-
-Aqui está a versão definitiva e polida do seu `README.md`. Pode copiar e colar!
-
-````markdown
+```markdown
 # Fluxa
 
 <div align="center">
@@ -34,8 +20,7 @@ Aqui está a versão definitiva e polida do seu `README.md`. Pode copiar e colar
 
 **Fluxa** é uma aplicação Full Stack de gestão financeira pessoal e patrimonial desenvolvida do zero. O sistema vai muito além de um simples rastreador de despesas, unificando o controle de fluxo de caixa, cartões de crédito, compras parceladas, carteiras de metas e assinaturas recorrentes em uma única plataforma moderna, segura e instalável (PWA).
 
-![Fluxa Demo](./docs/assets/demo.gif)
-_(Substitua o caminho acima por um GIF do sistema em uso)_
+![Fluxa - Visão Geral](./docs/assets/caixa.png)
 
 ---
 
@@ -47,6 +32,25 @@ O projeto foi construído com dois propósitos principais:
 
 - **Demonstrar capacidade técnica:** Construir uma API robusta que domina modelagem relacional complexa, transações ACID, consistência de dados, prevenção contra ataques BOLA/IDOR e cobertura por testes automatizados.
 - **Resolver uma necessidade real:** Entregar uma solução financeira diária sem anúncios, adaptada à realidade do controle financeiro, com uma interface responsiva desenhada para atrito zero.
+
+---
+
+## 📸 Demonstração Visual
+
+### Login e Autenticação Segura
+![Login](./docs/assets/login.png)
+
+### Fluxo de Caixa e Dashboard
+![Fluxo de Caixa](./docs/assets/caixa.png)
+
+### Gestão de Transações
+![Baixa de Transações](./docs/assets/baixa.png)
+
+### Controle de Assinaturas
+![Assinaturas](./docs/assets/assinaturas.png)
+
+### Carteiras e Metas Financeiras
+![Metas](./docs/assets/metas.png)
 
 ---
 
@@ -124,8 +128,8 @@ O ambiente de desenvolvimento local foi configurado para ser executado de maneir
 ```bash
 git clone [https://github.com/matssgit/fluxa.git](https://github.com/matssgit/fluxa.git)
 cd fluxa
+
 ```
-````
 
 **2. Configure e inicie o Backend:**
 
@@ -169,10 +173,10 @@ Acesse `http://localhost:5173` no seu navegador para utilizar a aplicação.
 
 O Fluxa conta com documentação técnica detalhada. Para compreender a fundo as decisões de design, modelagem de banco e planejamento, consulte a pasta `docs/` do repositório:
 
-- 🏛️ [Arquitetura do Sistema](https://www.google.com/search?q=./docs/architecture/SYSTEM_ARCHITECTURE.md)
-- 🎨 [Design System](https://www.google.com/search?q=./docs/architecture/DESIGN_SYSTEM.md)
-- ⚙️ [Roadmap do Backend](https://www.google.com/search?q=./docs/development/BACKEND_ROADMAP.md)
-- 💻 [Roadmap do Frontend](https://www.google.com/search?q=./docs/development/FRONTEND_ROADMAP.md)
+* 🏛️ [Arquitetura do Sistema](https://www.google.com/search?q=./docs/architecture/SYSTEM_ARCHITECTURE.md)
+* 🎨 [Design System](https://www.google.com/search?q=./docs/architecture/DESIGN_SYSTEM.md)
+* ⚙️ [Roadmap do Backend](https://www.google.com/search?q=./docs/development/BACKEND_ROADMAP.md)
+* 💻 [Roadmap do Frontend](https://www.google.com/search?q=./docs/development/FRONTEND_ROADMAP.md)
 
 ---
 
@@ -182,10 +186,10 @@ O Fluxa coroa meu esforço de consolidação técnica em Engenharia de Software.
 
 **Matheus Santana**
 
-_Desenvolvedor Full Stack_
+*Desenvolvedor Full Stack*
 
-- 🐙 **GitHub:** [@matssgit](https://www.google.com/search?q=https://github.com/matssgit)
-- 💼 **LinkedIn:** [Matheus Santana](https://www.google.com/search?q=https://linkedin.com/in/matheussantanadev)
+* 🐙 **GitHub:** [@matssgit](https://www.google.com/search?q=https://github.com/matssgit)
+* 💼 **LinkedIn:** [Matheus Santana](https://www.google.com/search?q=https://linkedin.com/in/matheussantanadev)
 
 ```
 
