@@ -20,13 +20,15 @@ const envSchema = z.object({
   SMTP_USER: z.string().default(""),
   SMTP_PASSWORD: z.string().default(""),
   EMAIL_FROM: z.string().default("noreply@fluxa.com"),
+
+  DEMO_CLEANUP_ENABLED: z.coerce.boolean().default(false),
+  DEMO_DATA_RETENTION_DAYS: z.coerce.number().default(30),
 });
 
 const _env = envSchema.safeParse(process.env);
 
 if (_env.success === false) {
   console.error("Invalid environment variables!", _env.error.format());
-
   throw new Error("Invalid environment variables.");
 }
 

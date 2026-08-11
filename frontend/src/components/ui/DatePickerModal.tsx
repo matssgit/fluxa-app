@@ -1,10 +1,11 @@
-import { useState } from "react";
 import {
-  X,
+  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
+  X,
 } from "lucide-react";
+
+import { useState } from "react";
 
 interface DatePickerModalProps {
   isOpen: boolean;
@@ -24,8 +25,22 @@ export function DatePickerModal({
   const initialDate = selectedDate
     ? new Date(`${selectedDate}T00:00:00`)
     : new Date();
+
   const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
   const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
+
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      const dateToUse = selectedDate
+        ? new Date(`${selectedDate}T00:00:00`)
+        : new Date();
+      setCurrentMonth(dateToUse.getMonth());
+      setCurrentYear(dateToUse.getFullYear());
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -59,7 +74,7 @@ export function DatePickerModal({
   function handleNextMonth() {
     if (currentMonth === 11) {
       setCurrentMonth(0);
-      setCurrentYear((prev) => prev - 1);
+      setCurrentYear((prev) => prev + 1);
     } else {
       setCurrentMonth((prev) => prev + 1);
     }

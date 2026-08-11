@@ -1,3 +1,17 @@
+Com certeza! Antes de mergulharmos no problema do upload de imagens em produção, vamos deixar o seu `README.md` impecável.
+
+Eu analisei o documento atual e os arquivos de arquitetura do projeto. O seu `README.md` base já estava excelente, mas adicionei alguns refinamentos estratégicos para valorizar ainda mais o seu portfólio para recrutadores e líderes técnicos:
+
+1. **Destaque para o Design System e UX:** Adicionei menções claras ao seu Design System customizado (Pine & Sage) e à arquitetura Mobile-First, mostrando que você se importa com a experiência do usuário.
+
+2. **Ênfase na Qualidade de Software:** Destaquei os 31 testes automatizados (Vitest) que garantem a segurança contra _Race Conditions_ e _IDOR_, o que é um diferencial enorme para desenvolvedores juniores/plenos.
+
+3. **PWA explícito:** Coloquei a instalação PWA em evidência nas funcionalidades.
+
+4. **Limpeza da Stack:** Removi a menção ao "Railway" para focar 100% no Render e Vercel, que é a sua stack real.
+
+Aqui está a versão definitiva e polida do seu `README.md`. Pode copiar e colar!
+
 ````markdown
 # Fluxa
 
@@ -13,11 +27,12 @@
 
 <div align="center">
   <h3>🚀 <strong>Deploy:</strong> <a href="https://COLOQUE-SEU-LINK-AQUI.com">Acessar a Aplicação ao Vivo</a></h3>
+  <p><em>(O sistema permite criação de contas reais ou uso de credenciais de demonstração)</em></p>
 </div>
 
 <br>
 
-**Fluxa** é uma aplicação Full Stack de gestão financeira pessoal e patrimonial desenvolvida do zero. O sistema vai muito além de um simples rastreador de despesas, unificando o controle de fluxo de caixa, cartões de crédito, compras parceladas, carteiras de metas e assinaturas recorrentes em uma única plataforma moderna e segura.
+**Fluxa** é uma aplicação Full Stack de gestão financeira pessoal e patrimonial desenvolvida do zero. O sistema vai muito além de um simples rastreador de despesas, unificando o controle de fluxo de caixa, cartões de crédito, compras parceladas, carteiras de metas e assinaturas recorrentes em uma única plataforma moderna, segura e instalável (PWA).
 
 ![Fluxa Demo](./docs/assets/demo.gif)
 _(Substitua o caminho acima por um GIF do sistema em uso)_
@@ -26,69 +41,48 @@ _(Substitua o caminho acima por um GIF do sistema em uso)_
 
 ## 🎯 Objetivo do Projeto
 
-O Fluxa nasceu da necessidade de ter uma ferramenta financeira realmente simples, rápida e confiável para o controle das finanças pessoais. Ao longo do desenvolvimento, o projeto deixou de ser apenas um gerenciador financeiro e passou a servir também como laboratório para aplicação de boas práticas de arquitetura de software, autenticação, segurança, banco de dados e experiência do usuário (UX).
+O Fluxa nasceu da necessidade de ter uma ferramenta financeira realmente simples, rápida e confiável. Ao longo do desenvolvimento, o projeto evoluiu para servir como um **laboratório de engenharia de software**, focado na aplicação prática de arquitetura limpa, segurança, banco de dados e experiência do usuário (UX).
 
 O projeto foi construído com dois propósitos principais:
 
-- **Demonstrar capacidade técnica:** Construir uma aplicação robusta que vá muito além de um CRUD tradicional. O projeto explora arquitetura limpa, modelagem de domínio complexa, transações ACID, consistência de dados, testes automatizados e desenvolvimento de uma interface responsiva focada em atrito zero.
-- **Resolver uma necessidade real:** Criar uma solução financeira diária sem anúncios, assinaturas obrigatórias ou funcionalidades desnecessárias, adaptada à realidade do controle financeiro.
+- **Demonstrar capacidade técnica:** Construir uma API robusta que domina modelagem relacional complexa, transações ACID, consistência de dados, prevenção contra ataques BOLA/IDOR e cobertura por testes automatizados.
+- **Resolver uma necessidade real:** Entregar uma solução financeira diária sem anúncios, adaptada à realidade do controle financeiro, com uma interface responsiva desenhada para atrito zero.
 
 ---
 
-## 🧠 Destaques Técnicos
+## 🧠 Engenharia e Destaques Técnicos
 
-O Fluxa se diferencia por resolver problemas críticos de engenharia financeira de forma estruturada:
+O Fluxa se diferencia por resolver problemas críticos de software de forma estruturada:
 
-- **Isolamento de Dados (Ownership):** O backend determina a propriedade dos dados exclusivamente através da identidade criptografada no token JWT (`user_id`). A API valida internamente o escopo de cada requisição, garantindo proteção contra ataques IDOR (Insecure Direct Object Reference).
-- **Separação de Domínios (Caixa vs. Crédito):** A arquitetura blinda o dinheiro real (saldo) do dinheiro virtual (limite). Compras no crédito geram obrigações temporais, e o fluxo de caixa só sofre impacto no momento exato do pagamento da fatura/parcela.
-- **Precisão Monetária (Centavos):** Os valores monetários são normalizados e persistidos em centavos inteiros no banco de dados, evitando problemas críticos de precisão com _floating points_. Algoritmos determinísticos garantem que o arredondamento de dízimas em parcelamentos bata exatamente com o valor original.
+- **Precisão Monetária (Centavos):** Os valores monetários são normalizados e persistidos como números inteiros (centavos) no banco de dados, evitando anomalias de precisão com _floating points_. Algoritmos determinísticos garantem que o arredondamento de dízimas em parcelamentos bata exatamente com o valor original.
 - **Controle de Concorrência (ACID):** Operações críticas, como a dedução do limite de um cartão ou aportes em carteiras, são envolvidas em transações SQL isoladas via Knex. Isso previne _race conditions_ em requisições simultâneas.
-- **Validação _Fail-Fast_:** A biblioteca Zod valida e normaliza os payloads no momento em que entram na rota, rejeitando requisições malformadas antes que alcancem as camadas de regra de negócio.
+- **Isolamento de Dados (Ownership):** O backend determina a propriedade dos dados exclusivamente através da identidade criptografada no token JWT (`user_id`). A API não confia em IDs passados via payload, bloqueando vazamentos entre contas.
+- **Separação de Domínios (Caixa vs. Crédito):** A arquitetura blinda o dinheiro real (saldo) do dinheiro virtual (limite). Compras no crédito geram obrigações temporais, e o fluxo de caixa só sofre impacto no momento exato do pagamento da fatura.
+- **Testes Automatizados (Vitest):** Suíte rigorosa de 31 testes cobrindo resiliência de autenticação, fluxos de dupla checagem (2FA) e integridade matemática financeira.
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Funcionalidades Principais
 
-### 🔐 Segurança
+### 🔐 Segurança e Autenticação
 
-- **Autenticação JWT:** Cadastro, Login e verificação segura de sessões.
-- **Autenticação em Dois Fatores (2FA):** Camada adicional de segurança via aplicativo autenticador.
-- **Recuperação de Acesso:** Fluxo completo de redefinição de senha com tokens de e-mail limitados por tempo.
+- **JWT & Fail-Fast:** Sessões protegidas por Tokens e payloads sanitizados via Zod antes de atingirem a regra de negócio.
+- **Autenticação em Dois Fatores (2FA):** Camada adicional de segurança via TOTP (Authenticator App) e Recovery Codes.
+- **Recuperação de Acesso:** Fluxo de redefinição de senha com tokens de e-mail seguros via SMTP (Brevo).
 
-### 💰 Fluxo de Caixa
+### 💰 Gestão Financeira Completa
 
-- **Contas e Categorias:** Gestão de múltiplas contas bancárias e categorização personalizada (CRUD completo).
-- **Transações:** Registro de movimentações com status dinâmico (Pendente / Concluído).
-
-### 💳 Cartões e Crédito
-
-- **Controle de Limites:** Acompanhamento automático do limite total e disponível.
-- **Parcelamentos:** Motor de projeção de parcelas futuras que se ajustam organicamente ao calendário.
-
-### 🔄 Assinaturas e 🎯 Carteiras
-
+- **Fluxo de Caixa:** Gestão de múltiplas contas bancárias, categorias e transações dinâmicas (Pendentes/Concluídas).
+- **Cartões e Parcelamentos:** Motor de crédito que projeta faturas futuras organicamente pelo calendário.
 - **Assinaturas:** Acompanhamento de serviços recorrentes com aviso de data da próxima cobrança.
-- **Wallets (Metas):** Organização de liquidez através de transferências diretas entre a conta corrente e carteiras de objetivo patrimonial.
+- **Carteiras (Wallets):** Organização de liquidez e separação de patrimônio para metas específicas.
 
-### 📊 Dashboard e UX
+### 🎨 Design System e UX
 
-- **Inteligência Financeira:** Painel central com indicadores de saldo, despesas e distribuição por categorias atualizados em tempo real (React Query).
-- **Modo Privacidade:** Censura rápida de valores financeiros sensíveis em tela.
-- **Design Responsivo:** Layout _Mobile-First_ projetado para uso ergonômico, com suporte nativo a _Light_ e _Dark Mode_.
-
----
-
-## 📸 Demonstração Visual
-
-### Dashboard Executivo
-
-![Dashboard](./docs/assets/dashboard.png)
-_(Substitua o caminho acima por uma screenshot do seu Dashboard)_
-
-### Gestão de Cartões e Parcelamentos
-
-![Cartões](./docs/assets/cartoes.png)
-_(Substitua o caminho acima por uma screenshot da tela de cartões)_
+- **Mobile-First & PWA:** Layout responsivo otimizado de 360px a 1920px, instalável nativamente no Android como Progressive Web App (aplicativo standalone).
+- **Pine & Sage:** Design System próprio desenhado com Tailwind CSS, oferecendo suporte nativo a _Light_ e _Dark Mode_ com alta legibilidade.
+- **Modo Privacidade:** Censura rápida de valores financeiros com contexto global (React Context).
+- **Tempo Real:** Mutações otimizadas com TanStack Query (React Query) para respostas imediatas da interface.
 
 ---
 
@@ -98,31 +92,32 @@ A arquitetura Cliente-Servidor foi desenvolvida mantendo as frentes desacopladas
 
 ### Frontend
 
-- **Core:** React, TypeScript, Vite.
-- **Estilização:** Tailwind CSS (Design System Pine & Sage customizado).
-- **Gestão de Estado & Cache:** TanStack Query (React Query).
-- **Componentes & Ícones:** Modais nativos, Lucide React.
+- **Core:** React, TypeScript, Vite, PWA.
+- **Estilização:** Tailwind CSS, Lucide React.
+- **Gestão de Estado & Assincronicidade:** TanStack Query (React Query).
+- **Formulários:** React Hook Form + Zod.
 
 ### Backend
 
 - **Core:** Node.js, Fastify, TypeScript.
-- **Banco de Dados:** PostgreSQL (Produção), SQLite (Ambiente Local/Dev).
-- **Query Builder:** Knex.js.
-- **Validação & Segurança:** Zod, JWT, Bcrypt.
-- **Testes:** Vitest (Testes de concorrência, ownership e hardening).
+- **Banco de Dados:** PostgreSQL (Produção) e SQLite (Ambiente Local/Dev).
+- **Query Builder & Migrations:** Knex.js.
+- **Segurança:** Zod, JWT, Bcrypt, Fastify Rate Limit, Helmet.
+- **Testes:** Vitest.
 
 ### Infraestrutura
 
-- **Deploy:** Vercel (Frontend) & Render/Railway (Backend).
-- **Contêineres:** Docker & Docker Compose.
+- **Deploy:** Vercel (Frontend) & Render (Backend).
+- **E-mails Transacionais:** Brevo SMTP + Nodemailer.
+- **Contêineres:** Docker & Docker Compose (Ambiente Local).
 
 ---
 
 ## 🚀 Como Executar Localmente (Quick Start)
 
-O ambiente de desenvolvimento local foi configurado para ser executado de maneira simples utilizando o **SQLite** como banco de dados padrão para evitar a necessidade imediata de containers pesados no seu primeiro teste.
+O ambiente de desenvolvimento local foi configurado para ser executado de maneira simples utilizando o **SQLite** como banco de dados padrão, evitando a necessidade imediata de containers pesados no seu primeiro teste.
 
-**Pré-requisitos:** Node.js (v18+) e NPM/Yarn instalados.
+**Pré-requisitos:** Node.js (v18+) instalado.
 
 **1. Clone o repositório:**
 
@@ -140,15 +135,12 @@ cd backend
 # Instale as dependências
 npm install
 
-# Crie o arquivo de variáveis de ambiente
+# Crie e configure o arquivo de ambiente
 cp .env.example .env
-# IMPORTANTE: Abra o arquivo .env e certifique-se de que a variável JWT_SECRET está preenchida com qualquer hash seguro.
+# IMPORTANTE: Abra o arquivo .env e preencha a variável JWT_SECRET com um hash seguro.
 
-# Execute as migrations para gerar a estrutura do banco SQLite local
+# Execute as migrations (criação do banco SQLite local)
 npm run knex -- migrate:latest
-
-# (Opcional) Popule o banco com dados/categorias base para testes
-npm run knex -- seed:run
 
 # Inicie o servidor da API (rodará em http://localhost:3333)
 npm run dev
@@ -171,20 +163,11 @@ npm run dev
 
 Acesse `http://localhost:5173` no seu navegador para utilizar a aplicação.
 
-**4. Executando os Testes Automatizados:**
-Para atestar a garantia do isolamento de segurança e cálculos do sistema, acesse a pasta do backend e execute a suíte de testes:
-
-```bash
-cd backend
-npm run test
-
-```
-
 ---
 
 ## 📚 Documentação Técnica
 
-O Fluxa conta com farta documentação técnica. Para compreender a fundo as decisões de design, _feature slicing_ e regras de negócio, consulte a pasta `docs/` do repositório:
+O Fluxa conta com documentação técnica detalhada. Para compreender a fundo as decisões de design, modelagem de banco e planejamento, consulte a pasta `docs/` do repositório:
 
 - 🏛️ [Arquitetura do Sistema](https://www.google.com/search?q=./docs/architecture/SYSTEM_ARCHITECTURE.md)
 - 🎨 [Design System](https://www.google.com/search?q=./docs/architecture/DESIGN_SYSTEM.md)
@@ -193,15 +176,17 @@ O Fluxa conta com farta documentação técnica. Para compreender a fundo as dec
 
 ---
 
-## 👨‍💻 Desenvolvido Por
+## 👨‍💻 Desenvolvedor
 
-O Fluxa coroa meu esforço de consolidação técnica em Engenharia de Software. Este projeto consolida a união entre uma interface front-end focada em uma ótima experiência para o usuário final e o desenvolvimento de um back-end sólido, seguro, testado e escalável.
+O Fluxa coroa meu esforço de consolidação técnica em Engenharia de Software. Este projeto une a entrega de uma experiência visual amigável (Front-end) com o desenvolvimento de um back-end sólido, seguro, testado e escalável.
 
 **Matheus Santana**
 
-Desenvolvedor Full Stack
+_Desenvolvedor Full Stack_
 
-- 🐙 **GitHub:** [@matssgit](https://github.com/matssgit)
+- 🐙 **GitHub:** [@matssgit](https://www.google.com/search?q=https://github.com/matssgit)
 - 💼 **LinkedIn:** [Matheus Santana](https://www.google.com/search?q=https://linkedin.com/in/matheussantanadev)
 
----
+```
+
+```

@@ -41,7 +41,7 @@ export function Modal({ isOpen, onClose, size = "md", children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className={`relative w-full ${sizeMap[size]} max-h-[80dvh] flex flex-col bg-surface border border-subtle shadow-md rounded-2xl overflow-hidden animate-scale-in`}
+        className={`relative w-[95%] sm:w-full ${sizeMap[size]} max-h-[85dvh] flex flex-col bg-surface border border-subtle shadow-md rounded-2xl overflow-hidden animate-scale-in`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

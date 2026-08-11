@@ -159,24 +159,146 @@ export async function usersRoutes(app: FastifyInstance) {
 
     const password_hash = await bcrypt.hash(password, 8);
     const userId = randomUUID();
-
-    await db("users").insert({
-      id: userId,
-      name,
-      email,
-      password_hash,
-      email_verified_at: null,
-    });
-
     const rawToken = randomBytes(32).toString("hex");
     const tokenHash = createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    await db("email_verification_tokens").insert({
-      id: randomUUID(),
-      user_id: userId,
-      token_hash: tokenHash,
-      expires_at: expiresAt,
+    // Bloco transacional (ACID) para criação segura e idempotente do novo usuário
+    await db.transaction(async (trx) => {
+      await trx("users").insert({
+        id: userId,
+        name,
+        email,
+        password_hash,
+        email_verified_at: null,
+      });
+
+      await trx("email_verification_tokens").insert({
+        id: randomUUID(),
+        user_id: userId,
+        token_hash: tokenHash,
+        expires_at: expiresAt,
+      });
+
+      // Verificação para garantir idempotência na criação das categorias
+      const existingCategories = await trx("categories")
+        .where({ user_id: userId })
+        .first();
+
+      if (!existingCategories) {
+        const defaultCategories = [
+          // Receitas
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Salário",
+            type: "income",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Freelance",
+            type: "income",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Investimentos",
+            type: "income",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Outras Receitas",
+            type: "income",
+            is_default: true,
+          },
+
+          // Despesas
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Alimentação",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Moradia",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Transporte",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Saúde",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Educação",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Lazer",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Compras",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Assinaturas",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Contas",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Estética",
+            type: "expense",
+            is_default: true,
+          },
+          {
+            id: randomUUID(),
+            user_id: userId,
+            name: "Outras Despesas",
+            type: "expense",
+            is_default: true,
+          },
+        ];
+
+        await trx("categories").insert(defaultCategories);
+      }
     });
 
     emailService.sendVerificationEmail(email, rawToken).catch(console.error);

@@ -1,19 +1,20 @@
-import { useState } from "react";
-import { api } from "../../api/client";
-import { Skeleton } from "../ui/Skeleton";
-import { PrivacyMask } from "../ui/PrivacyMask";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
   Building,
-  Tag,
   Check,
-  WalletCards,
-  PiggyBank,
-  Wallet,
   Landmark,
+  PiggyBank,
+  Tag,
+  Wallet,
+  WalletCards,
 } from "lucide-react";
+
+import { PrivacyMask } from "../ui/PrivacyMask";
+import { Skeleton } from "../ui/Skeleton";
+import { api } from "../../api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 interface Transaction {
   id: string;
@@ -140,8 +141,8 @@ export function TransactionTable({
 
   return (
     <div className="card-default overflow-hidden border-subtle/30">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto w-full pb-2">
+        <table className="w-full min-w-600px text-left border-collapse">
           <thead>
             <tr className="bg-elevated/40 border-b border-subtle/20 text-muted text-[11px] font-extrabold uppercase tracking-widest">
               <th className="p-4 pl-6 w-2/5">Descrição</th>

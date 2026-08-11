@@ -1,17 +1,18 @@
-import { z } from "zod";
-import { useState, useEffect } from "react";
+import {
+  AlignLeft,
+  Calendar as CalendarIcon,
+  DollarSign,
+  Target,
+} from "lucide-react";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "../../ui/Modal";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+
 import { DatePickerModal } from "../../ui/DatePickerModal";
 import { useCreateWallet } from "../../../hooks/useWallets";
-import { Modal, ModalHeader, ModalBody, ModalFooter } from "../../ui/Modal";
-import {
-  Target,
-  DollarSign,
-  Calendar as CalendarIcon,
-  AlignLeft,
-} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const walletSchema = z.object({
   title: z.string().min(1, "O nome da meta é obrigatório"),
@@ -49,12 +50,10 @@ export function CreateWalletModal({ isOpen, onClose }: CreateWalletModalProps) {
     },
   });
 
-  // Limpa o formulário sempre que o modal fechar/abrir
   useEffect(() => {
     if (!isOpen) reset();
   }, [isOpen, reset]);
 
-  // Observa a data sem causar stale UI
   const currentDeadline = useWatch({
     control,
     name: "deadline",
@@ -73,7 +72,6 @@ export function CreateWalletModal({ isOpen, onClose }: CreateWalletModalProps) {
         color: "brand",
       });
 
-      // Invalidação em cascata para atualizar o cockpit
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["wallets"] }),
         queryClient.invalidateQueries({ queryKey: ["dashboard"] }),

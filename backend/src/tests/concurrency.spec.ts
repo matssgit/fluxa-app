@@ -1,5 +1,7 @@
+import { beforeEach, describe, expect, it } from "vitest";
+
 import { app } from "../app.js";
-import { describe, it, expect, beforeEach } from "vitest";
+import { db } from "../database/database.js";
 
 describe("RC1.1 - Concorrência & Integridade Financeira (Race Conditions)", () => {
   let userToken: string;
@@ -10,7 +12,7 @@ describe("RC1.1 - Concorrência & Integridade Financeira (Race Conditions)", () 
     const userPayload = {
       name: "User Race Condition",
       email: `race-${Date.now()}@test.com`,
-      password: "password123",
+      password: "StrongPass@2026",
     };
     const createUserResponse = await app.inject({
       method: "POST",
@@ -19,6 +21,10 @@ describe("RC1.1 - Concorrência & Integridade Financeira (Race Conditions)", () 
     });
     if (createUserResponse.statusCode > 201)
       throw new Error(`Erro ao criar usuário: ${createUserResponse.body}`);
+
+    await db("users")
+      .where({ email: userPayload.email })
+      .update({ email_verified_at: new Date() });
 
     const loginResponse = await app.inject({
       method: "POST",
@@ -134,12 +140,6 @@ describe("RC1.1 - Concorrência & Integridade Financeira (Race Conditions)", () 
     );
 
     const responses = await Promise.all(concurrentRequests);
-
-    console.log(
-      "STATUS CODE:",
-      responses.map((r) => r.statusCode),
-    );
-    console.log("🚨 ERRO RETORNADO:", responses[0]?.body);
 
     const successfulResponses = responses.filter(
       (r) => r.statusCode === 204 || r.statusCode === 200,

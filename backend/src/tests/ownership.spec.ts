@@ -1,8 +1,9 @@
-import bcrypt from "bcrypt";
+import { beforeAll, describe, expect, it } from "vitest";
+
 import { app } from "../app.js";
+import bcrypt from "bcrypt";
 import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
-import { describe, it, expect, beforeAll } from "vitest";
 
 describe("Segurança & Isolamento Multiusuário (BOLA/IDOR)", () => {
   let tokenA: string;
@@ -33,7 +34,8 @@ describe("Segurança & Isolamento Multiusuário (BOLA/IDOR)", () => {
       id: userAId,
       name: "Matheus",
       email: "matheus@test.com",
-      password_hash: await bcrypt.hash("password123", 8),
+      password_hash: await bcrypt.hash("StrongPass@2026", 8),
+      email_verified_at: new Date(),
     });
 
     userBId = randomUUID();
@@ -41,21 +43,28 @@ describe("Segurança & Isolamento Multiusuário (BOLA/IDOR)", () => {
       id: userBId,
       name: "Paloma",
       email: "paloma@test.com",
-      password_hash: await bcrypt.hash("password123", 8),
+      password_hash: await bcrypt.hash("StrongPass@2026", 8),
+      email_verified_at: new Date(),
     });
 
     const loginA = await app.inject({
       method: "POST",
       url: "/users/login",
-      payload: { email: "matheus@test.com", password: "password123" },
+      payload: { email: "matheus@test.com", password: "StrongPass@2026" },
     });
+    if (loginA.statusCode !== 200) {
+      throw new Error(`Erro Crítico no Login A: ${loginA.payload}`);
+    }
     tokenA = loginA.json().token;
 
     const loginB = await app.inject({
       method: "POST",
       url: "/users/login",
-      payload: { email: "paloma@test.com", password: "password123" },
+      payload: { email: "paloma@test.com", password: "StrongPass@2026" },
     });
+    if (loginB.statusCode !== 200) {
+      throw new Error(`Erro Crítico no Login B: ${loginB.payload}`);
+    }
     tokenB = loginB.json().token;
 
     accountBId = randomUUID();

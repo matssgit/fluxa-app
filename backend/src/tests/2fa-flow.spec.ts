@@ -1,14 +1,15 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
 import { app } from "../app.js";
+import { authenticator } from "otplib";
+import bcrypt from "bcrypt";
 import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import bcrypt from "bcrypt";
-import { authenticator } from "otplib";
 
 describe("Fase 5 - Auditoria de Segurança 2FA", () => {
   let userId: string;
   let userEmail = "2fa_audit@fluxa.com";
-  let userPass = "strongpass123";
+  let userPass = "StrongPass@2026";
   let partialToken: string;
   let rawRecoveryCodes: string[] = [];
   let userSecret: string;
@@ -21,6 +22,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
       name: "2FA Auditor",
       email: userEmail,
       password_hash: await bcrypt.hash(userPass, 8),
+      email_verified_at: new Date(),
     });
   });
 
@@ -32,7 +34,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Deve realizar login normalmente sem 2FA e emitir type: 'access'", async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/users/login", // Prefixo adicionado
+        url: "/users/login",
         payload: { email: userEmail, password: userPass },
       });
       expect(res.statusCode).toBe(200);
@@ -51,7 +53,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     beforeAll(async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/users/login", // Prefixo adicionado
+        url: "/users/login",
         payload: { email: userEmail, password: userPass },
       });
       accessToken = JSON.parse(res.payload).token;
@@ -60,7 +62,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Deve gerar o secret do 2FA", async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/users/2fa/generate", // Prefixo adicionado
+        url: "/users/2fa/generate",
         headers: { authorization: `Bearer ${accessToken}` },
       });
       expect(res.statusCode).toBe(200);
@@ -74,7 +76,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
       const validCode = authenticator.generate(userSecret);
       const res = await app.inject({
         method: "POST",
-        url: "/users/2fa/enable", // Prefixo adicionado
+        url: "/users/2fa/enable",
         headers: { authorization: `Bearer ${accessToken}` },
         payload: { token: validCode },
       });
@@ -87,7 +89,6 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Validação de Armazenamento: Não deve armazenar Recovery Codes em texto puro", async () => {
       const user = await db("users").where({ id: userId }).first();
 
-      // Valida se foi salvo como 1 (true no SQLite) ou true nativo
       expect(
         user?.two_factor_enabled === 1 || user?.two_factor_enabled === true,
       ).toBe(true);
@@ -96,7 +97,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
         typeof user?.recovery_codes === "string"
           ? JSON.parse(user.recovery_codes)
           : user?.recovery_codes;
-      expect(savedCodes[0]).not.toBe(rawRecoveryCodes[0]); // Deve ser um hash
+      expect(savedCodes[0]).not.toBe(rawRecoveryCodes[0]);
 
       const isMatch = await bcrypt.compare(
         rawRecoveryCodes[0] as string,
@@ -110,7 +111,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Não deve retornar token de acesso, e sim tempToken", async () => {
       const res = await app.inject({
         method: "POST",
-        url: "/users/login", // Prefixo adicionado
+        url: "/users/login",
         payload: { email: userEmail, password: userPass },
       });
       expect(res.statusCode).toBe(200);
@@ -127,7 +128,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Bypass Prevention: token parcial não pode acessar rota privada", async () => {
       const res = await app.inject({
         method: "GET",
-        url: "/users/export", // Prefixo adicionado
+        url: "/users/export",
         headers: { authorization: `Bearer ${partialToken}` },
       });
       expect(res.statusCode).toBe(401);
@@ -140,13 +141,13 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
 
       const req1 = app.inject({
         method: "POST",
-        url: "/users/2fa/verify", // Prefixo adicionado
+        url: "/users/2fa/verify",
         headers: { authorization: `Bearer ${partialToken}` },
         payload: { token: validCode },
       });
       const req2 = app.inject({
         method: "POST",
-        url: "/users/2fa/verify", // Prefixo adicionado
+        url: "/users/2fa/verify",
         headers: { authorization: `Bearer ${partialToken}` },
         payload: { token: validCode },
       });
@@ -155,7 +156,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
 
       const statuses = [res1.statusCode, res2.statusCode];
       expect(statuses).toContain(200);
-      expect(statuses).toContain(400); // Uma tem que falhar bloqueada pelo banco
+      expect(statuses).toContain(400);
     });
   });
 
@@ -163,7 +164,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
     it("Deve blindar concorrência no /2fa/recovery", async () => {
       const resLogin = await app.inject({
         method: "POST",
-        url: "/users/login", // Prefixo adicionado
+        url: "/users/login",
         payload: { email: userEmail, password: userPass },
       });
       const newPartial = JSON.parse(resLogin.payload).tempToken;
@@ -172,13 +173,13 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
 
       const req1 = app.inject({
         method: "POST",
-        url: "/users/2fa/recovery", // Prefixo adicionado
+        url: "/users/2fa/recovery",
         headers: { authorization: `Bearer ${newPartial}` },
         payload: { recoveryCode: codeToUse },
       });
       const req2 = app.inject({
         method: "POST",
-        url: "/users/2fa/recovery", // Prefixo adicionado
+        url: "/users/2fa/recovery",
         headers: { authorization: `Bearer ${newPartial}` },
         payload: { recoveryCode: codeToUse },
       });
@@ -187,7 +188,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
 
       const statuses = [res1.statusCode, res2.statusCode];
       expect(statuses).toContain(200);
-      expect(statuses).toContain(400); // Uso único garantido
+      expect(statuses).toContain(400);
     });
   });
 
@@ -197,7 +198,7 @@ describe("Fase 5 - Auditoria de Segurança 2FA", () => {
       for (let i = 0; i < 6; i++) {
         const res = await app.inject({
           method: "POST",
-          url: "/users/login", // Prefixo adicionado
+          url: "/users/login",
           payload: { email: "wrong@email.com", password: "wrong" },
         });
         lastStatus = res.statusCode;

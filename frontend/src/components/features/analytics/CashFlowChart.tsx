@@ -1,12 +1,13 @@
-import type { CashFlowDataPoint } from "../../../types/analytics";
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts";
+
+import type { CashFlowDataPoint } from "../../../types/analytics";
 
 interface CashFlowChartProps {
   data: CashFlowDataPoint[];
@@ -21,7 +22,7 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
     }).format(value);
 
   return (
-    <div className="card-default p-6 border-subtle/30 flex flex-col justify-between h-full">
+    <div className="card-default p-6 border-subtle/30 flex flex-col justify-between h-full min-w-0">
       <div className="mb-6">
         <h3 className="font-bold text-lg text-primary tracking-tight">
           Evolução de Fluxo de Caixa
@@ -31,7 +32,7 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
         </p>
       </div>
 
-      <div className="w-full h-64 sm:h-72">
+      <div className="w-full h-64 sm:h-72 min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={data}
