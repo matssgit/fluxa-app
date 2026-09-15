@@ -8,6 +8,7 @@ import { useAccounts } from "../../hooks/useAccounts";
 import { useQueryClient } from "@tanstack/react-query";
 import { DatePickerModal } from "../ui/DatePickerModal";
 import { useCategories } from "../../hooks/useCategories";
+import { invalidateAfterTransactionCreation } from "../../lib/transaction-query-invalidation";
 import {
   X,
   ArrowUpCircle,
@@ -118,10 +119,7 @@ export function NewTransactionModal({
 
       await api.post("/transactions", payload);
 
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["summary"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["accounts"] });
+      invalidateAfterTransactionCreation(queryClient);
 
       reset({ type: "expense", status: "completed", date: today });
       onClose();
