@@ -56,7 +56,7 @@ export function PurchasesList({
                       ? "bg-elevated/80 text-muted border-subtle/30"
                       : hasPending
                         ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
-                        : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                        : "bg-income-soft text-income border-income/20"
                   }`}
                 >
                   {isCancelled ? (

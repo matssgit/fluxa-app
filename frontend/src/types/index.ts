@@ -1,4 +1,9 @@
-export type EventStatus = "pending" | "completed" | "future" | "cancelled";
+export type EventStatus =
+  | "pending"
+  | "completed"
+  | "paid"
+  | "future"
+  | "cancelled";
 export type EventFlow = "income" | "expense" | "transfer";
 export type EventType =
   | "transaction"

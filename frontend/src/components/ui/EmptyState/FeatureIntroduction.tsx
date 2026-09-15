@@ -27,16 +27,16 @@ export function FeatureIntroduction({
   onAction,
 }: FeatureIntroductionProps) {
   return (
-    <div className="w-full max-w-2xl mx-auto mt-4 sm:mt-8 animate-fade-in">
-      <div className="bg-surface border border-subtle/30 rounded-3xl p-6 sm:p-10 shadow-sm text-left relative overflow-hidden">
+    <div className="w-full max-w-4xl mx-auto mt-4 sm:mt-8 animate-fade-in">
+      <div className="bg-surface border border-border rounded-tl-[3rem] rounded-br-[3rem] rounded-tr-xl rounded-bl-xl p-6 sm:p-10 text-left relative overflow-hidden">
         {/* Efeito de fundo sutil para parecer um card premium */}
-        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+        <div className="absolute -top-8 -right-8 p-12 text-brand opacity-5 pointer-events-none">
           <Icon size={160} />
         </div>
 
         {/* Cabeçalho */}
-        <div className="flex items-center gap-4 mb-8 relative z-10">
-          <div className="w-14 h-14 rounded-2xl bg-brand/10 text-brand flex items-center justify-center shrink-0 shadow-inner">
+        <div className="flex items-center gap-4 mb-8 relative z-10 max-w-xl">
+          <div className="w-14 h-14 rounded-[1.25rem_1.25rem_1.25rem_0.35rem] bg-elevated text-brand flex items-center justify-center shrink-0 border border-border">
             <Icon size={28} />
           </div>
           <div>
@@ -48,7 +48,7 @@ export function FeatureIntroduction({
         </div>
 
         {/* O que é? */}
-        <div className="mb-8 relative z-10">
+        <div className="mb-8 relative z-10 max-w-2xl">
           <h3 className="text-sm font-extrabold text-primary mb-2 tracking-wide uppercase">
             O que é isso?
           </h3>
@@ -62,11 +62,11 @@ export function FeatureIntroduction({
           <h3 className="text-sm font-extrabold text-primary mb-3 tracking-wide uppercase">
             Exemplos na prática:
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-0 border-y border-subtle">
             {examples.map((example, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-elevated/40 border border-subtle/30 shadow-2xs"
+                className="flex items-center gap-3 py-4 border-b border-subtle last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
               >
                 <CheckCircle2 size={18} className="text-brand shrink-0" />
                 <div>

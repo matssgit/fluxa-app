@@ -70,7 +70,7 @@ export function InsightsWidget({
   const insights = getInsights();
 
   return (
-    <div className="card-default p-6 sm:p-8 flex flex-col justify-between border-subtle/30 shadow-sm">
+    <section className="p-6 sm:p-8 flex flex-col justify-between bg-elevated/55 border border-border rounded-tr-[2.5rem] rounded-bl-[2.5rem] rounded-tl-xl rounded-br-xl">
       <div>
         <div className="flex items-center gap-2.5 mb-6">
           <div className="w-9 h-9 rounded-xl bg-gold-500/10 text-gold-500 flex items-center justify-center shrink-0 shadow-2xs border border-gold-500/20">
@@ -104,7 +104,7 @@ export function InsightsWidget({
                   className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
                     isWarning
                       ? "bg-amber-500/10 text-amber-500"
-                      : "bg-emerald-500/10 text-emerald-500"
+                      : "bg-income-soft text-income"
                   }`}
                 >
                   <Icon size={16} />
@@ -127,6 +127,6 @@ export function InsightsWidget({
         <span>🤖 Motor de BI Ativo</span>
         <span className="text-secondary">Atualizado em tempo real</span>
       </div>
-    </div>
+    </section>
   );
 }

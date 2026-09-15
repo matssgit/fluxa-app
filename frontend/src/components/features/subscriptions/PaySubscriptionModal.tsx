@@ -123,8 +123,8 @@ export function PaySubscriptionModal({
             </div>
 
             {errors.account_id && (
-              <span className="text-red-500 text-xs font-bold mt-2  animate-fade-in flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+              <span className="text-expense text-xs font-bold mt-2 animate-fade-in flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-expense shrink-0" />
                 {errors.account_id.message}
               </span>
             )}

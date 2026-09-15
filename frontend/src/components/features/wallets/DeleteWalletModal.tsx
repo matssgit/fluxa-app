@@ -62,7 +62,7 @@ export function DeleteWalletModal({
             type="button"
             onClick={handleDelete}
             disabled={isPending}
-            className="flex-1 px-4 py-3 rounded-xl bg-danger hover:bg-red-500 text-white text-sm font-bold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="btn btn-danger flex-1 px-4"
           >
             {isPending ? "Excluindo..." : "Sim, Excluir"}
           </button>

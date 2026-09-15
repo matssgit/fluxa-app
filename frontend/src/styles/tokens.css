@@ -1,81 +1,86 @@
 @layer base {
   :root {
-    /* CORES BRUTAS E PRIMITIVAS */
-    --green-900: #13312a;
-    --green-700: #155446;
-    --gold-500: #c69a72;
-    --beige-100: #f6e9ca;
+    --green-950: #102f29;
+    --green-900: #173f36;
+    --green-700: #35695a;
+    --sage-500: #829b88;
+    --sage-200: #dfe8de;
+    --cream-50: #fffdf7;
+    --sand-100: #f4f0e6;
+    --terracotta-500: #b9684f;
+    --brown-500: #876b5a;
     --white: #ffffff;
-    --gray-50: #fcfcfc;
-    --gray-200: #e5e7eb;
-    --gray-400: #9ca3af;
-    --gray-500: #6b7280;
-    --platina-metal: #f1f5f3;
+    --gray-400: #8b948f;
 
-    /* STATUS PRIMITIVOS */
-    --red-500: #ef4444;
-    --yellow-500: #f59e0b;
-    --blue-500: #3b82f6;
-    --emerald-500: #10b981;
+    --red-500: #b9684f;
+    --yellow-500: #b88745;
+    --blue-500: #527d79;
+    --emerald-500: #4f8068;
 
-    /* TOKENS SEMÂNTICOS (Light Mode) */
-    --color-page: #dbdbdb;
-    --color-surface: #ffffff;
-    --color-elevated: #ececec91;
+    --color-page: #f3f0e7;
+    --color-surface: #fffdf8;
+    --color-elevated: #e8ede6;
+    --color-surface-muted: #edf1eb;
     --color-brand: var(--green-900);
     --color-brand-light: var(--green-700);
-    --color-primary: #17181a;
-    --color-secondary: #334155;
-    --color-muted: #64748b;
-    --color-placeholder: var(--gray-400);
-    --color-border: rgba(19, 49, 42, 0.932);
-    --color-subtle: rgba(19, 49, 42, 0.2);
-    --color-danger: var(--red-500);
+    --color-primary: #18312b;
+    --color-secondary: #52635d;
+    --color-muted: #77847f;
+    --color-placeholder: #98a29d;
+    --color-border: rgba(23, 63, 54, 0.14);
+    --color-subtle: rgba(23, 63, 54, 0.09);
+    --color-accent: var(--terracotta-500);
+    --color-income: #4f8068;
+    --color-income-soft: #e4eee6;
+    --color-expense: #b9684f;
+    --color-expense-soft: #f3e4de;
+    --color-danger: var(--terracotta-500);
     --color-warning: var(--yellow-500);
     --color-success: var(--emerald-500);
     --color-info: var(--blue-500);
 
-    /* GEOMETRIA E SOMBRAS */
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --shadow-xs: 0 2px 4px 0 rgb(13 32 28 / 0.08);
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+    --radius-2xl: 30px;
+    --shadow-xs: 0 1px 2px rgb(26 54 47 / 0.05);
     --shadow-sm:
-      0 4px 12px -2px rgb(13 32 28 / 0.15), 0 2px 6px -1px rgb(13 32 28 / 0.1);
+      0 12px 28px -20px rgb(22 53 45 / 0.35),
+      0 2px 8px -4px rgb(22 53 45 / 0.12);
     --shadow-md:
-      0 20px 32px -8px rgb(13 32 28 / 0.28),
-      0 8px 16px -4px rgb(13 32 28 / 0.16), 0 0 1px 0 rgb(13 32 28 / 0.25);
+      0 28px 60px -32px rgb(22 53 45 / 0.38),
+      0 8px 24px -16px rgb(22 53 45 / 0.2);
 
-    /* MOTION */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* DARK MODE (Pine & Sage - Premium & High Contrast) */
   .dark {
-    --color-page: #1c2020;
-    --color-surface: #2e3835;
-    --color-elevated: #35534a;
-    --color-primary: #f8faf9;
-    --color-secondary: #c9d1cf;
-    --color-muted: #a9acab;
-    --color-placeholder: #707775;
-    --color-border: rgba(255, 255, 255, 0.06);
-    --color-subtle: rgba(255, 255, 255, 0.03);
-    --color-brand: #67caac;
-    --color-accent: #d8b48f;
-    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-    --shadow-sm:
-      0 4px 12px -2px rgba(0, 0, 0, 0.6), 0 2px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-md:
-      0 20px 32px -8px rgba(0, 0, 0, 0.8), 0 8px 16px -4px rgba(0, 0, 0, 0.6),
-      0 0 1px 0 rgba(255, 255, 255, 0.1);
+    --color-page: #0d211d;
+    --color-surface: #153029;
+    --color-elevated: #1d3b33;
+    --color-surface-muted: #1a3730;
+    --color-primary: #f4f0e6;
+    --color-secondary: #c2cdc7;
+    --color-muted: #93a39c;
+    --color-placeholder: #788a82;
+    --color-border: rgba(235, 239, 228, 0.12);
+    --color-subtle: rgba(235, 239, 228, 0.07);
+    --color-brand: #8db7a1;
+    --color-brand-light: #add0bd;
+    --color-accent: #d18a70;
+    --color-income: #86b59a;
+    --color-income-soft: #23463a;
+    --color-expense: #d4866e;
+    --color-expense-soft: #4a3029;
+    --shadow-xs: 0 2px 8px rgb(0 0 0 / 0.14);
+    --shadow-sm: 0 16px 36px -24px rgb(0 0 0 / 0.6);
+    --shadow-md: 0 30px 70px -36px rgb(0 0 0 / 0.75);
   }
 }
 
-/* REGRA DE BLINDAGEM DO FUNDO */
 body,
 html {
   background-color: var(--color-page) !important;

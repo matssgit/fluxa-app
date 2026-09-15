@@ -10,11 +10,29 @@
     color: var(--color-primary);
     -webkit-font-smoothing: antialiased;
     font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-      sans-serif;
+      "Segoe UI Variable", "Avenir Next", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 
   ::selection {
-    background-color: rgba(21, 84, 70, 0.1);
+    background-color: color-mix(in srgb, var(--color-brand) 18%, transparent);
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+    outline-offset: 3px;
+  }
+
+  .tabular-nums,
+  [data-financial-value="true"] {
+    font-variant-numeric: tabular-nums lining-nums;
   }
 }

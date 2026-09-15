@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 import type { User, UserPreferences } from "./AuthContext";
 import { AvatarStorage } from "../../lib/storage/AvatarStorage";
+import {
+  AUTH_SESSION_CLEARED_EVENT,
+  clearClientSession,
+} from "../../lib/query-client";
 import {
   login as apiLogin,
   register as apiRegister,
@@ -14,21 +18,56 @@ import {
 } from "../../services/auth";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const token = localStorage.getItem("@FinanceApp:token");
-    const storedUser = localStorage.getItem("@FinanceApp:user");
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(() =>
+    Boolean(localStorage.getItem("@FinanceApp:token")),
+  );
 
-    if (token && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser) as User;
-        parsedUser.avatar_url = AvatarStorage.load(parsedUser.avatar_url);
-        return parsedUser;
-      } catch {
-        return null;
-      }
+  useEffect(() => {
+    let active = true;
+    const token = localStorage.getItem("@FinanceApp:token");
+
+    const handleSessionCleared = () => {
+      if (!active) return;
+      setUser(null);
+      setIsLoading(false);
+    };
+
+    window.addEventListener(AUTH_SESSION_CLEARED_EVENT, handleSessionCleared);
+
+    if (token) {
+      void api
+        .get<{ user: User }>("/users/me")
+        .then(({ data }) => {
+          if (!active) return;
+
+          const validatedUser = data.user;
+          validatedUser.avatar_url = AvatarStorage.load(
+            validatedUser.avatar_url,
+          );
+          const userToSave = { ...validatedUser };
+          if (AvatarStorage.isLocalBase64(userToSave.avatar_url)) {
+            userToSave.avatar_url = "local_cache";
+          }
+          localStorage.setItem("@FinanceApp:user", JSON.stringify(userToSave));
+          setUser(validatedUser);
+        })
+        .catch(() => {
+          if (active) setUser(null);
+        })
+        .finally(() => {
+          if (active) setIsLoading(false);
+        });
     }
-    return null;
-  });
+
+    return () => {
+      active = false;
+      window.removeEventListener(
+        AUTH_SESSION_CLEARED_EVENT,
+        handleSessionCleared,
+      );
+    };
+  }, []);
 
   async function signIn(
     data: LoginCredentials,
@@ -55,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: User;
     };
 
+    await clearClientSession();
     loggedUser.avatar_url = AvatarStorage.load(loggedUser.avatar_url);
     localStorage.setItem("@FinanceApp:token", token);
 
@@ -71,10 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await apiRegister(data);
   }
 
-  function signOut() {
-    localStorage.removeItem("@FinanceApp:token");
-    localStorage.removeItem("@FinanceApp:user");
-    AvatarStorage.clear();
+  async function signOut() {
+    await clearClientSession();
     setUser(null);
   }
 
@@ -136,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isAuthenticated: !!user,
+        isLoading,
         signIn,
         signUp,
         signOut,

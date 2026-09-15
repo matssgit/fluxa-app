@@ -105,7 +105,7 @@ export function CategoryModal({
                 {...register("type")}
                 className="peer sr-only"
               />
-              <div className="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-surface peer-checked:text-red-500 peer-checked:shadow-sm transition-all">
+              <div className="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-expense-soft peer-checked:text-expense peer-checked:shadow-sm transition-all">
                 Saída (Despesa)
               </div>
             </label>
@@ -116,7 +116,7 @@ export function CategoryModal({
                 {...register("type")}
                 className="peer sr-only"
               />
-              <div className="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-surface peer-checked:text-emerald-500 peer-checked:shadow-sm transition-all">
+              <div className="text-center py-2 rounded-lg text-sm font-bold text-secondary peer-checked:bg-income-soft peer-checked:text-income peer-checked:shadow-sm transition-all">
                 Entrada (Receita)
               </div>
             </label>
@@ -133,7 +133,7 @@ export function CategoryModal({
               className="w-full rounded-xl border border-subtle/30 px-4 py-3 bg-elevated/40 focus:bg-surface text-primary outline-none transition-all"
             />
             {errors.name && (
-              <span className="text-red-500 text-xs mt-1 block">
+              <span className="text-expense text-xs mt-1 block">
                 {errors.name.message}
               </span>
             )}

@@ -9,7 +9,7 @@ export function ModalFooter({
 }) {
   return (
     <div
-      className={`shrink-0 sticky bottom-0 z-10 bg-surface border-t border-subtle/20 p-4 sm:p-6 flex gap-3 justify-end ${className}`}
+      className={`shrink-0 sticky bottom-0 z-10 bg-surface border-t border-subtle p-5 sm:px-8 sm:py-6 flex gap-3 justify-end ${className}`}
     >
       {children}
     </div>

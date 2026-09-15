@@ -50,7 +50,7 @@ export function TransactionToolbar({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
+    <div className="flex flex-col gap-3 rounded-3xl border border-border bg-surface p-3 shadow-sm sm:flex-row sm:items-center sm:p-4">
       <div className="relative flex-1">
         <Search
           size={18}
@@ -61,7 +61,7 @@ export function TransactionToolbar({
           placeholder="Pesquisar lançamentos, lojas, categorias..."
           value={searchTerm || ""}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-11 pr-4 py-3 bg-surface border border-subtle/30 rounded-2xl text-sm font-semibold text-primary focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all shadow-sm"
+          className="w-full pl-11 pr-10 py-3 bg-surface-muted border border-border rounded-2xl text-sm font-semibold text-primary transition-all"
         />
         {searchTerm && (
           <button
@@ -76,19 +76,19 @@ export function TransactionToolbar({
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-2 sm:pb-0">
         <button
           onClick={() => toggleFlow("income")}
-          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("income") ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+          className={`px-4 py-2.5 rounded-full text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("income") ? "bg-income-soft text-income border-income/20" : "bg-surface border-border text-secondary hover:bg-elevated"}`}
         >
           Receitas
         </button>
         <button
           onClick={() => toggleFlow("expense")}
-          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("expense") ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+          className={`px-4 py-2.5 rounded-full text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.flow?.includes("expense") ? "bg-expense-soft text-expense border-expense/20" : "bg-surface border-border text-secondary hover:bg-elevated"}`}
         >
           Despesas
         </button>
         <button
           onClick={() => toggleStatus("pending")}
-          className={`px-4 py-3 rounded-2xl text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.status?.includes("pending") ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : "bg-surface border-subtle/30 text-secondary hover:bg-elevated"}`}
+          className={`px-4 py-2.5 rounded-full text-sm font-bold border whitespace-nowrap transition-all cursor-pointer ${filters.status?.includes("pending") ? "bg-warning/10 text-warning border-warning/20" : "bg-surface border-border text-secondary hover:bg-elevated"}`}
         >
           Pendentes
         </button>
@@ -105,7 +105,7 @@ export function TransactionToolbar({
 
           <button
             onClick={onOpenAdvancedFilters}
-            className="px-4 py-3 rounded-2xl text-sm font-bold bg-surface border border-subtle/30 text-secondary hover:bg-elevated hover:text-primary transition-all flex items-center gap-2 whitespace-nowrap shadow-sm cursor-pointer"
+            className="px-4 py-2.5 rounded-full text-sm font-bold bg-surface border border-border text-secondary hover:bg-elevated hover:text-primary transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer"
           >
             <SlidersHorizontal size={16} />
             Filtros

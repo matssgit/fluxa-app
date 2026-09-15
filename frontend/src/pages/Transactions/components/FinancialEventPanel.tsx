@@ -68,7 +68,7 @@ export function FinancialEventPanel({
   };
 
   const isIncome = event.flow === "income";
-  const colorClass = isIncome ? "text-emerald-500" : "text-red-500";
+  const colorClass = isIncome ? "text-income" : "text-expense";
 
   const renderInstallmentContext = () => {
     const ctx = event.context;
@@ -113,7 +113,7 @@ export function FinancialEventPanel({
           </div>
 
           <div className="flex justify-between text-[11px] sm:text-xs font-medium">
-            <span className="text-emerald-500">
+            <span className="text-income">
               Pagos: R$ {totalPaid.toFixed(2)}
             </span>
             <span className="text-muted">
@@ -129,12 +129,12 @@ export function FinancialEventPanel({
           <div className="relative pl-3 border-l-2 border-subtle/20 space-y-5 sm:space-y-6 ml-2">
             {ctx.installmentNumber > 1 && (
               <div className="relative">
-                <div className="absolute -left-4.25 top-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-surface" />
+                <div className="absolute -left-4.25 top-1 w-3 h-3 rounded-full bg-income ring-4 ring-surface" />
                 <div className="pl-4">
                   <p className="text-xs sm:text-sm font-bold text-secondary">
                     Parcela {ctx.installmentNumber - 1}/{ctx.totalInstallments}
                   </p>
-                  <p className="text-[10px] sm:text-xs font-medium text-emerald-500 flex items-center gap-1 mt-0.5">
+                  <p className="text-[10px] sm:text-xs font-medium text-income flex items-center gap-1 mt-0.5">
                     <Check size={12} /> Paga
                   </p>
                 </div>
@@ -204,11 +204,11 @@ export function FinancialEventPanel({
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex flex-col justify-center text-center sm:text-left">
-              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 mb-1.5 flex justify-center sm:justify-start items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-income-soft border border-income/20 flex flex-col justify-center text-center sm:text-left">
+              <p className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-income mb-1.5 flex justify-center sm:justify-start items-center gap-1.5">
                 <CheckCircle2 size={12} /> Pago em
               </p>
-              <p className="text-xs sm:text-sm font-bold text-emerald-700">
+              <p className="text-xs sm:text-sm font-bold text-income">
                 {formatDate(event.createdAt || event.date)}
               </p>
             </div>
@@ -240,7 +240,7 @@ export function FinancialEventPanel({
                 </span>
                 <div>
                   {isCompleted ? (
-                    <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-sm">
+                    <span className="badge badge-success gap-1.5 text-[11px] sm:text-xs">
                       <CheckCircle2 size={14} /> Concluído
                     </span>
                   ) : (
@@ -367,7 +367,7 @@ export function FinancialEventPanel({
                   <Clock size={10} className="sm:w-3 sm:h-3" /> Pendente
                 </span>
               ) : (
-                <span className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] sm:text-xs font-bold text-emerald-600">
+                <span className="badge badge-success gap-1.5 text-[10px] sm:text-xs">
                   <CheckCircle2 size={10} className="sm:w-3 sm:h-3" /> Concluído
                 </span>
               )}
@@ -378,7 +378,7 @@ export function FinancialEventPanel({
             <div className="px-5 py-4 sm:px-8 sm:py-5 border-b border-subtle/10 bg-surface shrink-0">
               <button
                 onClick={() => onMarkAsPaid(event.id)}
-                className="w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-2xl bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md hover:bg-emerald-600 transition-colors active:scale-95 cursor-pointer"
+                className="btn btn-primary w-full text-xs sm:text-sm"
               >
                 <CheckCircle2 size={18} className="sm:w-5 sm:h-5" />
                 Dar baixa no pagamento

@@ -168,7 +168,7 @@ export function NewTransactionModal({
                   {...register("type")}
                   className="peer sr-only"
                 />
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-emerald-500 peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all duration-200">
+                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-income-soft peer-checked:text-income peer-checked:shadow-2xs peer-checked:border peer-checked:border-income/20 transition-all duration-200">
                   <ArrowUpCircle size={16} className="shrink-0" />
                   <span>Receita</span>
                 </div>
@@ -181,7 +181,7 @@ export function NewTransactionModal({
                   {...register("type")}
                   className="peer sr-only"
                 />
-                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-surface peer-checked:text-red-500 peer-checked:shadow-2xs peer-checked:border peer-checked:border-subtle/30 transition-all duration-200">
+                <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-muted peer-checked:bg-expense-soft peer-checked:text-expense peer-checked:shadow-2xs peer-checked:border peer-checked:border-expense/20 transition-all duration-200">
                   <ArrowDownCircle size={16} className="shrink-0" />
                   <span>Despesa</span>
                 </div>

@@ -1,6 +1,7 @@
 import {
   Area,
   AreaChart,
+  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -22,7 +23,7 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
     }).format(value);
 
   return (
-    <div className="card-default p-6 border-subtle/30 flex flex-col justify-between h-full min-w-0">
+    <div className="bg-surface border border-border rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl p-6 sm:p-8 flex flex-col justify-between h-full min-w-0">
       <div className="mb-6">
         <h3 className="font-bold text-lg text-primary tracking-tight">
           Evolução de Fluxo de Caixa
@@ -38,25 +39,30 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
             data={data}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
           >
+            <CartesianGrid
+              vertical={false}
+              stroke="var(--color-subtle)"
+              strokeDasharray="4 7"
+            />
             <defs>
               <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-income)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--color-income)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#EF4444" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-expense)" stopOpacity={0.24} />
+                <stop offset="95%" stopColor="var(--color-expense)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
               dataKey="month"
-              stroke="#64748B"
+              stroke="var(--color-muted)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#64748B"
+              stroke="var(--color-muted)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -64,10 +70,11 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#1E293B",
-                borderColor: "#334155",
+                backgroundColor: "var(--color-surface)",
+                borderColor: "var(--color-border)",
                 borderRadius: "12px",
-                color: "#F8FAFC",
+                color: "var(--color-primary)",
+                boxShadow: "var(--shadow-md)",
                 fontSize: "12px",
               }}
               formatter={(value: unknown) => [
@@ -80,8 +87,8 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
               type="monotone"
               dataKey="income"
               name="Entradas"
-              stroke="#10B981"
-              strokeWidth={2}
+              stroke="var(--color-income)"
+              strokeWidth={3}
               fillOpacity={1}
               fill="url(#colorIncome)"
             />
@@ -89,8 +96,8 @@ export function CashFlowChart({ data }: CashFlowChartProps) {
               type="monotone"
               dataKey="expense"
               name="Saídas"
-              stroke="#EF4444"
-              strokeWidth={2}
+              stroke="var(--color-expense)"
+              strokeWidth={3}
               fillOpacity={1}
               fill="url(#colorExpense)"
             />

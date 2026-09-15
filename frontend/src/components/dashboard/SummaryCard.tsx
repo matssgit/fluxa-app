@@ -19,63 +19,60 @@ export function SummaryCard({
 }: SummaryCardProps) {
   const variantStyles = {
     income: {
-      badge: "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30",
-      borderHover: "hover:border-emerald-500/50",
-      glow: "group-hover:shadow-[0_4px_20px_rgba(16,185,129,0.15)]",
-      emoji: "💰",
-      valueColor: "text-emerald-500 dark:text-emerald-600 font-black",
+      shell: "bg-income-soft border-income/10 rounded-tl-[2.25rem] rounded-br-[2.25rem] rounded-tr-xl rounded-bl-xl",
+      badge: "bg-surface/70 text-income",
+      valueColor: "text-income",
+      rail: "bg-income",
     },
     expense: {
-      badge: "bg-red-500/15 text-red-500 border border-red-500/30",
-      borderHover: "hover:border-red-500/50",
-      glow: "group-hover:shadow-[0_4px_20px_rgba(239,68,68,0.15)]",
-      emoji: "📉",
-      valueColor: "text-red-500 dark:text-red-700 font-black",
+      shell: "bg-expense-soft border-expense/10 rounded-tr-[2.25rem] rounded-bl-[2.25rem] rounded-tl-xl rounded-br-xl",
+      badge: "bg-surface/70 text-expense",
+      valueColor: "text-expense",
+      rail: "bg-expense",
     },
     balance: {
-      badge: "bg-brand/15 text-brand border border-brand/30",
-      borderHover: "hover:border-brand/60",
-      glow: "group-hover:shadow-[0_4px_20px_rgba(19,49,42,0.25)]",
-      emoji: "🏦",
-      valueColor: "text-primary font-black",
+      shell: "bg-surface border-border rounded-3xl",
+      badge: "bg-brand/10 text-brand",
+      valueColor: "text-primary",
+      rail: "bg-brand",
     },
     projection: {
-      badge: "bg-purple-500/15 text-purple-500 border border-purple-500/30",
-      borderHover: "hover:border-purple-500/50",
-      glow: "group-hover:shadow-[0_4px_20px_rgba(168,85,247,0.15)]",
-      emoji: "🔮",
-      valueColor: "text-purple-600 dark:text-purple-700 font-black",
+      shell: "bg-surface border-border rounded-3xl",
+      badge: "bg-elevated text-secondary",
+      valueColor: "text-primary",
+      rail: "bg-info",
     },
     default: {
-      badge: "bg-subtle/20 text-muted border border-subtle/30",
-      borderHover: "hover:border-subtle/50",
-      glow: "group-hover:shadow-md",
-      emoji: "📊",
-      valueColor: "text-primary font-bold",
+      shell: "bg-surface border-border rounded-3xl",
+      badge: "bg-elevated text-muted",
+      valueColor: "text-primary",
+      rail: "bg-brand",
     },
   };
 
   const style = variantStyles[variant] || variantStyles.default;
 
   return (
-    <div
-      className={`p-5 sm:p-6 rounded-3xl bg-surface border border-subtle/30 ${style.borderHover} ${style.glow} transition-all duration-300 shadow-2xs flex flex-col justify-between group cursor-default`}
+    <article
+      className={`relative min-h-36 overflow-hidden border p-5 sm:p-6 transition-all duration-300 flex flex-col justify-between group cursor-default ${style.shell}`}
     >
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <span className="text-xs sm:text-sm font-extrabold text-muted tracking-tight flex items-center gap-1.5">
-          <span className="text-sm select-none">{style.emoji}</span>
+      <div className={`absolute left-0 top-7 h-10 w-1 rounded-r-full ${style.rail}`} />
+      <div className="absolute -right-8 -bottom-12 w-28 h-28 rounded-full border-[18px] border-current opacity-[0.035]" />
+      <div className="relative flex items-center justify-between gap-3 mb-5">
+        <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted flex items-center">
           <span>{title}</span>
         </span>
         <div
-          className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-2xs ${style.badge}`}
+          className={`w-10 h-10 rounded-[1rem_1rem_1rem_0.3rem] flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:-translate-y-0.5 ${style.badge}`}
         >
           <Icon size={20} />
         </div>
       </div>
 
-      <div>
+      <div className="relative">
         <h4
-          className={`text-xl sm:text-2xl tracking-tight transition-colors duration-200 ${style.valueColor}`}
+          data-financial-value="true"
+          className={`text-2xl sm:text-3xl font-extrabold tracking-[-0.05em] tabular-nums transition-colors duration-200 ${style.valueColor}`}
         >
           <PrivacyMask amount={value} />
         </h4>
@@ -83,6 +80,6 @@ export function SummaryCard({
           <p className="text-[11px] font-medium text-muted mt-1">{subtitle}</p>
         )}
       </div>
-    </div>
+    </article>
   );
 }

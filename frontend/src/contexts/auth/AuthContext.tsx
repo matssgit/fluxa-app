@@ -26,11 +26,12 @@ export interface User {
 export interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   signIn: (
     data: LoginCredentials,
   ) => Promise<{ requiresTwoFactor: true; tempToken: string } | void>;
   signUp: (data: RegisterCredentials) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateProfile: (data: {
     name: string;
     avatar_url?: string | null;

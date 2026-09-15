@@ -18,13 +18,13 @@ import { AuthProvider } from "./contexts/auth/AuthProvider";
 import { ThemeProvider } from "./contexts/theme/ThemeProvider";
 import { VerifyEmailPending } from "./pages/VerifyEmailPending";
 import { PrivacyProvider } from "./contexts/privacy/PrivacyProvider";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/query-client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-const queryClient = new QueryClient();
-
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -81,25 +81,24 @@ export default function App() {
               toastOptions={{
                 duration: 3500,
                 style: {
-                  background: "#13312A",
-                  color: "#FFFFFF",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  borderRadius: "12px",
+                  background: "var(--color-surface)",
+                  color: "var(--color-primary)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "18px",
                   fontSize: "14px",
                   fontWeight: "500",
-                  boxShadow:
-                    "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2)",
+                  boxShadow: "var(--shadow-md)",
                 },
                 success: {
                   iconTheme: {
-                    primary: "#10B981",
-                    secondary: "#13312A",
+                    primary: "var(--color-income)",
+                    secondary: "var(--color-surface)",
                   },
                 },
                 error: {
                   iconTheme: {
-                    primary: "#EF4444",
-                    secondary: "#FFFFFF",
+                    primary: "var(--color-expense)",
+                    secondary: "var(--color-surface)",
                   },
                 },
               }}

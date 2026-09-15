@@ -45,10 +45,10 @@ export function SubscriptionCard({
 
   return (
     <div
-      className={`card-default p-6 flex flex-col justify-between border-subtle/30 group transition-all duration-300 ease-out ${
+      className={`relative overflow-hidden p-5 sm:p-6 flex flex-col justify-between border border-border rounded-tl-[2rem] rounded-br-[2rem] rounded-tr-xl rounded-bl-xl group transition-all duration-300 ease-out ${
         status === "cancelled"
           ? "opacity-60 bg-elevated/20"
-          : "hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 bg-surface"
+          : "hover:-translate-y-1 hover:shadow-md bg-surface"
       }`}
     >
       <div>
@@ -86,13 +86,19 @@ export function SubscriptionCard({
           </div>
         </div>
 
-        <div className="py-4">
+        <div className="py-6 flex items-end justify-between gap-3">
+          <div>
           <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted block">
             Valor Recorrente
           </span>
-          <p className="text-xl sm:text-2xl font-extrabold text-primary tracking-tight mt-0.5">
+          <p className="text-2xl sm:text-3xl font-extrabold text-primary tracking-[-0.05em] tabular-nums mt-0.5">
             <PrivacyMask amount={Number(subscription.amount) || 0} />
           </p>
+          </div>
+          <div className="text-right">
+            <span className="text-[9px] font-extrabold uppercase tracking-widest text-muted block">Próxima</span>
+            <span className="text-sm font-extrabold text-primary">Dia {subscription.due_day}</span>
+          </div>
         </div>
 
         <div className="pb-3 flex items-center justify-between text-xs text-muted font-medium border-b border-subtle/20">
@@ -118,10 +124,7 @@ export function SubscriptionCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0 ml-2 text-secondary font-bold bg-surface px-2 py-1 rounded-lg border border-subtle/30 shadow-2xs">
-            <Calendar size={12} className="text-brand" />
-            <span>Dia {subscription.due_day}</span>
-          </div>
+          <Calendar size={14} className="text-brand shrink-0 ml-2" />
         </div>
       </div>
 
@@ -173,7 +176,7 @@ export function SubscriptionCard({
               onClick={() => onRequestCancel(subscription.id)}
               disabled={isUpdating}
               title="Cancelar assinatura"
-              className="p-1.5 text-muted hover:text-red-500 hover:bg-surface rounded-lg transition-all cursor-pointer disabled:opacity-50"
+              className="p-1.5 text-muted hover:text-expense hover:bg-expense-soft rounded-lg transition-all cursor-pointer disabled:opacity-50"
             >
               <Ban size={15} />
             </button>

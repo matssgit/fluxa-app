@@ -15,7 +15,7 @@ export function CategoryDistributionChart({
     }).format(value);
 
   return (
-    <div className="card-default p-6 border-subtle/30 flex flex-col justify-between h-full">
+    <div className="bg-elevated/55 border border-border rounded-tr-[2.5rem] rounded-bl-[2.5rem] rounded-tl-xl rounded-br-xl p-6 sm:p-8 flex flex-col justify-between h-full">
       <div>
         <h3 className="font-bold text-lg text-primary tracking-tight">
           Despesas por Categoria
@@ -34,26 +34,27 @@ export function CategoryDistributionChart({
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={55}
-                outerRadius={75}
-                paddingAngle={4}
+                innerRadius={58}
+                outerRadius={79}
+                paddingAngle={5}
                 dataKey="amount"
               >
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry.color || "#10B981"}
-                    stroke="#0F172A"
+                    fill={entry.color || "var(--color-brand)"}
+                    stroke="var(--color-surface)"
                     strokeWidth={2}
                   />
                 ))}
               </Pie>
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1E293B",
-                  borderColor: "#334155",
+                  backgroundColor: "var(--color-surface)",
+                  borderColor: "var(--color-border)",
                   borderRadius: "12px",
-                  color: "#F8FAFC",
+                  color: "var(--color-primary)",
+                  boxShadow: "var(--shadow-md)",
                   fontSize: "12px",
                 }}
                 formatter={(value: unknown) => [
@@ -75,7 +76,7 @@ export function CategoryDistributionChart({
               <div className="flex items-center gap-2 truncate pr-2">
                 <span
                   className="w-2.5 h-2.5 rounded-full shrink-0"
-                  style={{ backgroundColor: item.color || "#10B981" }}
+                  style={{ backgroundColor: item.color || "var(--color-brand)" }}
                 />
                 <span className="font-medium text-primary truncate">
                   {item.category_name}

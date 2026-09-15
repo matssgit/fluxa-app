@@ -298,7 +298,7 @@ export function SecurityTab() {
           {step === "idle" && isCurrentlyEnabled && (
             <button
               onClick={() => setStep("disable_confirm")}
-              className="w-full md:w-auto px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-bold rounded-xl transition-all shrink-0"
+              className="btn btn-danger w-full md:w-auto px-5 shrink-0"
             >
               Desativar
             </button>
@@ -311,7 +311,7 @@ export function SecurityTab() {
               Configure seu autenticador
             </h4>
             <div className="flex flex-col sm:flex-row gap-8 items-start">
-              <div className="p-4 bg-white border border-subtle/30 rounded-2xl shadow-sm shrink-0">
+              <div className="p-4 bg-white border border-border rounded-2xl shadow-sm shrink-0">
                 {setupData?.qrCodeUrl ? (
                   setupData.qrCodeUrl.startsWith("data:image") ? (
                     <img
@@ -460,7 +460,7 @@ export function SecurityTab() {
                 <button
                   type="submit"
                   disabled={is2FALoading}
-                  className="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-all shadow-sm disabled:opacity-70"
+                  className="btn btn-danger px-5"
                 >
                   {is2FALoading ? "Aguarde..." : "Desativar"}
                 </button>

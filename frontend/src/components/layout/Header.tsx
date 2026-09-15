@@ -38,23 +38,23 @@ export function Header() {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const firstName = user?.name?.trim().split(" ")[0] || "você";
+
   return (
-    <header className="h-20 w-full bg-surface/75 backdrop-blur-md border-b border-subtle/20 sticky top-0 z-30 px-4 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-      <div className="space-y-0.5 min-w-0 pr-4 select-none">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-black text-primary tracking-tight leading-none uppercase">
-            FLUXA
-          </h1>
-        </div>
-        <p className="text-[10px] sm:text-xs font-semibold text-muted/60 tracking-widest hidden sm:block truncate uppercase">
-          Organize a sua vida financeira.
-        </p>
+    <header className="min-h-22 w-full bg-background/72 backdrop-blur-xl sticky top-0 z-30 px-4 sm:px-7 lg:px-10 xl:px-12 flex items-center justify-between transition-all duration-300">
+      <div className="min-w-0 pr-4 select-none">
+        <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-muted block mb-1">
+          Seu espaço financeiro
+        </span>
+        <h1 className="text-lg sm:text-xl font-extrabold text-primary tracking-[-0.035em] leading-none truncate">
+          Olá, {firstName}.
+        </h1>
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-full bg-elevated hover:bg-subtle/50 text-secondary transition-all duration-300 cursor-pointer flex items-center justify-center shadow-xs border border-subtle/20"
+          className="w-11 h-11 rounded-full bg-surface hover:bg-elevated text-secondary transition-all duration-300 cursor-pointer flex items-center justify-center shadow-xs border border-border"
           aria-label="Alternar tema"
           title={theme === "light" ? "Ativar Dark Mode" : "Ativar Light Mode"}
         >
@@ -65,7 +65,7 @@ export function Header() {
           )}
         </button>
 
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-elevated/60 border border-subtle/30 text-[11px] font-semibold text-secondary shadow-2xs">
+        <div className="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-[1rem_1rem_1rem_0.3rem] bg-income-soft text-[11px] font-bold text-income">
           <ShieldCheck className="w-3.5 h-3.5 text-brand" />
           <span>Ambiente Seguro</span>
         </div>
@@ -95,11 +95,11 @@ export function Header() {
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover shadow-sm border border-subtle/30 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30"
                 />
               ) : (
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-linear-to-tr from-brand to-emerald-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm border border-white/20 group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/30">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-brand text-white dark:text-[#102f29] font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200 ring-2 ring-transparent group-hover:ring-brand/20">
                   {getUserInitials(user?.name)}
                 </div>
               )}
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-surface rounded-full" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-income border-2 border-surface rounded-full" />
             </div>
 
             <ChevronDown
@@ -122,7 +122,7 @@ export function Header() {
                 <Link
                   to="/categories"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors xl:hidden"
                 >
                   <Tag className="w-4 h-4 text-muted" />
                   <span>Categorias e Tags</span>
@@ -130,7 +130,7 @@ export function Header() {
                 <Link
                   to="/subscriptions"
                   onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors min-[1400px]:hidden"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-semibold text-secondary hover:bg-elevated/80 hover:text-primary transition-colors xl:hidden"
                 >
                   <Repeat className="w-4 h-4 text-brand" />
                   <span>Assinaturas</span>
@@ -151,7 +151,7 @@ export function Header() {
                     setIsMenuOpen(false);
                     signOut();
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-expense hover:bg-expense-soft transition-colors text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sair do Sistema</span>

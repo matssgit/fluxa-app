@@ -165,7 +165,6 @@ export function AboutTab() {
                 { name: "Node.js", icon: Terminal },
                 { name: "Fastify", icon: Terminal },
                 { name: "PostgreSQL", icon: Database },
-                { name: "SQLite", icon: Database },
                 { name: "React Query", icon: Code2 },
                 { name: "Knex.js", icon: Database },
                 { name: "Zod", icon: Shield },

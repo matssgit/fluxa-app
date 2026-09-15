@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DashboardTour } from "./DashboardTour";
 import { EmptyState, Card } from "../../components/ui";
+import { PrivacyMask } from "../../components/ui/PrivacyMask";
 import { useDashboard } from "../../hooks/useDashboard";
 import { formatCurrency } from "../../utils/formatters";
 import { SummaryCard } from "../../components/dashboard/SummaryCard";
@@ -15,7 +16,6 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   DollarSign,
-  Calendar,
   AlertCircle,
   Clock,
   TrendingUp,
@@ -167,78 +167,110 @@ export function Dashboard() {
       <DashboardTour />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
-            Dashboard
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-brand">
+            Visão geral
+          </span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-primary tracking-[-0.045em]">
+            Seu fluxo financeiro
           </h1>
           <p className="text-xs sm:text-sm font-medium text-muted mt-1">
-            Visão geral e telemetria em tempo real do seu património.
+            Clareza para decidir hoje e tranquilidade para planejar amanhã.
           </p>
         </div>
       </div>
-      {/* BANNER DE SAÚDE FINANCEIRA */}
-      <div className="card-default p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-brand rounded-3xl tour-dash-health">
-        <div className="flex items-center gap-4">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${
-              isHealthy
-                ? "bg-brand/10 text-brand"
-                : "bg-amber-500/10 text-amber-500"
-            }`}
-          >
-            {isHealthy ? <ShieldCheck size={26} /> : <Zap size={26} />}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base sm:text-lg font-extrabold text-primary tracking-tight">
-                {isHealthy
-                  ? "Sua liquidez operacional está saudável!"
-                  : "Atenção ao ritmo de gastos do mês"}
-              </h3>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-surface border border-subtle/30 text-secondary hidden md:inline-block">
-                Telemetria Ativa
-              </span>
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 tour-dashboard-summary">
+        <div className="lg:col-span-8 min-h-80 sm:min-h-96 rounded-tl-[2.75rem] rounded-tr-[2.75rem] rounded-br-[2.75rem] rounded-bl-xl bg-[#173f36] text-[#fffdf7] p-7 sm:p-10 relative overflow-hidden shadow-md flex flex-col justify-between">
+          <div className="absolute -right-24 -top-28 w-96 h-96 rounded-full border-[58px] border-white/5" />
+          <div className="absolute right-8 -bottom-40 w-80 h-80 rounded-[42%_58%_68%_32%] bg-[#829b88]/18 rotate-12" />
+          <div className="absolute left-[45%] top-14 w-24 h-56 rounded-[70%_30%_64%_36%] bg-white/3 rotate-45" />
+          <div className="relative flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#dfe8de]">
+              Saldo disponível
+            </span>
+            <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
+              <DollarSign size={21} strokeWidth={1.8} />
             </div>
-            <p className="text-xs sm:text-sm font-medium text-muted mt-0.5">
-              {isHealthy
-                ? `Você está mantendo uma margem de poupança de ${savingsRate.toFixed(0)}% sobre as suas receitas.`
-                : `Suas saídas já consumiram ${burnRatePercentage.toFixed(0)}% das entradas deste período.`}
+          </div>
+          <div className="relative my-10">
+            <div
+              data-financial-value="true"
+              className="text-5xl sm:text-6xl lg:text-7xl leading-none font-extrabold tracking-[-0.065em] tabular-nums"
+            >
+              <PrivacyMask amount={availableLiquidity} />
+            </div>
+            <p className="text-sm text-[#dfe8de]/75 mt-5 max-w-sm leading-relaxed">
+              Recursos livres considerando as entradas e saídas registradas.
             </p>
           </div>
+
+          <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 border-t border-white/10 pt-5">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#dfe8de]/60 block">
+                Projeção no fim do mês
+              </span>
+              <span className="text-lg sm:text-xl font-extrabold tabular-nums mt-1 block">
+                {formatCurrency(projectedBalance)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#dfe8de]">
+              {isHealthy ? <ShieldCheck size={17} /> : <Zap size={17} />}
+              <span>
+                {isHealthy
+                  ? `${savingsRate.toFixed(0)}% de margem preservada`
+                  : `${burnRatePercentage.toFixed(0)}% das entradas comprometidas`}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+          <SummaryCard
+            title="Entradas do mês"
+            value={totalIncome}
+            icon={ArrowUpCircle}
+            variant="income"
+          />
+          <SummaryCard
+            title="Saídas do mês"
+            value={totalExpenses}
+            icon={ArrowDownCircle}
+            variant="expense"
+          />
+        </div>
+      </section>
+
+      <div className="tour-dash-health flex flex-col sm:flex-row sm:items-center gap-4 py-5 sm:py-6 border-y border-border">
+        <div
+          className={`w-12 h-12 rounded-[1.25rem_1.25rem_1.25rem_0.35rem] flex items-center justify-center shrink-0 ${
+            isHealthy
+              ? "bg-income-soft text-income"
+              : "bg-warning/10 text-warning"
+          }`}
+        >
+          {isHealthy ? <ShieldCheck size={25} /> : <Zap size={25} />}
+        </div>
+        <div className="flex-1">
+          <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted">
+            Leitura do período
+          </span>
+          <h3 className="text-base sm:text-lg font-extrabold text-primary tracking-tight">
+            {isHealthy
+              ? "Seu fluxo mantém uma margem confortável"
+              : "O ritmo de gastos merece atenção"}
+          </h3>
+          <p className="text-xs sm:text-sm font-medium text-muted mt-0.5">
+            {isHealthy
+              ? `Você está preservando ${savingsRate.toFixed(0)}% das receitas deste período.`
+              : `Suas saídas já consumiram ${burnRatePercentage.toFixed(0)}% das entradas deste período.`}
+          </p>
         </div>
       </div>
-      {/* CARDS DE RESUMO */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 tour-dashboard-summary">
-        <SummaryCard
-          title="Entradas do Mês"
-          value={totalIncome}
-          icon={ArrowUpCircle}
-          variant="income"
-        />
-        <SummaryCard
-          title="Saídas do Mês"
-          value={totalExpenses}
-          icon={ArrowDownCircle}
-          variant="expense"
-        />
-        <SummaryCard
-          title="Saldo Disponível"
-          value={availableLiquidity}
-          icon={DollarSign}
-          variant="balance"
-        />
-        <SummaryCard
-          title="Projeção Fim do Mês"
-          value={projectedBalance}
-          icon={Calendar}
-          variant="projection"
-        />
-      </section>
       {/* TELEMETRIA + RADAR */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col">
           <Card
             variant="default"
-            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-telemetry"
+            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-telemetry rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl"
           >
             <div>
               <SectionTitle
@@ -315,7 +347,7 @@ export function Dashboard() {
         <div className="flex flex-col">
           <Card
             variant="default"
-            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-radar"
+            className="flex-1 flex flex-col justify-between p-6 sm:p-8 tour-dash-radar rounded-tr-[2.5rem] rounded-bl-[2.5rem] rounded-tl-xl rounded-br-xl"
           >
             <div>
               <SectionTitle

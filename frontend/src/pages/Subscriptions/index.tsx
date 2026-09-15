@@ -92,7 +92,7 @@ export function Subscriptions() {
 
         {isError && !isPageLoading && (
           <div className="py-12 flex flex-col items-center justify-center text-center">
-            <AlertCircle size={48} className="text-red-500 mb-4 opacity-80" />
+            <AlertCircle size={48} className="text-expense mb-4 opacity-80" />
             <h2 className="text-lg font-bold text-primary mb-2">
               Não foi possível consultar os seus serviços
             </h2>
@@ -178,7 +178,7 @@ export function Subscriptions() {
                   </div>
 
                   <div className="flex-1 card-default p-5 flex items-center gap-4 rounded-3xl">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-income-soft text-income flex items-center justify-center shrink-0">
                       <PieChart size={24} />
                     </div>
                     <div>
@@ -206,7 +206,7 @@ export function Subscriptions() {
                   )}
                 </div>
 
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
                   {visibleSubs.map((sub) => (
                     <SubscriptionCard
                       key={sub.id}
@@ -232,7 +232,7 @@ export function Subscriptions() {
                   </button>
 
                   {showHidden && (
-                    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 w-full opacity-80 transition-all">
+                    <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mt-6 w-full opacity-80 transition-all">
                       {hiddenSubs.map((sub) => (
                         <SubscriptionCard
                           key={sub.id}

@@ -8,7 +8,7 @@ export interface ModalHeaderProps {
 
 export function ModalHeader({ title, description, onClose }: ModalHeaderProps) {
   return (
-    <div className="flex items-start justify-between px-6 py-5 border-b border-subtle">
+    <div className="flex items-start justify-between px-6 sm:px-8 py-6 border-b border-subtle">
       <div className="space-y-1">
         <h3 className="text-lg font-semibold text-primary tracking-tight">
           {title}

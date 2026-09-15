@@ -35,7 +35,7 @@ const ACCOUNT_TYPE_CONFIG: Record<
   wallet: {
     label: "Carteira Física",
     icon: Wallet,
-    badgeClass: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    badgeClass: "bg-income-soft text-income border-income/20",
   },
   savings: {
     label: "Investimentos",
@@ -97,7 +97,7 @@ export function Accounts() {
       )}
 
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           <Skeleton className="h-44 w-full rounded-2xl" />
           <Skeleton className="h-44 w-full rounded-2xl" />
           <Skeleton className="h-44 w-full rounded-2xl" />
@@ -126,8 +126,8 @@ export function Accounts() {
           onAction={handleCreate}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {accounts.map((acc: AccountData) => {
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
+          {accounts.map((acc: AccountData, index: number) => {
             const typeKey = (acc.type as AccountTypeKey) || "checking";
             const config =
               ACCOUNT_TYPE_CONFIG[typeKey] ?? ACCOUNT_TYPE_CONFIG.checking;
@@ -136,11 +136,16 @@ export function Accounts() {
             return (
               <div
                 key={acc.id}
-                className="card-default p-6 flex flex-col justify-between h-auto min-h-48 border border-subtle/30 bg-surface group transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 rounded-3xl"
+                className={`relative overflow-hidden p-6 sm:p-7 flex flex-col justify-between min-h-56 border border-border bg-surface group transition-all duration-300 hover:shadow-md ${
+                  index % 2 === 0
+                    ? "md:col-span-7 rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl"
+                    : "md:col-span-5 rounded-tr-[2.5rem] rounded-bl-[2.5rem] rounded-tl-xl rounded-br-xl"
+                }`}
               >
+                <div className="absolute -right-12 -bottom-16 w-40 h-40 rounded-full border-[24px] border-brand/4 pointer-events-none" />
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-elevated flex items-center justify-center text-primary group-hover:bg-brand/10 group-hover:text-brand transition-colors shadow-inner">
+                    <div className="w-12 h-12 rounded-[1.15rem_1.15rem_1.15rem_0.35rem] bg-elevated flex items-center justify-center text-primary group-hover:bg-brand group-hover:text-white dark:group-hover:text-[#102f29] transition-colors">
                       <IconComponent size={24} />
                     </div>
                     <span
@@ -150,23 +155,20 @@ export function Accounts() {
                     </span>
                   </div>
 
-                  <div>
-                    <h3 className="font-bold text-base sm:text-lg text-primary tracking-tight truncate group-hover:text-brand transition-colors">
+                  <div className="mt-7">
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted block mb-1">
+                      Saldo atual
+                    </span>
+                    <strong className="block text-3xl sm:text-4xl font-extrabold text-primary tracking-[-0.055em] tabular-nums">
+                      {formatCurrency(acc.balance ?? 0)}
+                    </strong>
+                    <h3 className="font-bold text-sm text-secondary tracking-tight truncate mt-3 group-hover:text-brand transition-colors">
                       {acc.name}
                     </h3>
-                    <p className="text-xs text-muted font-medium mt-0.5">
-                      Saldo Atual:{" "}
-                      <strong className="text-primary text-sm">
-                        {formatCurrency(acc.balance ?? 0)}
-                      </strong>
-                    </p>
                   </div>
                 </div>
 
-                <div className="pt-4 mt-4 border-t border-subtle/20 flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted">
-                    Gestão
-                  </span>
+                <div className="relative pt-4 mt-4 border-t border-subtle flex items-center justify-end">
                   <div className="flex items-center gap-1 bg-elevated/60 p-1 rounded-xl border border-subtle/20">
                     <button
                       onClick={() => handleEdit(acc)}
@@ -178,7 +180,7 @@ export function Accounts() {
                     <button
                       onClick={() => handleDelete(acc)}
                       title="Excluir conta"
-                      className="p-1.5 text-muted hover:text-red-500 hover:bg-surface rounded-lg transition-all cursor-pointer"
+                      className="p-1.5 text-muted hover:text-expense hover:bg-expense-soft rounded-lg transition-all cursor-pointer"
                     >
                       <Trash2 size={15} />
                     </button>

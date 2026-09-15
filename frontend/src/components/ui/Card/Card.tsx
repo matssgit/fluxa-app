@@ -16,7 +16,7 @@ export function Card({
     elevated: "card-elevated",
     interactive: "card-interactive",
     metric:
-      "bg-surface border border-subtle shadow-sm p-6 rounded-2xl relative overflow-hidden",
+      "bg-surface border border-border shadow-sm p-6 rounded-3xl relative overflow-hidden",
   };
 
   return (

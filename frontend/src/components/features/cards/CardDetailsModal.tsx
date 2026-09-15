@@ -71,7 +71,7 @@ export function CardDetailsModal({
     totalLimit > 0 ? (consumedLimit / totalLimit) * 100 : 0;
 
   const getProgressBarColor = (percentage: number) => {
-    if (percentage > 90) return "bg-red-500 shadow-red-500/30";
+    if (percentage > 90) return "bg-expense";
     if (percentage > 75) return "bg-amber-500 shadow-amber-500/30";
     return "bg-brand shadow-brand/30";
   };
@@ -188,7 +188,7 @@ export function CardDetailsModal({
 
               <button
                 onClick={onDeleteClick}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs sm:text-sm font-bold transition-all border border-red-500/20 cursor-pointer shadow-2xs"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-expense-soft hover:opacity-80 text-expense rounded-xl text-xs sm:text-sm font-bold transition-all border border-expense/20 cursor-pointer shadow-2xs"
               >
                 <Trash2 size={16} />
                 <span>Excluir Cartão</span>

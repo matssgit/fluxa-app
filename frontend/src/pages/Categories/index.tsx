@@ -96,9 +96,9 @@ export function Categories() {
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-surface border border-subtle/30 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col h-full">
+          <div className="bg-expense-soft/55 border border-expense/10 rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl p-5 sm:p-7 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-expense-soft text-expense flex items-center justify-center shrink-0">
                 <TrendingDown size={20} />
               </div>
               <div>
@@ -126,7 +126,7 @@ export function Categories() {
                       <span className="text-sm font-bold text-secondary group-hover:text-primary transition-colors">
                         {cat.name}
                       </span>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-500 bg-red-500/10 px-2 py-1 rounded-lg">
+                      <span className="badge badge-danger text-[10px] uppercase tracking-wider">
                         Despesa
                       </span>
                     </div>
@@ -141,7 +141,7 @@ export function Categories() {
                       </button>
                       <button
                         onClick={() => setCategoryToDelete(cat)}
-                        className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+                        className="p-2 text-muted hover:text-expense hover:bg-expense-soft rounded-xl transition-colors cursor-pointer"
                         title="Excluir Categoria"
                       >
                         <Trash2 size={16} />
@@ -153,9 +153,9 @@ export function Categories() {
             </div>
           </div>
 
-          <div className="bg-surface border border-subtle/30 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col h-full">
+          <div className="bg-income-soft/60 border border-income/10 rounded-tr-[2.5rem] rounded-bl-[2.5rem] rounded-tl-xl rounded-br-xl p-5 sm:p-7 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-income-soft text-income flex items-center justify-center shrink-0">
                 <TrendingUp size={20} />
               </div>
               <div>
@@ -183,7 +183,7 @@ export function Categories() {
                       <span className="text-sm font-bold text-secondary group-hover:text-primary transition-colors">
                         {cat.name}
                       </span>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg">
+                      <span className="badge badge-success text-[10px] uppercase tracking-wider">
                         Receita
                       </span>
                     </div>
@@ -198,7 +198,7 @@ export function Categories() {
                       </button>
                       <button
                         onClick={() => setCategoryToDelete(cat)}
-                        className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors cursor-pointer"
+                        className="p-2 text-muted hover:text-expense hover:bg-expense-soft rounded-xl transition-colors cursor-pointer"
                         title="Excluir Categoria"
                       >
                         <Trash2 size={16} />

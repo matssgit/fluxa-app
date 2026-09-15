@@ -1,46 +1,121 @@
 .card {
-  @apply rounded-2xl transition-all duration-300;
+  @apply rounded-3xl transition-all duration-300;
 }
 
-/* Chapa metalizada flutuante com reflexo chanfrado no topo */
-.card-default {
-  background: linear-gradient(
-    135deg,
-    var(--white) 0%,
-    #f7faf8 50%,
-    #edf2ef 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    var(--shadow-md),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
-  @apply p-6 rounded-2xl transition-all duration-300 dark:bg-none dark:bg-surface dark:border-subtle/30 dark:shadow-sm;
+.card-default,
+.card-elevated,
+.card-interactive {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  @apply p-6 rounded-3xl transition-all duration-300;
 }
 
 .card-elevated {
-  background: linear-gradient(135deg, #fcfdfc 0%, #edf2ef 100%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: var(--shadow-sm);
-  @apply p-6 rounded-2xl transition-all duration-300 dark:bg-none dark:bg-elevated dark:border-subtle/20;
+  background: var(--color-surface-muted);
 }
 
-/* Card interativo ganha física de gravidade */
 .card-interactive {
-  background: linear-gradient(
-    135deg,
-    var(--white) 0%,
-    #f7faf8 50%,
-    #edf2ef 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow:
-    var(--shadow-sm),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
-  @apply p-6 rounded-2xl transition-all duration-300 cursor-pointer dark:bg-none dark:bg-surface dark:border-subtle/30;
+  cursor: pointer;
 }
 
 .card-interactive:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-6px);
-  border-color: var(--green-700);
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-brand) 28%, transparent);
+}
+
+.btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 font-bold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2;
+  border-radius: 999px;
+}
+
+.btn-primary {
+  background: var(--green-900);
+  color: var(--cream-50);
+  box-shadow: 0 10px 22px -14px rgb(16 47 41 / 0.7);
+}
+
+.btn-primary:hover {
+  background: #225347;
+  transform: translateY(-1px);
+}
+
+.dark .btn-primary {
+  background: var(--color-brand);
+  color: var(--green-950);
+}
+
+.btn-secondary {
+  background: var(--color-elevated);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-ghost {
+  color: var(--color-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--color-elevated);
+  color: var(--color-primary);
+}
+
+.btn-danger {
+  background: var(--color-expense-soft);
+  color: var(--color-expense);
+}
+
+.input,
+input:not([type="radio"]):not([type="checkbox"]),
+select,
+textarea {
+  background: var(--color-surface-muted);
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.input {
+  @apply min-h-12 w-full border px-4 text-sm text-primary outline-none transition-all placeholder:text-placeholder;
+}
+
+.input:focus,
+input:not([type="radio"]):not([type="checkbox"]):focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--color-brand) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand) 12%, transparent);
+  outline: none;
+}
+
+.input-error {
+  border-color: var(--color-expense);
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold;
+}
+
+.badge-success {
+  background: var(--color-income-soft);
+  border-color: color-mix(in srgb, var(--color-income) 25%, transparent);
+  color: var(--color-income);
+}
+
+.badge-danger {
+  background: var(--color-expense-soft);
+  border-color: color-mix(in srgb, var(--color-expense) 25%, transparent);
+  color: var(--color-expense);
+}
+
+.badge-warning {
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 24%, transparent);
+  color: var(--color-warning);
+}
+
+.badge-neutral {
+  background: var(--color-elevated);
+  border-color: var(--color-border);
+  color: var(--color-secondary);
 }

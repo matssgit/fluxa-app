@@ -31,7 +31,7 @@ export function CancelSubscriptionModal({
 
       <ModalBody className="p-6">
         <div className="flex flex-col items-center text-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2 ring-4 ring-red-500/5">
+          <div className="w-14 h-14 rounded-2xl bg-expense-soft flex items-center justify-center text-expense mb-2 border border-expense/20">
             <AlertTriangle size={28} />
           </div>
 
@@ -65,7 +65,7 @@ export function CancelSubscriptionModal({
           <button
             onClick={handleConfirm}
             disabled={isPending}
-            className="flex-1 px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-all disabled:opacity-50 cursor-pointer shadow-sm shadow-red-500/20 flex items-center justify-center gap-2"
+            className="btn btn-danger flex-1 px-4"
           >
             {isPending ? (
               <span className="animate-pulse">A Cancelar...</span>

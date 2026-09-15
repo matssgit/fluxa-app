@@ -3,6 +3,8 @@
   --color-page: var(--color-page);
   --color-surface: var(--color-surface);
   --color-elevated: var(--color-elevated);
+  --color-background: var(--color-page);
+  --color-surface-muted: var(--color-surface-muted);
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
   --color-muted: var(--color-muted);
@@ -11,7 +13,11 @@
   --color-subtle: var(--color-subtle);
   --color-brand: var(--color-brand);
   --color-brand-light: var(--color-brand-light);
-  --color-accent: var(--gold-500);
+  --color-accent: var(--color-accent);
+  --color-income: var(--color-income);
+  --color-income-soft: var(--color-income-soft);
+  --color-expense: var(--color-expense);
+  --color-expense-soft: var(--color-expense-soft);
   --color-danger: var(--color-danger);
   --color-warning: var(--color-warning);
   --color-success: var(--color-success);
@@ -22,6 +28,7 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
 
   /* SHADOWS */
   --shadow-xs: var(--shadow-xs);

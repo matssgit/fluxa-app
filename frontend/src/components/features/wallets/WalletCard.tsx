@@ -39,12 +39,13 @@ export function WalletCard({
 
   return (
     <div
-      className={`card-default p-6 flex flex-col justify-between border-subtle/30 group transition-all duration-300 ease-out ${
+      className={`relative overflow-hidden min-h-72 p-6 sm:p-7 flex flex-col justify-between border border-border rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl group transition-all duration-300 ease-out ${
         wallet.status === "paused"
           ? "opacity-60 bg-elevated/20"
-          : "hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 bg-surface"
+          : "hover:-translate-y-1 hover:shadow-md bg-surface"
       }`}
     >
+      <div className="absolute -right-16 -bottom-20 w-52 h-52 rounded-full border-[30px] border-brand/4 pointer-events-none" />
       <div>
         <div className="flex justify-between items-start gap-3">
           <div className="truncate pr-2">
@@ -75,7 +76,7 @@ export function WalletCard({
             </div>
 
             {isCompleted ? (
-              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <span className="badge badge-success gap-1 text-[10px] uppercase tracking-wider">
                 <CheckCircle2 size={12} />
                 Atingida
               </span>
@@ -85,14 +86,14 @@ export function WalletCard({
                 Pausada
               </span>
             ) : (
-              <span className="inline-block text-[11px] font-extrabold text-brand bg-brand/10 px-2 py-0.5 rounded-lg border border-brand/20">
+              <span className="text-3xl sm:text-4xl font-extrabold tracking-[-0.06em] text-brand tabular-nums">
                 {progress}%
               </span>
             )}
           </div>
         </div>
 
-        <div className="py-5">
+        <div className="relative py-7">
           <div className="flex justify-between items-baseline mb-2">
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-muted block">
@@ -112,11 +113,11 @@ export function WalletCard({
             </div>
           </div>
 
-          <div className="w-full h-2.5 bg-elevated rounded-full overflow-hidden p-0.5 border border-subtle/20 shadow-2xs">
+          <div className="w-full h-4 bg-elevated rounded-full overflow-hidden p-1 border border-border">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 isCompleted
-                  ? "bg-emerald-500"
+                  ? "bg-income"
                   : wallet.status === "paused"
                     ? "bg-amber-500"
                     : "bg-brand"
@@ -126,7 +127,7 @@ export function WalletCard({
           </div>
         </div>
 
-        <div className="pb-4 flex items-center gap-1.5 text-xs text-muted font-medium border-b border-subtle/20">
+        <div className="relative pb-4 flex items-center gap-1.5 text-xs text-muted font-medium border-b border-subtle">
           <Calendar size={13} className="text-brand shrink-0" />
           <span>
             Previsão para{" "}
@@ -137,7 +138,7 @@ export function WalletCard({
         </div>
       </div>
 
-      <div className="pt-3 flex items-center gap-2 mt-2">
+      <div className="relative pt-3 flex items-center gap-2 mt-2">
         <button
           onClick={() => onProgress(wallet, "deposit")}
           disabled={isCompleted || wallet.status === "paused"}

@@ -8,7 +8,7 @@ export interface Subscription {
   amount: number;
   due_day: number;
   frequency: "monthly" | "yearly";
-  status?: "active" | "paused" | "cancelled" | "deleted";
+  status?: "active" | "paused" | "cancelled";
 
   category_name?: string;
   category_color?: string;

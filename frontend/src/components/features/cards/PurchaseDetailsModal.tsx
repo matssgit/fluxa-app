@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAccounts } from "../../../hooks/useAccounts";
-import { X, Calendar, CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle2, AlertCircle, Trash2 } from "lucide-react";
+import { Modal, ModalBody, ModalHeader } from "../../ui/Modal";
 import {
   useInstallments,
   usePayInstallment,
@@ -53,44 +54,31 @@ export function PurchaseDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-          <div>
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <ModalHeader
+        title={purchase.title}
+        description={purchase.store}
+        onClose={onClose}
+      />
+      <ModalBody>
+        <div className="space-y-6">
+          {isPurchaseCancelled && (
             <div className="flex items-center gap-2">
-              <h2
-                className={`text-xl font-bold ${isPurchaseCancelled ? "text-slate-400 line-through" : "text-slate-800"}`}
-              >
-                {purchase.title}
-              </h2>
-              {isPurchaseCancelled && (
-                <span className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-md font-medium uppercase tracking-wider">
-                  Cancelada
-                </span>
-              )}
+              <span className="badge badge-neutral uppercase tracking-wider">
+                Compra cancelada
+              </span>
             </div>
-            <p className="text-sm text-slate-500">{purchase.store}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto max-h-[65vh]">
+          )}
           {/* Seletor de Conta (Oculto se a compra estiver cancelada) */}
           {!isPurchaseCancelled && (
-            <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <div className="p-4 bg-surface-muted rounded-2xl border border-border">
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-secondary mb-2">
                 Conta para débito das parcelas
               </label>
               <select
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
-                className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full p-3 bg-surface border border-border rounded-xl text-sm text-primary"
               >
                 <option value="" disabled>
                   Selecione uma conta bancária...
@@ -120,16 +108,16 @@ export function PurchaseDetailsModal({
               return (
                 <div
                   key={inst.id}
-                  className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-surface rounded-2xl border border-border shadow-xs"
                 >
                   <div>
                     <p
-                      className={`font-semibold ${isInstCancelled ? "text-slate-400" : "text-slate-800"}`}
+                      className={`font-semibold ${isInstCancelled ? "text-muted line-through" : "text-primary"}`}
                     >
                       Parcela {inst.installment_number} /{" "}
                       {inst.total_installments}
                     </p>
-                    <div className="flex items-center gap-2 text-sm text-slate-500 mt-0.5">
+                    <div className="flex items-center gap-2 text-sm text-muted mt-0.5">
                       <Calendar size={14} />
                       {new Date(
                         inst.expected_date + "T12:00:00",
@@ -137,9 +125,9 @@ export function PurchaseDetailsModal({
                     </div>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p
-                      className={`font-bold ${isInstCancelled ? "text-slate-400" : "text-slate-800"}`}
+                      className={`font-bold ${isInstCancelled ? "text-muted" : "text-primary"}`}
                     >
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
@@ -148,18 +136,18 @@ export function PurchaseDetailsModal({
                     </p>
 
                     {inst.status === "paid" ? (
-                      <span className="text-xs text-emerald-600 font-bold flex items-center justify-end gap-1 mt-1">
+                      <span className="text-xs text-income font-bold flex items-center sm:justify-end gap-1 mt-1">
                         <CheckCircle2 size={12} /> Pago
                       </span>
                     ) : isInstCancelled ? (
-                      <span className="text-xs text-slate-400 font-bold flex items-center justify-end gap-1 mt-1 uppercase">
+                      <span className="text-xs text-muted font-bold flex items-center sm:justify-end gap-1 mt-1 uppercase">
                         Estornada
                       </span>
                     ) : (
                       <button
                         disabled={isPaying || !selectedAccountId}
                         onClick={() => handlePay(inst.id)}
-                        className="text-xs bg-purple-600 text-white px-4 py-1.5 rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors mt-1 font-medium"
+                        className="btn btn-primary min-h-9 px-4 mt-2 text-xs"
                       >
                         {isPaying ? "Processando..." : "Pagar Parcela"}
                       </button>
@@ -172,22 +160,22 @@ export function PurchaseDetailsModal({
 
           {/* Botão de Cancelamento (Visível apenas se a compra não estiver cancelada) */}
           {!isPurchaseCancelled && (
-            <div className="mt-8 pt-6 border-t border-slate-100">
+            <div className="pt-6 border-t border-subtle">
               <button
                 onClick={handleCancel}
                 disabled={isCancelling}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium transition-colors disabled:opacity-50"
+                className="btn btn-danger w-full px-4"
               >
                 <Trash2 size={18} />
                 {isCancelling ? "Cancelando..." : "Cancelar Compra"}
               </button>
-              <p className="text-center text-xs text-slate-400 mt-2">
+              <p className="text-center text-xs text-muted mt-2">
                 O limite das parcelas em aberto será restaurado.
               </p>
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </ModalBody>
+    </Modal>
   );
 }

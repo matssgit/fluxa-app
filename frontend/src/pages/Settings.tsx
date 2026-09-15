@@ -71,7 +71,7 @@ export function Settings() {
   };
 
   return (
-    <div className="w-full animate-fade-in flex flex-col min-h-screen sm:min-h-0">
+    <div className="w-full animate-fade-in flex flex-col min-h-screen sm:min-h-0 pb-20 sm:pb-0">
       <div className="pt-6 px-4 sm:px-0 sm:pt-0 mb-6">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">
           Configurações
@@ -81,9 +81,9 @@ export function Settings() {
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-2 sm:gap-6 lg:gap-10 flex-1">
-        <aside className="w-full md:w-64 shrink-0 px-4 sm:px-0">
-          <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible pb-3 md:pb-0 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
+      <div className="flex flex-col md:grid md:grid-cols-[15rem_minmax(0,1fr)] gap-4 sm:gap-6 lg:gap-10 flex-1">
+        <aside className="w-full shrink-0 px-4 sm:px-0 md:sticky md:top-28 md:self-start">
+          <nav className="flex md:flex-col gap-2 overflow-x-auto md:overflow-visible p-2 sm:p-3 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none rounded-tl-[2rem] rounded-br-[2rem] rounded-tr-xl rounded-bl-xl bg-elevated/55 border border-border">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -127,9 +127,9 @@ export function Settings() {
 
             <button
               onClick={signOut}
-              className="hidden md:flex items-center gap-3 w-full p-3 rounded-2xl hover:bg-red-500/10 text-red-500 transition-colors text-left cursor-pointer group"
+              className="hidden md:flex items-center gap-3 w-full p-3 rounded-2xl hover:bg-expense-soft text-expense transition-colors text-left cursor-pointer group"
             >
-              <div className="p-2 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+              <div className="p-2 rounded-xl bg-expense-soft transition-colors">
                 <LogOut size={18} />
               </div>
               <span className="text-sm font-bold">Sair da conta</span>
@@ -137,7 +137,7 @@ export function Settings() {
           </nav>
         </aside>
 
-        <main className="flex-1 min-w-0 bg-surface rounded-3xl shadow-sm border border-subtle/30 mx-4 sm:mx-0 mb-28 sm:mb-20 p-5 sm:p-8 min-h-[50vh]">
+        <main className="relative flex-1 min-w-0 bg-surface rounded-tl-[2.75rem] rounded-br-[2.75rem] rounded-tr-xl rounded-bl-xl border border-border mx-4 sm:mx-0 mb-28 sm:mb-20 p-5 sm:p-8 lg:p-10 min-h-[50vh] overflow-hidden before:absolute before:right-0 before:top-0 before:w-32 before:h-32 before:rounded-bl-full before:bg-brand/4">
           {renderActiveTab()}
         </main>
       </div>

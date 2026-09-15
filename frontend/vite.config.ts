@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: [
-        "favicon.ico",
+        "favicon/favicon.ico",
         "apple-touch-icon.png",
         "favicon-32x32.png",
         "favicon-16x16.png",
@@ -17,8 +17,9 @@ export default defineConfig({
         name: "Fluxa",
         short_name: "Fluxa",
         description: "Gestão Financeira Pessoal",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#173f36",
+        background_color: "#f3f0e7",
+        lang: "pt-BR",
         display: "standalone",
         start_url: "/",
         scope: "/",

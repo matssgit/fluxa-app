@@ -124,7 +124,7 @@ export function InstallmentsList() {
 
                   <td className="py-4 text-right pr-2">
                     {inst.status === "paid" ? (
-                      <span className="inline-flex items-center justify-end gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-extrabold uppercase tracking-[0.15em]">
+                      <span className="badge badge-success justify-end gap-1.5 text-[10px] uppercase tracking-[0.15em]">
                         <CheckCircle2 size={13} /> Pago
                       </span>
                     ) : inst.status === "cancelled" ? (
@@ -137,7 +137,7 @@ export function InstallmentsList() {
                           onClick={() =>
                             setCancellingPurchaseId(inst.purchase_id)
                           }
-                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-elevated hover:bg-red-500/10 hover:text-red-500 text-secondary text-xs font-bold transition-all duration-200 cursor-pointer border border-subtle/30"
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-elevated hover:bg-expense-soft hover:text-expense text-secondary text-xs font-bold transition-all duration-200 cursor-pointer border border-border"
                         >
                           Cancelar
                         </button>

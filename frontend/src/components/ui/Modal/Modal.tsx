@@ -37,11 +37,11 @@ export function Modal({ isOpen, onClose, size = "md", children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/20 backdrop-blur-xs animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#102f29]/35 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className={`relative w-[95%] sm:w-full ${sizeMap[size]} max-h-[85dvh] flex flex-col bg-surface border border-subtle shadow-md rounded-2xl overflow-hidden animate-scale-in`}
+        className={`relative w-[95%] sm:w-full ${sizeMap[size]} max-h-[85dvh] flex flex-col bg-surface border border-border shadow-md rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl overflow-hidden animate-scale-in`}
         onClick={(e) => e.stopPropagation()}
       >
         {children}

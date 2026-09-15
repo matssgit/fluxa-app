@@ -35,7 +35,8 @@ export function CreditSummaryWidget() {
     }).format(val);
 
   return (
-    <div className="card-default p-6 sm:p-8 flex flex-col justify-between border-subtle/30 shadow-sm">
+    <section className="relative overflow-hidden p-6 sm:p-8 flex flex-col justify-between bg-surface border border-border rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl">
+      <div className="absolute -right-16 -bottom-20 w-48 h-48 rounded-full border-[28px] border-brand/4 pointer-events-none" />
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
@@ -105,7 +106,7 @@ export function CreditSummaryWidget() {
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     usedPercentage > 85
-                      ? "bg-red-500 shadow-red-500/30"
+                      ? "bg-expense"
                       : usedPercentage > 70
                         ? "bg-amber-500 shadow-amber-500/30"
                         : "bg-brand shadow-brand/30"
@@ -117,7 +118,7 @@ export function CreditSummaryWidget() {
                 <span className="text-muted">Consumo global</span>
                 <span
                   className={
-                    usedPercentage > 85 ? "text-red-500" : "text-secondary"
+                    usedPercentage > 85 ? "text-expense" : "text-secondary"
                   }
                 >
                   {usedPercentage.toFixed(1)}% utilizado
@@ -129,13 +130,13 @@ export function CreditSummaryWidget() {
       </div>
 
       {usedPercentage > 85 && (
-        <div className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-xs font-semibold text-red-500">
+        <div className="mt-4 p-3 rounded-xl bg-expense-soft border border-expense/20 flex items-center gap-2 text-xs font-semibold text-expense">
           <ShieldAlert size={16} className="shrink-0" />
           <span>
             Alerta: Você está se aproximando do limite máximo do seu crédito.
           </span>
         </div>
       )}
-    </div>
+    </section>
   );
 }

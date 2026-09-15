@@ -2,6 +2,7 @@
 export type FinancialEventStatus =
   | "pending"
   | "completed"
+  | "paid"
   | "future"
   | "cancelled";
 export type FinancialEventFlow = "income" | "expense" | "transfer";

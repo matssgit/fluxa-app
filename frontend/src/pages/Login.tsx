@@ -5,7 +5,15 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../hooks/useAuth";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ShieldAlert, KeyRound, MailWarning } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  ShieldAlert,
+  ShieldCheck,
+  KeyRound,
+  MailWarning,
+  TrendingUp,
+} from "lucide-react";
 import { api } from "../api/client";
 
 type LoginStep = "credentials" | "two_factor" | "recovery" | "unverified";
@@ -83,9 +91,7 @@ export function Login() {
 
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Botão clicado!"); // Adicione isso
     const currentEmail = getValues("email");
-    console.log("E-mail capturado:", currentEmail); // Adicione isso
     navigate("/forgot-password", { state: { email: currentEmail } });
   };
 
@@ -215,11 +221,83 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+    <div className="min-h-screen bg-background relative overflow-hidden transition-colors duration-300">
+      <div className="absolute -top-48 -right-32 w-112 h-112 rounded-full bg-brand/6 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 left-1/3 w-96 h-96 rounded-full bg-accent/6 blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 min-h-screen grid lg:grid-cols-[1.18fr_0.82fr]">
+        <aside className="hidden lg:flex m-4 mr-0 rounded-[2.25rem] bg-[#173f36] text-[#fffdf7] p-12 xl:p-16 relative overflow-hidden flex-col justify-between shadow-md">
+          <div className="absolute -right-28 -top-24 w-112 h-112 rounded-full border-[70px] border-white/5" />
+          <div className="absolute -left-28 bottom-24 w-80 h-80 rounded-full border-[44px] border-[#829b88]/12" />
+          <div className="absolute right-20 bottom-1/3 w-40 h-64 rounded-[50%] bg-[#829b88]/8 rotate-35" />
+
+          <div className="relative flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center">
+              <ArrowLeftRight size={21} strokeWidth={2} />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold tracking-[-0.05em]">
+                Fluxa
+              </div>
+              <div className="text-[9px] uppercase tracking-[0.24em] text-[#dfe8de]/70 font-bold">
+                vida financeira
+              </div>
+            </div>
+          </div>
+
+          <div className="relative max-w-xl">
+            <span className="text-xs uppercase tracking-[0.22em] text-[#b9cdbf] font-bold">
+              Clareza em movimento
+            </span>
+            <h1 className="mt-5 text-5xl xl:text-6xl leading-[1.04] font-extrabold tracking-[-0.06em]">
+              Sua vida financeira,
+              <span className="block text-[#a9c8b7]">mais leve e fluida.</span>
+            </h1>
+            <p className="mt-6 text-base text-[#dfe8de]/75 leading-relaxed max-w-md">
+              Organize decisões, acompanhe seu fluxo e construa tranquilidade
+              com uma visão clara do seu dinheiro.
+            </p>
+          </div>
+
+          <div className="relative grid grid-cols-[1.2fr_0.8fr] gap-4">
+            <div className="rounded-3xl bg-white/8 border border-white/10 p-6 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-xs text-[#dfe8de]/70">
+                <span>Saldo disponível</span>
+                <TrendingUp size={17} />
+              </div>
+              <div className="mt-5 text-3xl font-extrabold tracking-[-0.04em] tabular-nums">
+                R$ 8.420,50
+              </div>
+              <div className="mt-5 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full w-3/4 rounded-full bg-[#9fbead]" />
+              </div>
+            </div>
+            <div className="rounded-3xl bg-[#f4f0e6] text-[#173f36] p-6 flex flex-col justify-between">
+              <ShieldCheck size={22} />
+              <div>
+                <div className="text-2xl font-extrabold">Protegido</div>
+                <div className="text-xs text-[#52635d] mt-1">
+                  Segurança em cada acesso
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section className="flex flex-col justify-center py-10 px-4 sm:px-8 lg:px-12 xl:px-16">
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-7">
+            <div className="w-10 h-10 rounded-2xl bg-brand text-white dark:text-[#102f29] flex items-center justify-center">
+              <ArrowLeftRight size={19} />
+            </div>
+            <span className="text-2xl font-extrabold tracking-[-0.05em] text-primary">
+              Fluxa
+            </span>
+          </div>
+
       <div className="w-full sm:mx-auto sm:max-w-md">
         {step === "credentials" && (
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-primary">
-            Acesse sua conta
+          <h2 className="text-center lg:text-left text-3xl sm:text-4xl font-extrabold tracking-[-0.05em] text-primary">
+            Que bom ter você aqui.
           </h2>
         )}
         {step === "two_factor" && (
@@ -227,7 +305,7 @@ export function Login() {
             <div className="p-4 bg-brand/10 text-brand rounded-full mb-4">
               <ShieldAlert size={32} />
             </div>
-            <h2 className="text-center text-2xl font-bold tracking-tight text-primary">
+            <h2 className="text-center text-3xl font-extrabold tracking-[-0.04em] text-primary">
               Verificação em duas etapas
             </h2>
           </div>
@@ -237,7 +315,7 @@ export function Login() {
             <div className="p-4 bg-amber-500/10 text-amber-500 rounded-full mb-4">
               <KeyRound size={32} />
             </div>
-            <h2 className="text-center text-2xl font-bold tracking-tight text-primary">
+            <h2 className="text-center text-3xl font-extrabold tracking-[-0.04em] text-primary">
               Código de recuperação
             </h2>
           </div>
@@ -247,23 +325,25 @@ export function Login() {
             <div className="p-4 bg-blue-500/10 text-blue-500 rounded-full mb-4">
               <MailWarning size={32} />
             </div>
-            <h2 className="text-center text-2xl font-bold tracking-tight text-primary">
+            <h2 className="text-center text-3xl font-extrabold tracking-[-0.04em] text-primary">
               Verifique seu e-mail
             </h2>
           </div>
         )}
       </div>
 
-      <div className="mt-8 w-full sm:mx-auto sm:max-w-md">
-        <div className="bg-surface py-8 px-6 shadow-xl rounded-3xl border border-subtle transition-colors duration-300">
+      <div className="mt-7 w-full sm:mx-auto sm:max-w-md">
+        <div className="bg-surface py-8 sm:py-10 px-6 sm:px-9 shadow-md rounded-tl-[2.75rem] rounded-br-[2.75rem] rounded-tr-xl rounded-bl-xl border border-border transition-colors duration-300 relative overflow-hidden">
+          <div className="absolute -right-12 -top-14 w-36 h-36 rounded-full border-[22px] border-brand/4 pointer-events-none" />
+          <div className="relative">
           {error && (
-            <div className="mb-6 p-3 bg-red-50 text-red-500 text-sm rounded-xl text-center">
+            <div className="mb-6 p-3.5 bg-expense-soft text-expense text-sm rounded-2xl text-center font-medium">
               {error}
             </div>
           )}
 
           {resendSuccess && (
-            <div className="mb-6 p-3 bg-green-50 text-green-600 text-sm rounded-xl text-center">
+            <div className="mb-6 p-3.5 bg-income-soft text-income text-sm rounded-2xl text-center font-medium">
               {resendSuccess}
             </div>
           )}
@@ -281,7 +361,7 @@ export function Login() {
                   <input
                     type="email"
                     {...registerLogin("email")}
-                    className="block w-full appearance-none rounded-xl border border-subtle px-4 py-3 text-primary placeholder:text-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand sm:text-sm bg-background transition-colors"
+                    className="block w-full min-h-12 appearance-none rounded-2xl border border-border px-4 py-3 text-primary placeholder:text-muted sm:text-sm bg-surface-muted transition-all"
                   />
                   {loginErrors.email && (
                     <span className="text-red-500 text-xs mt-1 block">
@@ -308,7 +388,7 @@ export function Login() {
                   <input
                     type="password"
                     {...registerLogin("password")}
-                    className="block w-full appearance-none rounded-xl border border-subtle px-4 py-3 text-primary placeholder:text-muted focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand sm:text-sm bg-background transition-colors"
+                    className="block w-full min-h-12 appearance-none rounded-2xl border border-border px-4 py-3 text-primary placeholder:text-muted sm:text-sm bg-surface-muted transition-all"
                   />
                   {loginErrors.password && (
                     <span className="text-red-500 text-xs mt-1 block">
@@ -321,7 +401,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex w-full justify-center rounded-xl border border-transparent bg-brand py-3 px-4 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-70 transition-colors"
+                className="flex w-full min-h-12 items-center justify-center rounded-full bg-brand py-3 px-4 text-sm font-bold text-white dark:text-[#102f29] shadow-sm hover:bg-brand-light focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-70 transition-all"
               >
                 {isLoading ? "Entrando..." : "Entrar"}
               </button>
@@ -353,7 +433,7 @@ export function Login() {
                   maxLength={6}
                   placeholder="000000"
                   {...registerTotp("token")}
-                  className="block w-full text-center tracking-[0.5em] font-mono text-xl appearance-none rounded-xl border border-subtle px-4 py-4 text-primary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand bg-background transition-colors"
+                  className="block w-full text-center tracking-[0.5em] font-mono text-xl appearance-none rounded-2xl border border-border px-4 py-4 text-primary bg-surface-muted transition-all"
                 />
                 {totpErrors.token && (
                   <span className="text-red-500 text-xs mt-2 block text-center font-medium">
@@ -365,7 +445,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex w-full justify-center rounded-xl border border-transparent bg-brand py-3 px-4 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-70 transition-colors"
+                className="flex w-full min-h-12 items-center justify-center rounded-full bg-brand py-3 px-4 text-sm font-bold text-white dark:text-[#102f29] shadow-sm hover:bg-brand-light disabled:opacity-70 transition-all"
               >
                 {isLoading ? "Verificando..." : "Verificar"}
               </button>
@@ -407,7 +487,7 @@ export function Login() {
                   type="text"
                   {...registerRecovery("recoveryCode")}
                   placeholder="Seu código de recuperação"
-                  className="block w-full text-center font-mono text-sm appearance-none rounded-xl border border-subtle px-4 py-4 text-primary focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand bg-background transition-colors"
+                  className="block w-full text-center font-mono text-sm appearance-none rounded-2xl border border-border px-4 py-4 text-primary bg-surface-muted transition-all"
                 />
                 {recoveryErrors.recoveryCode && (
                   <span className="text-red-500 text-xs mt-2 block text-center font-medium">
@@ -419,7 +499,7 @@ export function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex w-full justify-center rounded-xl border border-transparent bg-brand py-3 px-4 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-70 transition-colors"
+                className="flex w-full min-h-12 items-center justify-center rounded-full bg-brand py-3 px-4 text-sm font-bold text-white dark:text-[#102f29] shadow-sm hover:bg-brand-light disabled:opacity-70 transition-all"
               >
                 {isLoading ? "Confirmando..." : "Confirmar"}
               </button>
@@ -451,7 +531,7 @@ export function Login() {
                 type="button"
                 onClick={handleResendEmail}
                 disabled={isLoading}
-                className="flex w-full justify-center rounded-xl border border-transparent bg-brand py-3 px-4 text-sm font-medium text-white shadow-sm hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:opacity-70 transition-colors"
+                className="flex w-full min-h-12 items-center justify-center rounded-full bg-brand py-3 px-4 text-sm font-bold text-white dark:text-[#102f29] shadow-sm hover:bg-brand-light disabled:opacity-70 transition-all"
               >
                 {isLoading ? "Enviando..." : "Reenviar e-mail"}
               </button>
@@ -467,7 +547,10 @@ export function Login() {
               </div>
             </div>
           )}
+          </div>
         </div>
+      </div>
+        </section>
       </div>
     </div>
   );

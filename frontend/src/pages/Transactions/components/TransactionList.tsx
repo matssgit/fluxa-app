@@ -85,7 +85,7 @@ export function TransactionList({
   if (transactions.length === 0) {
     if (isSearching) {
       return (
-        <div className="w-full bg-surface rounded-3xl border border-subtle/30 shadow-sm p-12 flex flex-col items-center justify-center text-center">
+        <div className="w-full bg-surface rounded-3xl border border-border shadow-sm px-5 py-12 flex flex-col items-center justify-center text-center">
           <div className="w-16 h-16 bg-elevated rounded-2xl flex items-center justify-center text-muted mb-4 shadow-sm border border-subtle/20">
             <SearchX size={28} />
           </div>
@@ -107,7 +107,7 @@ export function TransactionList({
     }
     if (isFiltering) {
       return (
-        <div className="w-full bg-surface rounded-3xl border border-subtle/30 shadow-sm p-12 flex flex-col items-center justify-center text-center">
+        <div className="w-full bg-surface rounded-3xl border border-border shadow-sm px-5 py-12 flex flex-col items-center justify-center text-center">
           <div className="w-16 h-16 bg-elevated rounded-2xl flex items-center justify-center text-muted mb-4 shadow-sm border border-subtle/20">
             <FilterX size={28} />
           </div>
@@ -124,7 +124,7 @@ export function TransactionList({
       );
     }
     return (
-      <div className="w-full bg-surface rounded-3xl border border-subtle/30 shadow-sm p-12 flex flex-col items-center justify-center text-center">
+      <div className="w-full bg-surface rounded-3xl border border-border shadow-sm px-5 py-12 flex flex-col items-center justify-center text-center">
         <div className="w-16 h-16 bg-elevated rounded-2xl flex items-center justify-center text-muted mb-4 shadow-sm border border-subtle/20">
           <Receipt size={28} />
         </div>
@@ -187,12 +187,12 @@ export function TransactionList({
   return (
     <div className="w-full flex flex-col gap-6">
       {sortedDates.map((dateKey) => (
-        <div key={dateKey} className="flex flex-col gap-3">
-          <h3 className="text-xs font-extrabold tracking-widest text-muted uppercase pl-2">
+        <div key={dateKey} className="grid grid-cols-1 lg:grid-cols-[7.5rem_minmax(0,1fr)] gap-3 lg:gap-5">
+          <h3 className="text-[10px] font-extrabold tracking-[0.18em] text-muted uppercase pl-2 lg:pl-0 lg:pt-5 lg:text-right lg:sticky lg:top-28 lg:self-start">
             {getRelativeDayName(dateKey)}
           </h3>
 
-          <div className="bg-surface rounded-3xl border border-subtle/30 shadow-sm overflow-hidden flex flex-col divide-y divide-subtle/10">
+          <div className="bg-surface rounded-tl-[2rem] rounded-br-[2rem] rounded-tr-xl rounded-bl-xl border border-border overflow-hidden flex flex-col divide-y divide-subtle">
             {groupedEvents[dateKey].map((event) => {
               let Icon = Store;
               if (event.type === "installment") Icon = CreditCard;
@@ -202,10 +202,10 @@ export function TransactionList({
                 <div
                   key={event.id}
                   onClick={() => onEventClick(event)}
-                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 hover:bg-elevated/40 transition-colors cursor-pointer"
+                  className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:px-6 sm:py-5 hover:bg-surface-muted transition-colors cursor-pointer before:absolute before:left-0 before:top-1/2 before:h-0 before:w-1 before:-translate-y-1/2 before:rounded-r-full before:bg-brand before:transition-all hover:before:h-8"
                 >
                   <div className="flex items-start sm:items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-elevated flex items-center justify-center text-muted border border-subtle/20 shrink-0 group-hover:bg-surface transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-elevated flex items-center justify-center text-secondary border border-border shrink-0 group-hover:bg-surface transition-colors">
                       <Icon size={18} />
                     </div>
 
@@ -271,7 +271,7 @@ export function TransactionList({
 
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center shrink-0 w-full sm:w-auto mt-2 sm:mt-0 pl-14 sm:pl-0">
                     <span
-                      className={`text-sm font-bold ${event.flow === "income" ? "text-emerald-500" : "text-red-500"}`}
+                      className={`text-sm font-extrabold ${event.flow === "income" ? "text-income" : "text-expense"}`}
                     >
                       <PrivacyMask amount={event.amount} />
                     </span>
@@ -288,9 +288,9 @@ export function TransactionList({
                         <>
                           <CheckCircle2
                             size={12}
-                            className="text-emerald-500"
+                            className="text-income"
                           />
-                          <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">
+                          <span className="text-[10px] font-bold text-income uppercase tracking-wider">
                             Concluído
                           </span>
                         </>
