@@ -107,15 +107,15 @@ export function Settings() {
                   >
                     <Icon size={18} />
                   </div>
-                  <div className="whitespace-nowrap">
+                  <div className="min-w-0 flex-1 whitespace-nowrap md:whitespace-normal">
                     <span
-                      className={`text-sm font-bold ${
+                      className={`block text-sm font-bold ${
                         isActive ? "text-brand" : "text-primary"
                       }`}
                     >
                       {tab.label}
                     </span>
-                    <span className="hidden md:block text-[11px] font-medium text-muted mt-0.5">
+                    <span className="hidden md:block text-[11px] leading-snug font-medium text-muted mt-0.5 break-words">
                       {tab.description}
                     </span>
                   </div>
