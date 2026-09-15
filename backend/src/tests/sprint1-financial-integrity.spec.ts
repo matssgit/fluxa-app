@@ -149,6 +149,84 @@ describe("Sprint 1 - integridade financeira e concorrência", () => {
     );
   });
 
+  it("exibe entrada e saída comuns no histórico do caixa", async () => {
+    const transactions = [
+      {
+        title: "Salário",
+        amount: 1500,
+        type: "entrada",
+        account_id: accountId,
+        status: "completed",
+      },
+      {
+        title: "Mercado",
+        amount: 120,
+        type: "saida",
+        account_id: accountId,
+        category_id: categoryId,
+        status: "completed",
+      },
+    ];
+
+    for (const payload of transactions) {
+      const response = await app.inject({
+        method: "POST",
+        url: "/transactions",
+        headers: authorization(),
+        payload,
+      });
+      expect(response.statusCode).toBe(201);
+    }
+
+    const eventsResponse = await app.inject({
+      method: "GET",
+      url: "/financial-events?type=transaction&status=completed",
+      headers: authorization(),
+    });
+    expect(eventsResponse.statusCode).toBe(200);
+
+    const events = eventsResponse.json().items;
+    expect(events.find((event: any) => event.title === "Salário")).toEqual(
+      expect.objectContaining({
+        amount: "1500.00",
+        flow: "income",
+        status: "completed",
+        type: "transaction",
+      }),
+    );
+    expect(events.find((event: any) => event.title === "Mercado")).toEqual(
+      expect.objectContaining({
+        amount: "120.00",
+        flow: "expense",
+        status: "completed",
+        type: "transaction",
+      }),
+    );
+
+    const stored = await db("transactions")
+      .where({ user_id: userId })
+      .whereIn("title", ["Salário", "Mercado"])
+      .orderBy("title");
+    expect(
+      stored.map(({ amount, type }) => ({ amount: Number(amount), type })),
+    ).toEqual([
+      { amount: 120, type: "saida" },
+      { amount: 1500, type: "entrada" },
+    ]);
+
+    const summaryResponse = await app.inject({
+      method: "GET",
+      url: "/transactions/summary",
+      headers: authorization(),
+    });
+    expect(summaryResponse.statusCode).toBe(200);
+    expect(summaryResponse.json().summary).toEqual({
+      amount: 1380,
+      income: 1500,
+      expense: 120,
+    });
+  });
+
   it("aceita somente uma de duas compras concorrentes acima do limite somado", async () => {
     const cardId = randomUUID();
     await db("cards").insert({
