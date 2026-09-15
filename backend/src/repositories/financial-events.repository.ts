@@ -3,6 +3,7 @@ import type {
   FinancialEventFilter,
   FinancialEventDTO,
 } from "../types/financial-events.js";
+import { transactionFlowSql } from "../domain/transaction-money.js";
 
 export class FinancialEventsRepository {
   async getEvents(
@@ -13,10 +14,8 @@ export class FinancialEventsRepository {
       .select(
         "t.id",
         "t.title",
-        "t.amount",
-        knex.raw(
-          "CASE WHEN t.amount >= 0 THEN 'income' ELSE 'expense' END as flow",
-        ),
+        knex.raw("ABS(t.amount) as amount"),
+        knex.raw(transactionFlowSql("t") + " as flow"),
         "t.status",
         "t.created_at as date",
         knex.raw(
@@ -114,10 +113,8 @@ export class FinancialEventsRepository {
           .from("transactions as t")
           .whereRaw("t.subscription_id = s.id")
           .whereRaw(
-            "EXTRACT(MONTH FROM t.created_at) = EXTRACT(MONTH FROM CURRENT_DATE)",
-          )
-          .whereRaw(
-            "EXTRACT(YEAR FROM t.created_at) = EXTRACT(YEAR FROM CURRENT_DATE)",
+            "(t.competence = TO_CHAR(CURRENT_DATE, 'YYYY-MM') OR " +
+              "(t.competence IS NULL AND DATE_TRUNC('month', t.created_at) = DATE_TRUNC('month', CURRENT_DATE)))",
           );
       });
 
@@ -152,16 +149,20 @@ export class FinancialEventsRepository {
 
     if (filters.type?.length) mainQuery.whereIn("type", filters.type);
     if (filters.flow?.length) mainQuery.whereIn("flow", filters.flow);
-    if (filters.status?.length) mainQuery.whereIn("status", filters.status);
+    if (filters.status?.length) {
+      const statuses = new Set(filters.status);
+      if (statuses.has("completed")) statuses.add("paid");
+      mainQuery.whereIn("status", [...statuses]);
+    }
     if (filters.categoryIds?.length)
       mainQuery.whereIn("categoryId", filters.categoryIds);
     if (filters.accountIds?.length)
       mainQuery.whereIn("accountId", filters.accountIds);
 
     if (filters.cardIds?.length) {
-      mainQuery.whereRaw(
-        `context->>'cardId' IN (${filters.cardIds.map((id) => `'${id}'`).join(",")})`,
-      );
+      mainQuery.whereRaw("context->>'cardId' = ANY(?::text[])", [
+        filters.cardIds,
+      ]);
     }
 
     if (filters.minAmount !== undefined)

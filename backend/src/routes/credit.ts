@@ -3,6 +3,11 @@ import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
+import {
+  InstallmentPaymentError,
+  payInstallment,
+} from "../services/installment-payments.service.js";
+import { getInstallmentDueDate } from "../utils/installment-dates.js";
 
 export async function creditRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
@@ -39,8 +44,11 @@ export async function creditRoutes(app: FastifyInstance) {
 
       return reply.status(201).send(novoCartao);
     } catch (error) {
+      if (error instanceof z.ZodError) throw error;
       console.error("Erro ao cadastrar cartão:", error);
-      return reply.status(500).send({ message: "Erro interno", error });
+      return reply
+        .status(500)
+        .send({ message: "Erro interno ao cadastrar cartão." });
     }
   });
 
@@ -74,38 +82,49 @@ export async function creditRoutes(app: FastifyInstance) {
       const body = updateCardSchema.parse(request.body);
       const userId = (request.user as any)?.sub;
 
-      const card = await db("cards").where({ id, user_id: userId }).first();
+      const result = await db.transaction(async (trx) => {
+        const card = await trx("cards")
+          .where({ id, user_id: userId })
+          .forUpdate()
+          .first();
 
-      if (!card) {
+        if (!card) return "not_found" as const;
+
+        const consumedLimit =
+          Number(card.total_limit) - Number(card.available_limit);
+        const newAvailableLimit = body.total_limit - consumedLimit;
+
+        if (newAvailableLimit < 0) return "below_consumed" as const;
+
+        await trx("cards").where({ id, user_id: userId }).update({
+          name: body.name,
+          brand: body.brand,
+          due_day: body.due_day,
+          total_limit: body.total_limit,
+          available_limit: newAvailableLimit,
+          color: body.color,
+        });
+
+        return "updated" as const;
+      });
+
+      if (result === "not_found") {
         return reply.status(404).send({ message: "Cartão não encontrado." });
       }
-
-      const consumedLimit =
-        Number(card.total_limit) - Number(card.available_limit);
-      const newAvailableLimit = body.total_limit - consumedLimit;
-
-      if (newAvailableLimit < 0) {
+      if (result === "below_consumed") {
         return reply.status(400).send({
           message:
             "O novo limite não pode ser menor que o valor já consumido nas faturas.",
         });
       }
 
-      await db("cards").where({ id }).update({
-        name: body.name,
-        brand: body.brand,
-        due_day: body.due_day,
-        total_limit: body.total_limit,
-        available_limit: newAvailableLimit,
-        color: body.color,
-      });
-
       return reply.status(204).send();
     } catch (error) {
+      if (error instanceof z.ZodError) throw error;
       console.error("Erro ao editar cartão:", error);
       return reply
         .status(500)
-        .send({ message: "Erro ao editar cartão", error });
+        .send({ message: "Erro interno ao editar cartão." });
     }
   });
 
@@ -129,14 +148,6 @@ export async function creditRoutes(app: FastifyInstance) {
         return reply.status(401).send({ message: "Não autenticado." });
       }
 
-      const card = await db("cards")
-        .where({ id: body.card_id, user_id: userId })
-        .first();
-
-      if (!card) {
-        return reply.status(404).send({ message: "Cartão não encontrado." });
-      }
-
       const category = await db("categories")
         .where({ id: body.category_id, user_id: userId })
         .first();
@@ -147,17 +158,24 @@ export async function creditRoutes(app: FastifyInstance) {
           .send({ message: "Categoria inválida ou não pertence a você." });
       }
 
-      const totalAmountToDeduct = Number(body.total_amount);
-      const availableLimit = Number(card.available_limit);
-
-      if (availableLimit < totalAmountToDeduct) {
-        return reply.status(400).send({
-          message:
-            "Verifique o limite do cartão. Limite insuficiente para esta compra.",
-        });
-      }
-
       await db.transaction(async (trx) => {
+        const card = await trx("cards")
+          .where({ id: body.card_id, user_id: userId })
+          .forUpdate()
+          .first();
+
+        if (!card) throw new Error("CARD_NOT_FOUND");
+        if (Number(card.available_limit) < body.total_amount) {
+          throw new Error("INSUFFICIENT_LIMIT");
+        }
+
+        const limitUpdated = await trx("cards")
+          .where({ id: body.card_id, user_id: userId })
+          .andWhere("available_limit", ">=", body.total_amount)
+          .decrement("available_limit", body.total_amount);
+
+        if (limitUpdated !== 1) throw new Error("INSUFFICIENT_LIMIT");
+
         const purchaseId = randomUUID();
 
         await trx("credit_purchases").insert({
@@ -172,10 +190,6 @@ export async function creditRoutes(app: FastifyInstance) {
           total_installments: body.total_installments,
           purchase_date: body.purchase_date.split("T")[0],
         });
-
-        await trx("cards")
-          .where({ id: body.card_id })
-          .decrement("available_limit", body.total_amount);
 
         const baseInstallmentAmount =
           Math.floor((body.total_amount / body.total_installments) * 100) / 100;
@@ -199,10 +213,6 @@ export async function creditRoutes(app: FastifyInstance) {
             );
           }
 
-          const dateObj = new Date(`${body.purchase_date}T12:00:00`);
-          dateObj.setUTCMonth(dateObj.getUTCMonth() + i);
-          dateObj.setUTCDate(card.due_day);
-
           installmentsToInsert.push({
             id: randomUUID(),
             user_id: userId,
@@ -210,7 +220,11 @@ export async function creditRoutes(app: FastifyInstance) {
             installment_number: i,
             total_installments: body.total_installments,
             amount: currentAmount,
-            expected_date: dateObj.toISOString().split("T")[0],
+            expected_date: getInstallmentDueDate(
+              body.purchase_date,
+              i,
+              card.due_day,
+            ),
             status: "pending",
           });
         }
@@ -219,7 +233,16 @@ export async function creditRoutes(app: FastifyInstance) {
       });
 
       return reply.status(201).send();
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === "CARD_NOT_FOUND") {
+        return reply.status(404).send({ message: "Cartão não encontrado." });
+      }
+      if (error instanceof Error && error.message === "INSUFFICIENT_LIMIT") {
+        return reply.status(400).send({
+          message:
+            "Verifique o limite do cartão. Limite insuficiente para esta compra.",
+        });
+      }
       console.error("Erro ao lançar compra:", error);
       return reply
         .status(500)
@@ -265,72 +288,42 @@ export async function creditRoutes(app: FastifyInstance) {
       const { account_id } = bodySchema.parse(request.body);
       const userId = (request.user as any)?.sub;
 
-      if (account_id) {
-        const account = await db("accounts")
-          .where({ id: account_id, user_id: userId })
-          .first();
-
-        if (!account) {
-          return reply.status(403).send({
-            message:
-              "Operação negada. A conta selecionada não pertence a você.",
-          });
-        }
-      }
-
-      await db.transaction(async (trx) => {
-        // Utiliza row-level lock (FOR UPDATE) para evitar race conditions no pagamento duplo da mesma parcela
-        const installment = await trx("installments")
-          .where({ id, user_id: userId })
-          .forUpdate()
-          .first();
-
-        if (!installment) throw new Error("INSTALLMENT_NOT_FOUND");
-        if (installment.status === "paid") throw new Error("ALREADY_PAID");
-
-        const purchase = await trx("credit_purchases")
-          .where({ id: installment.purchase_id, user_id: userId })
-          .first();
-
-        if (!purchase) throw new Error("PURCHASE_NOT_FOUND");
-
-        const today = new Date().toISOString().split("T")[0];
-
-        await trx("installments").where({ id }).update({
-          status: "paid",
-          completed_date: today,
-        });
-
-        if (account_id) {
-          const amountToDeduct = Math.abs(Number(installment.amount));
-
-          await trx("transactions").insert({
-            id: randomUUID(),
-            user_id: userId,
-            account_id: account_id,
-            category_id: purchase.category_id,
-            title: `Fatura: ${purchase.title} (${installment.installment_number}/${installment.total_installments})`,
-            amount: -amountToDeduct,
-            status: "completed",
-          });
-        }
-
-        await trx("cards")
-          .where({ id: purchase.card_id })
-          .increment("available_limit", Number(installment.amount));
+      await payInstallment({
+        installmentId: id,
+        userId,
+        accountId: account_id,
       });
 
       return reply.status(204).send();
-    } catch (error: any) {
-      if (error.message === "INSTALLMENT_NOT_FOUND") {
+    } catch (error: unknown) {
+      if (
+        error instanceof InstallmentPaymentError &&
+        error.code === "INSTALLMENT_NOT_FOUND"
+      ) {
         return reply.status(404).send({ message: "Parcela não encontrada." });
       }
-      if (error.message === "PURCHASE_NOT_FOUND") {
+      if (
+        error instanceof InstallmentPaymentError &&
+        error.code === "PURCHASE_NOT_FOUND"
+      ) {
         return reply
           .status(404)
           .send({ message: "Compra vinculada não encontrada." });
       }
-      if (error.message === "ALREADY_PAID") {
+      if (
+        error instanceof InstallmentPaymentError &&
+        error.code === "ACCOUNT_NOT_FOUND"
+      ) {
+        return reply.status(403).send({
+          message: "Operação negada. A conta selecionada não pertence a você.",
+        });
+      }
+      if (
+        error instanceof InstallmentPaymentError &&
+        ["ALREADY_PAID", "PURCHASE_CANCELLED", "INSTALLMENT_CANCELLED"].includes(
+          error.code,
+        )
+      ) {
         return reply.status(400).send({ message: "Já paga." });
       }
 
@@ -377,24 +370,19 @@ export async function creditRoutes(app: FastifyInstance) {
       const { id } = paramsSchema.parse(request.params);
       const userId = (request.user as any)?.sub;
 
-      await db.transaction(async (trx) => {
+      const result = await db.transaction(async (trx) => {
         const purchase = await trx("credit_purchases")
           .where({ id, user_id: userId })
+          .forUpdate()
           .first();
 
-        if (!purchase) {
-          return reply.status(404).send({ message: "Compra não encontrada." });
-        }
+        if (!purchase) return "not_found" as const;
+        if (purchase.status === "cancelled") return "already_cancelled" as const;
 
-        if (purchase.status === "cancelled") {
-          return reply
-            .status(400)
-            .send({ message: "Esta compra já está cancelada." });
-        }
-
-        const installments = await trx("installments").where({
-          purchase_id: id,
-        });
+        const installments = await trx("installments")
+          .where({ purchase_id: id })
+          .orderBy("id", "asc")
+          .forUpdate();
 
         const pendingInstallments = installments.filter(
           (inst) => inst.status === "pending",
@@ -405,9 +393,20 @@ export async function creditRoutes(app: FastifyInstance) {
           0,
         );
 
+        const card = await trx("cards")
+          .where({ id: purchase.card_id, user_id: userId })
+          .forUpdate()
+          .first();
+        if (!card) throw new Error("CARD_NOT_FOUND");
+
         await trx("cards")
-          .where({ id: purchase.card_id })
-          .increment("available_limit", amountToRestore);
+          .where({ id: card.id })
+          .update({
+            available_limit: trx.raw(
+              "LEAST(total_limit, available_limit + ?)",
+              [amountToRestore],
+            ),
+          });
 
         await trx("credit_purchases")
           .where({ id })
@@ -416,7 +415,18 @@ export async function creditRoutes(app: FastifyInstance) {
         await trx("installments")
           .where({ purchase_id: id, status: "pending" })
           .update({ status: "cancelled" });
+
+        return "cancelled" as const;
       });
+
+      if (result === "not_found") {
+        return reply.status(404).send({ message: "Compra não encontrada." });
+      }
+      if (result === "already_cancelled") {
+        return reply
+          .status(400)
+          .send({ message: "Esta compra já está cancelada." });
+      }
 
       return reply.status(204).send();
     } catch (error) {

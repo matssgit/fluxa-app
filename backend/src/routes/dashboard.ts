@@ -2,6 +2,11 @@ import { db as knex } from "../database/database.js";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
 import { endOfMonth, startOfMonth, format } from "date-fns";
+import {
+  getSignedTransactionAmount,
+  getTransactionDirection,
+  getTransactionMagnitude,
+} from "../domain/transaction-money.js";
 
 export async function dashboardRoutes(app: FastifyInstance) {
   app.get("/", { preHandler: [checkAuth] }, async (request, reply) => {
@@ -14,25 +19,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
 
     const balanceResult = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
-      .select("amount", "type");
+      .select("amount", "type", "subscription_id");
 
-    let currentBalance = 0;
-    balanceResult.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const typeStr = String(t.type || "").toLowerCase();
-
-      // Inteligência relacional de legado: Se type for nulo/antigo, infere receita caso amount seja > 0
-      if (
-        typeStr === "entrada" ||
-        typeStr === "income" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      ) {
-        currentBalance += Math.abs(num);
-      } else {
-        currentBalance -= Math.abs(num);
-      }
-    });
+    const currentBalance = balanceResult.reduce(
+      (total, transaction) =>
+        total + getSignedTransactionAmount(transaction),
+      0,
+    );
 
     const completedMonthTransactions = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
@@ -41,20 +34,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
           .orWhereBetween("expected_date", [monthStart, monthEnd])
           .orWhereBetween("created_at", [monthStart, monthEnd]);
       })
-      .select("type", "amount");
+      .select("type", "amount", "subscription_id");
 
     let totalIncome = 0;
     let totalExpenses = 0;
     completedMonthTransactions.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const val = Math.abs(num);
-      const typeStr = String(t.type || "").toLowerCase();
-      if (
-        typeStr === "entrada" ||
-        typeStr === "income" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      ) {
+      const val = getTransactionMagnitude(t);
+      if (getTransactionDirection(t) === "entrada") {
         totalIncome += val;
       } else {
         totalExpenses += val;
@@ -70,9 +56,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
       .where({ user_id: userId, status: "completed" })
       .whereNotNull("subscription_id")
       .where(function () {
-        this.whereBetween("completed_date", [monthStart, monthEnd])
-          .orWhereBetween("expected_date", [monthStart, monthEnd])
-          .orWhereBetween("created_at", [monthStart, monthEnd]);
+        this.where("competence", monthReference).orWhere(function () {
+          this.whereNull("competence").andWhere(function () {
+            this.whereBetween("completed_date", [monthStart, monthEnd])
+              .orWhereBetween("expected_date", [monthStart, monthEnd])
+              .orWhereBetween("created_at", [monthStart, monthEnd]);
+          });
+        });
       })
       .select("subscription_id");
 
@@ -94,20 +84,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
           .orWhereBetween("completed_date", [monthStart, monthEnd])
           .orWhereBetween("created_at", [monthStart, monthEnd]);
       })
-      .select("type", "amount");
+      .select("type", "amount", "subscription_id");
 
     let expectedIncome = 0;
     let pendingExpensesOnly = 0;
     pendingMonthTransactions.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const val = Math.abs(num);
-      const typeStr = String(t.type || "").toLowerCase();
-      if (
-        typeStr === "entrada" ||
-        typeStr === "income" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      ) {
+      const val = getTransactionMagnitude(t);
+      if (getTransactionDirection(t) === "entrada") {
         expectedIncome += val;
       } else {
         pendingExpensesOnly += val;
@@ -154,18 +137,12 @@ export async function dashboardRoutes(app: FastifyInstance) {
         "amount",
         "expected_date as dueDate",
         "type",
+        "subscription_id",
       );
 
-    const filteredPendingExpenses = pendingTransactionsList.filter((t) => {
-      const num = Number(t.amount || 0);
-      const typeStr = String(t.type || "").toLowerCase();
-      return !(
-        typeStr === "entrada" ||
-        typeStr === "income" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      );
-    });
+    const filteredPendingExpenses = pendingTransactionsList.filter(
+      (transaction) => getTransactionDirection(transaction) === "saida",
+    );
 
     const pendingInstallmentsList = await knex("installments")
       .join(
@@ -225,6 +202,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
         "expected_date",
         "created_at",
         "type",
+        "subscription_id",
       );
 
     return reply.send({
@@ -242,22 +220,15 @@ export async function dashboardRoutes(app: FastifyInstance) {
       },
       pendencies,
       timeline: timeline.map((t) => {
-        const num = Number(t.amount || 0);
-        const typeStr = String(t.type || "").toLowerCase();
-        const isIncome =
-          typeStr === "entrada" ||
-          typeStr === "income" ||
-          typeStr === "receita" ||
-          (typeStr === "" && num > 0);
         const effDate = t.completed_date || t.expected_date || t.created_at;
         return {
           id: t.id,
           type: "cash" as const,
           title: t.title || t.description || "Movimentação",
           description: "Movimentação de caixa",
-          amount: Math.abs(num),
+          amount: getTransactionMagnitude(t),
           date: formatDueDateBR(effDate),
-          cashType: isIncome ? "entrada" : "saida",
+          cashType: getTransactionDirection(t),
         };
       }),
       alerts: [],

@@ -3,7 +3,7 @@ import { env } from "../env/index.js";
 
 export class DemoCleanupService {
   static async runCleanup() {
-    if (!env.DEMO_CLEANUP_ENABLED) {
+    if (env.DEMO_CLEANUP_ENABLED !== true) {
       return;
     }
 
@@ -19,6 +19,7 @@ export class DemoCleanupService {
 
       await db.transaction(async (trx) => {
         const usersToDelete = await trx("users")
+          .where("is_demo", true)
           .where("created_at", "<=", expirationDate)
           .select("id");
 
@@ -29,7 +30,7 @@ export class DemoCleanupService {
 
         const userIds = usersToDelete.map((u) => u.id);
         console.log(
-          `[DEMO CLEANUP] ${userIds.length} usuário(s) encontrado(s) para remoção.`,
+          `[DEMO CLEANUP] ${userIds.length} usuário(s) demo encontrado(s) para remoção. Retenção: ${env.DEMO_DATA_RETENTION_DAYS} dias.`,
         );
 
         await trx("transactions").whereIn("user_id", userIds).del();

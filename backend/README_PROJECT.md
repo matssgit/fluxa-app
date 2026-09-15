@@ -3,7 +3,7 @@
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge\&logo=nodedotjs\&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge\&logo=typescript\&logoColor=white)
 ![Fastify](https://img.shields.io/badge/Fastify-000000?style=for-the-badge\&logo=fastify\&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge\&logo=sqlite\&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge\&logo=postgresql\&logoColor=white)
 ![Knex](https://img.shields.io/badge/Knex-D26B38?style=for-the-badge)
 ![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge\&logo=vitest\&logoColor=white)
 
@@ -20,11 +20,15 @@ Este projeto foi desenvolvido com foco em boas práticas de desenvolvimento back
 * Node.js
 * TypeScript
 * Fastify
-* SQLite
+* PostgreSQL
 * Knex.js
 * Zod
 * Vitest
 * Supertest
+
+PostgreSQL é o único banco oficialmente suportado. O avatar personalizado é
+armazenado localmente no navegador; o banco guarda apenas o marcador
+`local_cache`, sem representar upload remoto.
 
 ---
 
@@ -129,7 +133,6 @@ src
 │   └── index.ts
 │
 ├── middlewares
-│   └── check-session-id-exists.ts
 │
 ├── routes
 │   └── transactions.ts
@@ -277,7 +280,7 @@ npm run test
 * Desenvolvimento de APIs REST
 * TypeScript
 * Fastify
-* SQLite
+* PostgreSQL
 * Query Builder com Knex
 * Cookies e Sessões
 * Middlewares

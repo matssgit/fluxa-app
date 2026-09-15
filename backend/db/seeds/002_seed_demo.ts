@@ -9,6 +9,7 @@ export async function seed(knex: Knex): Promise<void> {
     email: "demo@fluxa.com",
     password_hash:
       "$2b$12$eX5Y8wU/sQoM7oM.9r/qC.R0N5G7aK2sRjP6a1.9x6sE7tI5bHh7K",
+    is_demo: true,
     preferences: JSON.stringify({
       theme: "system",
       privacy: { hide_balance: false },
@@ -63,7 +64,7 @@ export async function seed(knex: Knex): Promise<void> {
     category_id: categoryId,
     title: "Compra Mercado",
     amount: 450.0,
-    type: "expense",
+    type: "saida",
     status: "completed",
     session_id: randomUUID(),
     description: "Compra mensal",

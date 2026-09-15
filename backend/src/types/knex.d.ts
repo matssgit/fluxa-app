@@ -25,8 +25,13 @@ declare module "knex/types/tables" {
       avatar_url?: string | null;
       preferences?: any;
       created_at: string;
+      is_demo: boolean;
       two_factor_enabled: boolean;
       two_factor_secret?: string | null;
+      token_version: number;
+      password_reset_token_hash?: string | null;
+      password_reset_expires_at?: string | Date | null;
+      email_verified_at?: string | Date | null;
 
       recovery_codes?: string[] | string | null;
       last_totp_step?: number | null;
@@ -53,12 +58,14 @@ declare module "knex/types/tables" {
       account_id?: string;
       category_id?: string;
       subscription_id?: string | null;
+      competence?: string | null;
       session_id?: string;
       title: string;
       description?: string;
       observation?: string;
       amount: number;
       status: "pending" | "completed";
+      type?: "entrada" | "saida" | null;
       expected_date?: string;
       completed_date?: string;
       created_at: string;

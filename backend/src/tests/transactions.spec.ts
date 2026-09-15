@@ -20,7 +20,7 @@ describe("Transactions routes", () => {
       password_hash: "hash_seguro_123",
     });
 
-    token = app.jwt.sign({ sub: userId });
+    token = app.jwt.sign({ sub: userId, type: "access", tokenVersion: 0 });
   });
 
   afterAll(async () => {

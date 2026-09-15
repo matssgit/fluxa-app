@@ -19,28 +19,10 @@ export async function usersRoutes(app: FastifyInstance) {
         .string()
         .refine((val) => !val.startsWith("data:image"), {
           message:
-            "Imagens Base64 não são permitidas no banco. Utilize um serviço de Storage.",
+            "O avatar em Base64 deve ser armazenado localmente no navegador.",
         })
         .nullable()
         .optional(),
-    });
-
-    app.get("/test-email", async (request, reply) => {
-      console.log("[TEST-EMAIL] Rota de diagnóstico acionada.");
-      try {
-        await emailService.sendVerificationEmail(
-          "aronxmattheus@gmail.com",
-          "token_de_teste_123",
-        );
-        return reply.status(200).send({
-          message: "Comando de envio executado. Verifique os logs do Render.",
-        });
-      } catch (error) {
-        console.error("[TEST-EMAIL] Falha capturada na rota de teste:", error);
-        return reply
-          .status(500)
-          .send({ error: "Falha no envio", details: String(error) });
-      }
     });
 
     const { name, avatar_url } = updateProfileSchema.parse(request.body);
@@ -52,6 +34,30 @@ export async function usersRoutes(app: FastifyInstance) {
     });
 
     return reply.status(200).send({ message: "Perfil atualizado com sucesso" });
+  });
+
+  app.get("/me", { preHandler: [checkAuth] }, async (request, reply) => {
+    const user = await db("users").where({ id: request.user.sub }).first();
+
+    if (!user) {
+      return reply.status(404).send({ error: "Usuário não encontrado." });
+    }
+
+    const preferences =
+      typeof user.preferences === "string"
+        ? JSON.parse(user.preferences)
+        : user.preferences || {};
+
+    return reply.send({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatar_url,
+        preferences,
+        two_factor_enabled: user.two_factor_enabled,
+      },
+    });
   });
 
   app.put(
@@ -82,7 +88,9 @@ export async function usersRoutes(app: FastifyInstance) {
           typeof user.preferences === "string"
             ? JSON.parse(user.preferences)
             : user.preferences || {};
-      } catch (e) {}
+      } catch {
+        console.error("Preferências inválidas armazenadas para o usuário.");
+      }
 
       const mergedPreferences = {
         ...currentPrefs,
@@ -170,6 +178,7 @@ export async function usersRoutes(app: FastifyInstance) {
         name,
         email,
         password_hash,
+        is_demo: false,
         email_verified_at: null,
       });
 
@@ -340,7 +349,11 @@ export async function usersRoutes(app: FastifyInstance) {
 
       if (user.two_factor_enabled) {
         const tempToken = app.jwt.sign(
-          { sub: user.id, type: "2fa_partial" },
+          {
+            sub: user.id,
+            type: "2fa_partial",
+            tokenVersion: user.token_version,
+          },
           { expiresIn: "5m" },
         );
 
@@ -351,7 +364,11 @@ export async function usersRoutes(app: FastifyInstance) {
       }
 
       const token = app.jwt.sign(
-        { sub: user.id, type: "access" },
+        {
+          sub: user.id,
+          type: "access",
+          tokenVersion: user.token_version,
+        },
         { expiresIn: "7d" },
       );
 
@@ -385,25 +402,32 @@ export async function usersRoutes(app: FastifyInstance) {
     const tokenHash = createHash("sha256").update(token).digest("hex");
     const now = new Date();
 
-    const updatedRows = await db("email_verification_tokens")
-      .where("token_hash", tokenHash)
-      .whereNull("used_at")
-      .where("expires_at", ">", now)
-      .update({ used_at: now });
+    const verified = await db.transaction(async (trx) => {
+      const tokenRecord = await trx("email_verification_tokens")
+        .where("token_hash", tokenHash)
+        .whereNull("used_at")
+        .where("expires_at", ">", now)
+        .forUpdate()
+        .first();
 
-    if (updatedRows === 0) {
+      if (!tokenRecord) return false;
+
+      await trx("email_verification_tokens")
+        .where({ id: tokenRecord.id })
+        .whereNull("used_at")
+        .update({ used_at: now });
+
+      await trx("users")
+        .where({ id: tokenRecord.user_id })
+        .update({ email_verified_at: now });
+
+      return true;
+    });
+
+    if (!verified) {
       return reply.status(400).send({
         error: "O link de verificação é inválido, expirou ou já foi utilizado.",
       });
-    }
-
-    const tokenRecord = await db("email_verification_tokens")
-      .where({ token_hash: tokenHash })
-      .first();
-    if (tokenRecord) {
-      await db("users")
-        .where({ id: tokenRecord.user_id })
-        .update({ email_verified_at: now });
     }
 
     return reply
@@ -464,19 +488,32 @@ export async function usersRoutes(app: FastifyInstance) {
 
       let payload;
       try {
-        payload = await request.jwtVerify<{ sub: string; type?: string }>();
+        payload = await request.jwtVerify<{
+          sub: string;
+          type?: string;
+          tokenVersion?: number;
+        }>();
       } catch (err) {
         return reply
           .status(401)
           .send({ error: "Unauthorized or expired token." });
       }
 
-      if (payload.type !== "2fa_partial") {
+      if (
+        payload.type !== "2fa_partial" ||
+        !Number.isInteger(payload.tokenVersion)
+      ) {
         return reply.status(401).send({ error: "Invalid token type." });
       }
 
       const user = await db("users").where("id", payload.sub).first();
-      if (!user || !user.two_factor_enabled || !user.two_factor_secret) {
+      if (!user || user.token_version !== payload.tokenVersion) {
+        return reply.status(401).send({ error: "Invalid or revoked token." });
+      }
+      if (
+        !user.two_factor_enabled ||
+        !user.two_factor_secret
+      ) {
         return reply
           .status(400)
           .send({ error: "2FA is not enabled for this user." });
@@ -513,7 +550,11 @@ export async function usersRoutes(app: FastifyInstance) {
       }
 
       const accessToken = app.jwt.sign(
-        { sub: user.id, type: "access" },
+        {
+          sub: user.id,
+          type: "access",
+          tokenVersion: user.token_version,
+        },
         { expiresIn: "7d" },
       );
 
@@ -547,19 +588,32 @@ export async function usersRoutes(app: FastifyInstance) {
 
       let payload;
       try {
-        payload = await request.jwtVerify<{ sub: string; type?: string }>();
+        payload = await request.jwtVerify<{
+          sub: string;
+          type?: string;
+          tokenVersion?: number;
+        }>();
       } catch (err) {
         return reply
           .status(401)
           .send({ error: "Unauthorized or expired token." });
       }
 
-      if (payload.type !== "2fa_partial") {
+      if (
+        payload.type !== "2fa_partial" ||
+        !Number.isInteger(payload.tokenVersion)
+      ) {
         return reply.status(401).send({ error: "Invalid token type." });
       }
 
       const user = await db("users").where("id", payload.sub).first();
-      if (!user || !user.two_factor_enabled || !user.recovery_codes) {
+      if (!user || user.token_version !== payload.tokenVersion) {
+        return reply.status(401).send({ error: "Invalid or revoked token." });
+      }
+      if (
+        !user.two_factor_enabled ||
+        !user.recovery_codes
+      ) {
         return reply
           .status(400)
           .send({ error: "2FA or recovery codes not found." });
@@ -619,7 +673,11 @@ export async function usersRoutes(app: FastifyInstance) {
       }
 
       const accessToken = app.jwt.sign(
-        { sub: user.id, type: "access" },
+        {
+          sub: user.id,
+          type: "access",
+          tokenVersion: user.token_version,
+        },
         { expiresIn: "7d" },
       );
 
@@ -709,6 +767,7 @@ export async function usersRoutes(app: FastifyInstance) {
       await db("users").where("id", userId).update({
         two_factor_enabled: true,
         recovery_codes: recoveryCodesPayload,
+        token_version: db.raw("token_version + 1"),
       });
 
       return reply.status(200).send({
@@ -748,6 +807,7 @@ export async function usersRoutes(app: FastifyInstance) {
         two_factor_secret: null,
         recovery_codes: null,
         last_totp_step: null,
+        token_version: db.raw("token_version + 1"),
       });
 
       return reply.status(200).send({ message: "2FA disabled successfully." });
@@ -764,10 +824,11 @@ export async function usersRoutes(app: FastifyInstance) {
 
     if (user) {
       const token = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(token).digest("hex");
       const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
       await db("users").where({ id: user.id }).update({
-        password_reset_token: token,
+        password_reset_token_hash: tokenHash,
         password_reset_expires_at: expiresAt,
       });
 
@@ -792,24 +853,24 @@ export async function usersRoutes(app: FastifyInstance) {
 
     const { token, password } = resetPasswordSchema.parse(request.body);
 
-    const user = await db("users")
-      .where({ password_reset_token: token })
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const password_hash = await bcrypt.hash(password, 8);
+    const updatedUsers = await db("users")
+      .where({ password_reset_token_hash: tokenHash })
       .andWhere("password_reset_expires_at", ">", new Date())
-      .first();
+      .update({
+        password_hash,
+        password_reset_token_hash: null,
+        password_reset_expires_at: null,
+        token_version: db.raw("token_version + 1"),
+      })
+      .returning("id");
 
-    if (!user) {
+    if (updatedUsers.length === 0) {
       return reply
         .status(400)
         .send({ error: "Token de recuperação inválido ou expirado." });
     }
-
-    const password_hash = await bcrypt.hash(password, 8);
-
-    await db("users").where({ id: user.id }).update({
-      password_hash,
-      password_reset_token: null,
-      password_reset_expires_at: null,
-    });
 
     return reply.status(204).send();
   });
@@ -851,6 +912,7 @@ export async function usersRoutes(app: FastifyInstance) {
 
       await db("users").where({ id: userId }).update({
         password_hash,
+        token_version: db.raw("token_version + 1"),
       });
 
       return reply.status(204).send();

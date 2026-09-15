@@ -29,7 +29,7 @@ describe("Domínio Financeiro - Ecossistema de Crédito", () => {
       type: "expense",
     });
 
-    token = app.jwt.sign({ sub: userId });
+    token = app.jwt.sign({ sub: userId, type: "access", tokenVersion: 0 });
   });
 
   describe("Sub-domínio: Cartões de Crédito", () => {
@@ -261,7 +261,8 @@ describe("Domínio Financeiro - Ecossistema de Crédito", () => {
         .where({ account_id: accountId })
         .first();
       expect(transaction).toBeTruthy();
-      expect(Number(transaction?.amount)).toBe(-100);
+      expect(Number(transaction?.amount)).toBe(100);
+      expect(transaction?.type).toBe("saida");
     });
 
     it("Deve cancelar uma compra, estornar o limite das parcelas pendentes e preservar as pagas", async () => {

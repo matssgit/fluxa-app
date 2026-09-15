@@ -3,6 +3,7 @@ import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
+import { getSignedTransactionAmount } from "../domain/transaction-money.js";
 
 export async function accountsRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
@@ -31,17 +32,24 @@ export async function accountsRoutes(app: FastifyInstance) {
 
     const accounts = await db("accounts").where({ user_id: userId }).select();
 
-    const balances = await db("transactions")
-      .where({ user_id: userId })
-      .select("account_id")
-      .sum("amount as balance")
-      .groupBy("account_id");
+    const transactions = await db("transactions")
+      .where({ user_id: userId, status: "completed" })
+      .select("account_id", "amount", "type", "subscription_id");
+
+    const balances = new Map<string, number>();
+    transactions.forEach((transaction) => {
+      if (!transaction.account_id) return;
+      balances.set(
+        transaction.account_id,
+        (balances.get(transaction.account_id) || 0) +
+          getSignedTransactionAmount(transaction),
+      );
+    });
 
     const accountsWithBalance = accounts.map((acc) => {
-      const accBalance = balances.find((b) => b.account_id === acc.id);
       return {
         ...acc,
-        balance: Number(accBalance?.balance || 0),
+        balance: balances.get(acc.id) || 0,
       };
     });
 

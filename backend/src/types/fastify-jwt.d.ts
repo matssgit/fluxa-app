@@ -5,10 +5,12 @@ declare module "@fastify/jwt" {
     payload: {
       sub: string;
       type?: "access" | "2fa_partial";
+      tokenVersion?: number;
     };
     user: {
       sub: string;
       id: string;
+      tokenVersion: number;
     };
   }
 }

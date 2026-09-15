@@ -3,6 +3,11 @@ import { db as knex } from "../database/database.js";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
 import { endOfMonth, startOfMonth, format } from "date-fns";
+import {
+  getSignedTransactionAmount,
+  getTransactionDirection,
+  getTransactionMagnitude,
+} from "../domain/transaction-money.js";
 
 export async function analyticsRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
@@ -27,10 +32,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const targetDate = month ? new Date(`${month}-01T00:00:00`) : now;
     const monthStartStr = format(startOfMonth(targetDate), "yyyy-MM-dd");
     const monthEndStr = format(endOfMonth(targetDate), "yyyy-MM-dd");
+    const targetCompetence = format(targetDate, "yyyy-MM");
 
-    const accounts = await knex("accounts").where({ user_id: userId });
-    const totalBalance = accounts.reduce(
-      (acc, curr) => acc + (Number(curr.balance) || 0),
+    const balanceTransactions = await knex("transactions")
+      .where({ user_id: userId, status: "completed" })
+      .select("amount", "type", "subscription_id");
+    const totalBalance = balanceTransactions.reduce(
+      (total, transaction) =>
+        total + getSignedTransactionAmount(transaction),
       0,
     );
 
@@ -46,15 +55,8 @@ export async function analyticsRoutes(app: FastifyInstance) {
     let monthlyExpenses = 0;
 
     currentTransactions.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const val = Math.abs(num);
-      const typeStr = String(t.type || "").toLowerCase();
-      if (
-        typeStr === "income" ||
-        typeStr === "entrada" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      ) {
+      const val = getTransactionMagnitude(t);
+      if (getTransactionDirection(t) === "entrada") {
         monthlyIncome += val;
       } else {
         monthlyExpenses += val;
@@ -116,18 +118,13 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
     const categorySpendMap = new Map<string, number>();
     currentTransactions.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const typeStr = String(t.type || "").toLowerCase();
-      const isIncome =
-        typeStr === "income" ||
-        typeStr === "entrada" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0);
-
-      if (!isIncome) {
+      if (getTransactionDirection(t) === "saida") {
         const catId = String(t.category_id || "uncategorized");
         const current = categorySpendMap.get(catId) || 0;
-        categorySpendMap.set(catId, current + Math.abs(num));
+        categorySpendMap.set(
+          catId,
+          current + getTransactionMagnitude(t),
+        );
       }
     });
 
@@ -206,16 +203,9 @@ export async function analyticsRoutes(app: FastifyInstance) {
           tDate.getMonth() === mIndex &&
           tDate.getFullYear() === y
         ) {
-          const num = Number(t.amount || 0);
-          const val = Math.abs(num);
-          const typeStr = String(t.type || "").toLowerCase();
-          const isIncome =
-            typeStr === "income" ||
-            typeStr === "entrada" ||
-            typeStr === "receita" ||
-            (typeStr === "" && num > 0);
+          const val = getTransactionMagnitude(t);
 
-          if (isIncome) mIncome += val;
+          if (getTransactionDirection(t) === "entrada") mIncome += val;
           else mExpense += val;
         }
       });
@@ -286,21 +276,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const pendingMonthTransactions = await knex("transactions")
       .where({ user_id: userId, status: "pending" })
       .whereBetween("expected_date", [monthStartStr, monthEndStr])
-      .select("type", "amount");
+      .select("type", "amount", "subscription_id");
 
     let expectedIncome = 0;
     let pendingExpensesOnly = 0;
 
     pendingMonthTransactions.forEach((t) => {
-      const num = Number(t.amount || 0);
-      const val = Math.abs(num);
-      const typeStr = String(t.type || "").toLowerCase();
-      if (
-        typeStr === "entrada" ||
-        typeStr === "income" ||
-        typeStr === "receita" ||
-        (typeStr === "" && num > 0)
-      ) {
+      const val = getTransactionMagnitude(t);
+      if (getTransactionDirection(t) === "entrada") {
         expectedIncome += val;
       } else {
         pendingExpensesOnly += val;
@@ -325,7 +308,14 @@ export async function analyticsRoutes(app: FastifyInstance) {
     const paidSubscriptionsThisMonth = await knex("transactions")
       .where({ user_id: userId, status: "completed" })
       .whereNotNull("subscription_id")
-      .whereBetween("completed_date", [monthStartStr, monthEndStr])
+      .where(function () {
+        this.where("competence", targetCompetence).orWhere(function () {
+          this.whereNull("competence").whereBetween("completed_date", [
+            monthStartStr,
+            monthEndStr,
+          ]);
+        });
+      })
       .select("subscription_id");
 
     const paidSubIds = paidSubscriptionsThisMonth.map((t) => t.subscription_id);

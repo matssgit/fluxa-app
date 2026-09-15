@@ -3,6 +3,14 @@ import { randomUUID } from "node:crypto";
 import { db as knex } from "../database/database.js";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
+import {
+  paySubscription,
+  SubscriptionPaymentError,
+} from "../services/subscription-payments.service.js";
+import {
+  getTransactionDirection,
+  getTransactionMagnitude,
+} from "../domain/transaction-money.js";
 
 interface AuthUser {
   sub: string;
@@ -27,19 +35,23 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
       .toISOString()
       .substring(0, 10);
 
-    const incomeResult = await knex("transactions")
+    const incomeTransactions = await knex("transactions")
       .where({ user_id: userId })
-      .andWhere("amount", ">", 0)
       .andWhere(function () {
         this.where("status", "completed")
           .andWhereBetween("completed_date", [startOfMonth, endOfMonth])
           .orWhere("status", "pending")
           .andWhereBetween("expected_date", [startOfMonth, endOfMonth]);
       })
-      .sum("amount as totalIncome")
-      .first();
+      .select("amount", "type", "subscription_id");
 
-    const totalIncomeMonth = Number(incomeResult?.totalIncome) || 0;
+    const totalIncomeMonth = incomeTransactions.reduce(
+      (total, transaction) =>
+        getTransactionDirection(transaction) === "entrada"
+          ? total + getTransactionMagnitude(transaction)
+          : total,
+      0,
+    );
 
     let monthlyTotal = 0;
     let yearlyProjection = 0;
@@ -94,16 +106,17 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
         due_day: z.number().min(1).max(31).optional(),
         next_billing_date: z.string().optional(),
         frequency: z.enum(["monthly", "yearly"]),
-        category_id: z.string().nullable().optional(),
+        category_id: z.string().uuid(),
         account_id: z.string().nullable().optional(),
         card_id: z.string().nullable().optional(),
-        status: z.enum(["active", "paused", "cancelled", "deleted"]).optional(),
-      });
+      }).strict();
 
       const body = createSubscriptionSchema.parse(request.body);
 
       if (!body.account_id && !body.card_id) {
-        throw new Error("A assinatura precisa de uma Conta ou Cartão!");
+        return reply.status(400).send({
+          message: "A assinatura precisa de uma conta ou cartão.",
+        });
       }
 
       const userId = (request.user as AuthUser).sub;
@@ -130,15 +143,13 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
         }
       }
 
-      if (body.category_id) {
-        const cat = await knex("categories")
-          .where({ id: body.category_id, user_id: userId })
-          .first();
-        if (!cat) {
-          return reply
-            .status(403)
-            .send({ detail: "Categoria inválida ou não pertence a você." });
-        }
+      const cat = await knex("categories")
+        .where({ id: body.category_id, user_id: userId })
+        .first();
+      if (!cat) {
+        return reply
+          .status(403)
+          .send({ detail: "Categoria inválida ou não pertence a você." });
       }
 
       const calculatedDueDay =
@@ -150,7 +161,7 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
       await knex("subscriptions").insert({
         id: randomUUID(),
         user_id: userId,
-        category_id: body.category_id || null,
+        category_id: body.category_id,
         account_id: body.account_id || null,
         card_id: body.card_id || null,
         title: body.title,
@@ -163,11 +174,11 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
 
       return reply.status(201).send();
     } catch (error: unknown) {
+      if (error instanceof z.ZodError) throw error;
       console.error("Erro ao criar assinatura:", error);
-      return reply.status(400).send({
-        message: "Erro de validação",
-        detail: error instanceof Error ? error.message : "Erro desconhecido",
-      });
+      return reply
+        .status(500)
+        .send({ message: "Erro interno ao criar assinatura." });
     }
   });
 
@@ -184,38 +195,36 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     const { account_id } = payBodySchema.parse(request.body);
     const userId = (request.user as AuthUser).sub;
 
-    const account = await knex("accounts")
-      .where({ id: account_id, user_id: userId })
-      .first();
-
-    if (!account) {
-      return reply.status(403).send({
-        message: "Operação negada. Conta inválida ou não pertence a você.",
+    try {
+      await paySubscription({
+        subscriptionId: id,
+        userId,
+        accountId: account_id,
       });
+      return reply.status(201).send();
+    } catch (error) {
+      if (error instanceof SubscriptionPaymentError) {
+        if (error.code === "SUBSCRIPTION_NOT_FOUND") {
+          return reply
+            .status(404)
+            .send({ message: "Assinatura não encontrada." });
+        }
+        if (error.code === "ACCOUNT_NOT_FOUND") {
+          return reply.status(403).send({
+            message: "Operação negada. Conta inválida ou não pertence a você.",
+          });
+        }
+        if (error.code === "ALREADY_PAID") {
+          return reply
+            .status(409)
+            .send({ message: "Assinatura já paga nesta competência." });
+        }
+        return reply
+          .status(400)
+          .send({ message: "Assinatura não está disponível para pagamento." });
+      }
+      throw error;
     }
-
-    const subscription = await knex("subscriptions")
-      .where({ id, user_id: userId })
-      .first();
-
-    if (!subscription) {
-      return reply.status(404).send({ message: "Assinatura não encontrada." });
-    }
-
-    await knex("transactions").insert({
-      id: randomUUID(),
-      user_id: userId,
-      account_id: account_id,
-      category_id: subscription.category_id,
-      subscription_id: subscription.id,
-      title: `Pagamento: ${subscription.title}`,
-      description: "Assinatura Mensal",
-      amount: subscription.amount,
-      status: "completed",
-      completed_date: new Date().toISOString().split("T")[0],
-    });
-
-    return reply.status(201).send();
   });
 
   app.get("/", async (request) => {
@@ -226,7 +235,6 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
       .leftJoin("accounts", "subscriptions.account_id", "accounts.id")
       .leftJoin("cards", "subscriptions.card_id", "cards.id")
       .where("subscriptions.user_id", userId)
-      .whereNot("subscriptions.status", "deleted")
       .select(
         "subscriptions.*",
         "categories.name as category_name",
@@ -245,7 +253,6 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     });
 
     const updateBodySchema = z.object({
-      // Impede a alteração manual para "deleted" por esta rota (reservado para soft delete)
       status: z.enum(["active", "paused", "cancelled"]),
     });
 
@@ -274,17 +281,13 @@ export async function subscriptionsRoutes(app: FastifyInstance) {
     const { id } = deleteParamsSchema.parse(request.params);
     const userId = (request.user as AuthUser).sub;
 
-    const subscription = await knex("subscriptions")
+    const deleted = await knex("subscriptions")
       .where({ id, user_id: userId })
-      .first();
+      .delete();
 
-    if (!subscription) {
+    if (deleted === 0) {
       return reply.status(404).send({ message: "Assinatura não encontrada." });
     }
-
-    await knex("subscriptions").where({ id }).update({
-      status: "deleted",
-    });
 
     return reply.status(204).send();
   });

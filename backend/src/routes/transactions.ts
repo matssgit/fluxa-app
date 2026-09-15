@@ -3,6 +3,12 @@ import { db } from "../database/database.js";
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { checkAuth } from "../middlewares/check-auth.js";
+import {
+  canonicalizeTransaction,
+  getSignedTransactionAmount,
+  getTransactionDirection,
+  getTransactionMagnitude,
+} from "../domain/transaction-money.js";
 
 export async function transactionsRoutes(app: FastifyInstance) {
   app.addHook("preHandler", checkAuth);
@@ -11,28 +17,21 @@ export async function transactionsRoutes(app: FastifyInstance) {
     const createTransactionSchema = z
       .object({
         title: z.string(),
-        amount: z.number(),
+        amount: z.number().finite(),
         account_id: z.string().uuid("Conta é obrigatória"),
         category_id: z.string().uuid("Categoria é obrigatória").optional(),
         description: z.string().optional(),
         observation: z.string().optional(),
         status: z.enum(["pending", "completed"]).default("completed"),
-        type: z.string().optional(),
+        type: z
+          .enum(["entrada", "saida", "income", "expense", "receita", "despesa"])
+          .optional(),
         expected_date: z.string().optional(),
         completed_date: z.string().optional(),
         date: z.string().optional(),
       })
       .transform((data) => {
-        let finalType = data.type ? String(data.type).toLowerCase() : "";
-
-        // Infere o tipo da transação pelo sinal matemático caso não seja enviado explicitamente
-        if (!finalType) {
-          finalType = data.amount >= 0 ? "entrada" : "saida";
-        } else if (finalType === "income" || finalType === "receita") {
-          finalType = "entrada";
-        } else if (finalType === "expense" || finalType === "despesa") {
-          finalType = "saida";
-        }
+        const canonical = canonicalizeTransaction(data.amount, data.type);
 
         const todayStr = new Date().toISOString().split("T")[0];
         const effectiveDate =
@@ -40,8 +39,8 @@ export async function transactionsRoutes(app: FastifyInstance) {
 
         return {
           ...data,
-          type: finalType,
-          amount: Math.abs(data.amount),
+          type: canonical.type,
+          amount: canonical.amount,
           expected_date: data.expected_date || effectiveDate,
           completed_date:
             data.status === "completed"
@@ -116,25 +115,18 @@ export async function transactionsRoutes(app: FastifyInstance) {
 
     const transactions = await db("transactions")
       .where({ user_id: userId, status: "completed" })
-      .select("amount", "type");
+      .select("amount", "type", "subscription_id");
 
     const summary = transactions.reduce(
       (acc, transaction) => {
-        const amount = Number(transaction.amount);
-        const typeStr = String(transaction.type || "").toLowerCase();
+        const amount = getTransactionMagnitude(transaction);
 
-        if (
-          typeStr === "entrada" ||
-          typeStr === "income" ||
-          typeStr === "receita" ||
-          (typeStr === "" && amount > 0)
-        ) {
-          acc.income += Math.abs(amount);
-          acc.amount += Math.abs(amount);
+        if (getTransactionDirection(transaction) === "entrada") {
+          acc.income += amount;
         } else {
-          acc.expense += Math.abs(amount);
-          acc.amount -= Math.abs(amount);
+          acc.expense += amount;
         }
+        acc.amount += getSignedTransactionAmount(transaction);
         return acc;
       },
       { amount: 0, income: 0, expense: 0 },

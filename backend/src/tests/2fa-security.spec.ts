@@ -2,6 +2,8 @@ import { app } from "../app.js";
 import { randomUUID } from "node:crypto";
 import { describe, it, expect, beforeAll } from "vitest";
 import { generateTestToken } from "./utils/auth-helper.js";
+import { db } from "../database/database.js";
+import bcrypt from "bcrypt";
 
 describe("Segurança 2FA - Bypass Prevention", () => {
   beforeAll(async () => {
@@ -21,12 +23,19 @@ describe("Segurança 2FA - Bypass Prevention", () => {
 
     expect(response.statusCode).toBe(401);
     expect(JSON.parse(response.payload).error).toBe(
-      "Unauthorized. 2FA verification required.",
+      "Unauthorized. Token invalid or revoked.",
     );
   });
 
   it("DEVE permitir que um token 'access' acesse rotas privadas", async () => {
     const fakeUserId = randomUUID();
+    await db("users").insert({
+      id: fakeUserId,
+      name: "JWT Access Test",
+      email: `jwt-access-${fakeUserId}@fluxa.test`,
+      password_hash: await bcrypt.hash("StrongPass@2026", 8),
+      email_verified_at: new Date(),
+    });
     const accessToken = generateTestToken(fakeUserId, "access");
 
     const response = await app.inject({
@@ -36,5 +45,6 @@ describe("Segurança 2FA - Bypass Prevention", () => {
     });
 
     expect(response.statusCode).not.toBe(401);
+    await db("users").where({ id: fakeUserId }).delete();
   });
 });

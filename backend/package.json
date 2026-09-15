@@ -9,20 +9,21 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src --format esm",
+    "build": "tsup src/server.ts src/app.ts --format esm --clean",
     "start": "node dist/server.js",
     "migrate:make": "tsx ./node_modules/knex/bin/cli.js migrate:make -x ts",
     "migrate:latest": "tsx ./node_modules/knex/bin/cli.js migrate:latest",
+    "migrate:test": "dotenv -e .env.test --override -- tsx ./node_modules/knex/bin/cli.js migrate:latest",
     "db:migrate": "tsx --require dotenv/config node_modules/knex/bin/cli.js migrate:latest --knexfile ./src/database.ts",
     "db:rollback": "tsx --require dotenv/config node_modules/knex/bin/cli.js migrate:rollback --knexfile ./src/database.ts",
-    "test": "vitest"
+    "test": "dotenv -e .env.test --override -- vitest"
   },
   "keywords": [
     "nodejs",
     "fastify",
     "typescript",
     "knex",
-    "sqlite"
+    "postgresql"
   ],
   "author": "",
   "license": "ISC",

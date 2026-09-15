@@ -19,7 +19,10 @@ transporter
     console.log("SMTP conectado com sucesso!");
   })
   .catch((error) => {
-    console.error("SMTP ERROR:", error);
+    console.error(
+      "SMTP ERROR:",
+      error instanceof Error ? error.message : "Falha desconhecida",
+    );
   });
 
 export const emailService = {
@@ -38,9 +41,12 @@ export const emailService = {
           <p>Se você não criou uma conta no Fluxa, desconsidere esta mensagem.</p>
         `,
       });
-      console.log("Email enviado:", info);
+      console.log("Email de verificação enviado:", info.messageId);
     } catch (error) {
-      console.error("[SMTP ERROR] Falha ao enviar verificação:", error);
+      console.error(
+        "[SMTP ERROR] Falha ao enviar verificação:",
+        error instanceof Error ? error.message : "Falha desconhecida",
+      );
       throw error;
     }
   },
@@ -59,6 +65,6 @@ export const emailService = {
         <p>Este link é válido por 30 minutos. Se você não solicitou esta alteração, desconsidere este e-mail.</p>
       `,
     });
-    console.log("Email enviado:", info);
+    console.log("Email de redefinição enviado:", info.messageId);
   },
 };

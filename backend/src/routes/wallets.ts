@@ -51,16 +51,29 @@ export async function walletsRoutes(app: FastifyInstance) {
     const initialStatus =
       initialAmount >= data.target_amount ? "completed" : "active";
 
-    await knex("wallets").insert({
-      id: randomUUID(),
-      user_id: userId,
-      title: data.title,
-      description: data.description || null,
-      target_amount: data.target_amount,
-      current_amount: initialAmount,
-      deadline: data.deadline ? new Date(data.deadline) : null,
-      color: data.color,
-      status: initialStatus,
+    await knex.transaction(async (trx) => {
+      const walletId = randomUUID();
+      await trx("wallets").insert({
+        id: walletId,
+        user_id: userId,
+        title: data.title,
+        description: data.description || null,
+        target_amount: data.target_amount,
+        current_amount: initialAmount,
+        deadline: data.deadline ? new Date(data.deadline) : null,
+        color: data.color,
+        status: initialStatus,
+      });
+
+      if (initialAmount > 0) {
+        await trx("wallet_history").insert({
+          id: randomUUID(),
+          wallet_id: walletId,
+          type: "deposit",
+          amount: initialAmount,
+          observation: "Saldo inicial",
+        });
+      }
     });
 
     return reply.status(201).send();
@@ -135,6 +148,7 @@ export async function walletsRoutes(app: FastifyInstance) {
       await knex.transaction(async (trx) => {
         const wallet = await trx("wallets")
           .where({ id: walletId, user_id: userId })
+          .forUpdate()
           .first();
 
         if (!wallet) {
@@ -162,6 +176,13 @@ export async function walletsRoutes(app: FastifyInstance) {
           }
         }
 
+        const appliedAmount = Math.abs(
+          newWalletAmount - currentWalletAmount,
+        );
+        if (appliedAmount === 0) {
+          throw new Error("A operação não altera o saldo do objetivo.");
+        }
+
         await trx("wallets").where({ id: walletId }).update({
           current_amount: newWalletAmount,
           status: newStatus,
@@ -172,7 +193,7 @@ export async function walletsRoutes(app: FastifyInstance) {
           id: randomUUID(),
           wallet_id: walletId,
           type: type,
-          amount: amount,
+          amount: appliedAmount,
           observation: observation || null,
           created_at: new Date(),
         });

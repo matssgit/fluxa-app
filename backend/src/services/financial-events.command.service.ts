@@ -1,37 +1,64 @@
 import { db as knex } from "../database/database.js";
+import { payInstallment } from "./installment-payments.service.js";
+import { paySubscription } from "./subscription-payments.service.js";
 
 export class FinancialEventCommandService {
-  async markAsPaid(eventId: string, userId: string): Promise<void> {
+  async markAsPaid(
+    eventId: string,
+    userId: string,
+    accountId?: string,
+  ): Promise<void> {
     const eventMeta = await this.resolveEventType(eventId, userId);
 
     if (!eventMeta) {
       throw new Error("Lançamento financeiro não encontrado ou acesso negado.");
     }
 
-    await knex.transaction(async (trx) => {
-      switch (eventMeta.type) {
-        case "transaction":
+    switch (eventMeta.type) {
+      case "transaction":
+        await knex.transaction(async (trx) => {
+          const transaction = await trx("transactions")
+            .where({ id: eventId, user_id: userId })
+            .forUpdate()
+            .first();
+          if (!transaction) {
+            throw new Error(
+              "Lançamento financeiro não encontrado ou acesso negado.",
+            );
+          }
+          if (transaction.status === "completed") return;
+
           await trx("transactions")
-            .where({ id: eventId })
-            .update({ status: "completed", updated_at: knex.fn.now() });
-          break;
+            .where({ id: eventId, user_id: userId })
+            .update({
+              status: "completed",
+              completed_date: new Date().toISOString().split("T")[0],
+            });
+        });
+        return;
 
-        case "installment":
-          await trx("installments")
-            .where({ id: eventId })
-            .update({ status: "completed", updated_at: knex.fn.now() });
-          break;
+      case "installment":
+        if (!accountId) {
+          throw new Error("Selecione uma conta para pagar esta parcela.");
+        }
+        await payInstallment({
+          installmentId: eventId,
+          userId,
+          accountId,
+        });
+        return;
 
-        case "subscription":
-          await trx("subscriptions")
-            .where({ id: eventId })
-            .update({ status: "completed", updated_at: knex.fn.now() });
-          break;
+      case "subscription":
+        await paySubscription({
+          subscriptionId: eventId,
+          userId,
+          ...(accountId ? { accountId } : {}),
+        });
+        return;
 
-        default:
-          throw new Error("Tipo de evento não suportado para esta operação.");
-      }
-    });
+      default:
+        throw new Error("Tipo de evento não suportado para esta operação.");
+    }
   }
 
   private async resolveEventType(

@@ -8,22 +8,18 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isPg = env.DATABASE_CLIENT === "pg";
 const isProduction = env.NODE_ENV === "production";
 
 export const config: Knex.Config = {
   client: env.DATABASE_CLIENT,
-  connection: isPg
-    ? {
-        connectionString: env.DATABASE_URL,
-        ssl: isProduction ? { rejectUnauthorized: false } : false,
-      }
-    : env.DATABASE_URL,
+  connection: {
+    connectionString: env.DATABASE_URL,
+    ssl: isProduction ? { rejectUnauthorized: false } : false,
+  },
   migrations: {
     extension: "ts",
     directory: path.resolve(__dirname, "../../db/migrations"),
   },
-  useNullAsDefault: !isPg,
 };
 
 export const db = knex(config);
