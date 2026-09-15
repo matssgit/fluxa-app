@@ -1,355 +1,271 @@
 # Fluxa
 
-<div align="center">
+Aplicação full stack de gestão financeira pessoal para acompanhar fluxo de caixa, contas, cartões, assinaturas e metas em uma visão consolidada, com segurança e uma experiência pensada para o uso cotidiano.
 
-<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-<img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-<img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
-<img src="https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white" alt="Fastify" />
-<img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+[Aplicação online](https://fluxa-core-app-five.vercel.app/) · [Portfólio](https://matheusantanadev.vercel.app/)
 
-<br />
-<br />
+## Visão do produto
 
-**Aplicação Full Stack de gestão financeira pessoal e patrimonial.**
+<p align="center">
+  <img src="./docs/assets/2-Dashboard.png" alt="Dashboard do Fluxa" width="760" />
+</p>
 
-Controle seu fluxo de caixa, cartões, parcelamentos, assinaturas e metas financeiras em uma única plataforma.
+<table>
+  <tr>
+    <td width="50%"><img src="./docs/assets/3-Caixa%20Central.png" alt="Caixa Central" width="100%" /></td>
+    <td width="50%"><img src="./docs/assets/4-Cart%C3%B5es.png" alt="Cartões de crédito" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Caixa Central</strong></td>
+    <td align="center"><strong>Cartões</strong></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/assets/5-Assinaturas.png" alt="Assinaturas" width="100%" /></td>
+    <td width="50%"><img src="./docs/assets/6-Metas%20e%20Objetivos.png" alt="Metas e objetivos" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Assinaturas</strong></td>
+    <td align="center"><strong>Metas</strong></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/assets/7-Categorias.png" alt="Categorias" width="100%" /></td>
+    <td width="50%"><img src="./docs/assets/8-Seguranca%20%202FA.png" alt="Segurança e autenticação em duas etapas" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Categorias</strong></td>
+    <td align="center"><strong>Segurança e 2FA</strong></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="./docs/assets/1-Login.png" alt="Login" width="100%" /></td>
+    <td width="50%"><img src="./docs/assets/9-Cadastro%20%2B%20verificacao%20por%20e-mail.png" alt="Cadastro e verificação por e-mail" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Login</strong></td>
+    <td align="center"><strong>Cadastro e verificação</strong></td>
+  </tr>
+</table>
 
-<br />
+## Sobre o projeto
 
-<a href="https://fluxa-core-app-five.vercel.app/">
-  <strong>🚀 Acessar aplicação</strong>
-</a>
+O Fluxa começou como um projeto de estudo de CRUD financeiro e evoluiu para uma aplicação full stack mais completa. Hoje, o projeto combina consistência financeira, segurança de sessão, tratamento de concorrência e uma interface responsiva para organizar decisões financeiras sem fragmentar os dados em ferramentas diferentes.
 
-</div>
+A aplicação mantém separadas as responsabilidades de caixa, crédito, recorrência e objetivos financeiros, mas reúne esses domínios em uma leitura única no dashboard.
 
----
+## Funcionalidades
 
-## 📌 Sobre o projeto
+### Finanças
 
-O **Fluxa** é uma aplicação Full Stack de gestão financeira pessoal desenvolvida do zero com foco em **engenharia de software, segurança, consistência de dados e experiência do usuário**.
+- contas, receitas e despesas;
+- histórico financeiro unificado no Caixa Central;
+- categorias personalizadas;
+- lançamentos pendentes e concluídos;
+- dashboard consolidado com saldo, receitas, despesas e projeções.
 
-A ideia surgiu da necessidade de ter uma ferramenta financeira simples e completa para o uso cotidiano, mas o projeto evoluiu para também funcionar como um laboratório prático de desenvolvimento de software.
+### Cartões
 
-Além do controle tradicional de receitas e despesas, o Fluxa trabalha com conceitos como:
-
-* Contas bancárias e fluxo de caixa
-* Cartões de crédito
-* Compras parceladas
-* Assinaturas recorrentes
-* Carteiras financeiras
-* Metas e organização patrimonial
-* Autenticação em dois fatores
-* Recuperação segura de acesso
-* PWA e experiência mobile-first
-
----
-
-## 🎥 Demonstração
-
-### Dashboard
-
-![Fluxa - Dashboard](./docs/assets/caixa.png)
-
-### Autenticação
-
-![Fluxa - Login](./docs/assets/login.png)
-
-### Transações
-
-![Fluxa - Transações](./docs/assets/baixa.png)
+- cadastro e acompanhamento de cartões;
+- controle de limite total e disponível;
+- compras à vista ou parceladas;
+- vencimentos e pagamento de parcelas;
+- cancelamento com recomposição consistente do limite.
 
 ### Assinaturas
 
-![Fluxa - Assinaturas](./docs/assets/assinaturas.png)
+- acompanhamento de gastos recorrentes;
+- pagamentos associados à competência mensal;
+- proteção contra pagamentos duplicados;
+- visão de próximos vencimentos.
 
-### Metas e Carteiras
+### Metas
 
-![Fluxa - Metas](./docs/assets/metas.png)
+- wallets para metas e objetivos;
+- depósitos e retiradas;
+- histórico de movimentações;
+- acompanhamento visual do progresso.
 
----
+### Segurança
 
-## ⚙️ Principais funcionalidades
+- autenticação com JWT;
+- confirmação de e-mail;
+- recuperação de senha com token de uso único;
+- revogação de sessões por versão do token;
+- autenticação em duas etapas com TOTP;
+- recovery codes;
+- isolamento de dados entre usuários;
+- limpeza do cache da aplicação ao encerrar ou invalidar uma sessão.
 
-### 💰 Gestão financeira
+### Experiência
 
-* **Fluxo de caixa** para receitas e despesas
-* **Múltiplas contas bancárias**
-* **Categorias personalizadas**
-* Controle de transações **pendentes e concluídas**
-* **Cartões de crédito**
-* Compras **parceladas**
-* Projeção de **faturas futuras**
-* **Assinaturas recorrentes**
-* **Carteiras financeiras** para separar patrimônio
-* **Metas financeiras**
+- interface responsiva;
+- temas claro e escuro;
+- modo de privacidade para ocultar valores;
+- PWA instalável;
+- navegação adaptada para mobile e desktop.
 
-### 🔐 Segurança
+## Decisões técnicas
 
-* Autenticação baseada em **JWT**
-* Validação de payloads com **Zod**
-* **Bcrypt** para proteção de credenciais
-* **Rate limiting** contra abuso de endpoints
-* Headers de segurança com **Helmet**
-* **2FA via TOTP**
-* **Recovery Codes**
-* Recuperação de senha através de tokens seguros enviados por e-mail
-* Isolamento de dados baseado na identidade autenticada do usuário
+- **PostgreSQL como banco oficial:** desenvolvimento, testes e produção utilizam o mesmo mecanismo relacional.
+- **Knex e migrations:** evolução do schema versionada e aplicada em ordem explícita.
+- **Modelo monetário canônico:** novos lançamentos persistem o valor como magnitude não negativa e a direção em <code>type</code> (<code>entrada</code> ou <code>saida</code>).
+- **Compatibilidade controlada:** registros legados sem tipo mantêm fallback isolado, sem influenciar novos dados.
+- **Idempotência em assinaturas:** uma competência não pode receber o mesmo pagamento mais de uma vez.
+- **Concorrência protegida:** operações críticas de cartões, parcelas, cancelamentos e wallets usam transações e locking.
+- **Revogação de JWT:** <code>token_version</code> invalida sessões anteriores após eventos sensíveis.
+- **Reset seguro:** tokens de redefinição são armazenados como hash SHA-256 e consumidos uma única vez.
+- **Cache entre sessões:** o QueryClient e dados locais associados ao usuário são limpos na troca de sessão.
+- **Validação de entrada:** contratos HTTP e filtros usam Zod.
+- **Testes automatizados:** os fluxos financeiros e de autenticação são exercitados contra PostgreSQL dedicado a testes.
 
----
+## Arquitetura
 
-## 🧠 Engenharia de software
+~~~text
+Frontend
+React + TypeScript + Vite + Tailwind CSS + TanStack Query
+        │
+        │ HTTPS / JSON
+        ▼
+Backend
+Node.js + Fastify + TypeScript + Zod + Knex
+        │
+        ▼
+PostgreSQL
 
-Uma das principais propostas do Fluxa é aplicar conceitos de engenharia de software em um projeto real, indo além de um simples CRUD.
+Vercel ── frontend
+Render ── backend
+~~~
 
-### 💵 Precisão monetária
+## Stack
 
-Valores financeiros são armazenados como **inteiros representando centavos**, evitando problemas de precisão relacionados ao uso de `floating point`.
+| Camada | Tecnologias principais |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
+| Backend | Node.js, Fastify, TypeScript, Zod, Knex |
+| Banco | PostgreSQL |
+| Autenticação | JWT, bcrypt, TOTP |
+| Testes | Vitest e test runner nativo do Node.js |
+| Infraestrutura | Vercel, Render, Docker Compose, Brevo SMTP |
 
-O sistema também utiliza algoritmos determinísticos para distribuir valores de compras parceladas, garantindo que a soma das parcelas corresponda exatamente ao valor original.
+## Testes
 
-### 🔄 Transações e consistência
+O projeto possui **65 testes automatizados passando**:
 
-Operações críticas são executadas dentro de **transações SQL**, garantindo atomicidade e consistência dos dados.
+- **64 testes backend** com Vitest;
+- **1 teste frontend** para a atualização consistente do histórico financeiro.
 
-Isso é utilizado, por exemplo, em operações envolvendo:
+A cobertura inclui autenticação, 2FA, revogação de sessão, ownership, hardening, integridade financeira, concorrência, cartões, assinaturas, wallets e histórico do caixa.
 
-* Limite de cartões
-* Compras parceladas
-* Aportes em carteiras
-* Atualizações financeiras relacionadas
+Comandos principais:
 
-O objetivo é evitar inconsistências causadas por requisições concorrentes.
+~~~bash
+# Backend
+cd backend
+npm test -- --run
 
-### 🔒 Isolamento de dados
+# Frontend
+cd frontend
+npm test
+npm run lint
+npm run build
+~~~
 
-O backend determina a propriedade dos recursos através da identidade autenticada presente no **JWT**.
+## PWA
 
-IDs enviados pelo cliente não são utilizados como mecanismo de autorização.
+O Fluxa pode ser instalado como Progressive Web App. O frontend gera manifest e service worker durante o build, inclui ícones dedicados e oferece uma experiência adequada para dispositivos móveis.
 
-Isso ajuda a prevenir vulnerabilidades de **BOLA/IDOR**, evitando que um usuário consiga acessar recursos pertencentes a outra conta simplesmente alterando um identificador na requisição.
+Dados financeiros autenticados não usam runtime caching no service worker, evitando que respostas privadas sejam reutilizadas indevidamente.
 
-### 💳 Separação entre caixa e crédito
+## Rodando localmente
 
-O Fluxa diferencia o **dinheiro disponível** do **limite de crédito**.
+### Requisitos
 
-Uma compra realizada no cartão não reduz diretamente o saldo da conta bancária. Ela gera uma obrigação futura que será refletida no fluxo de caixa somente quando a respectiva fatura for efetivamente paga.
+- Node.js 18 ou superior;
+- npm;
+- PostgreSQL 16 ou compatível;
+- Docker e Docker Compose, caso prefira usar o banco disponibilizado pelo projeto.
 
-### 🧪 Testes automatizados
+### Instalação
 
-A API possui uma suíte de testes utilizando **Vitest**, cobrindo principalmente:
+~~~bash
+git clone https://github.com/matssgit/fluxa-app.git
+cd fluxa-app
 
-* Autenticação
-* Fluxos de segurança
-* 2FA
-* Integridade das operações financeiras
-* Regras de parcelamento
-* Cenários de erro
+cd backend
+npm install
 
-**31 testes automatizados** atualmente.
-
----
-
-## 🎨 Interface e experiência
-
-### 📱 Mobile-first
-
-A interface foi desenvolvida para funcionar desde dispositivos móveis de aproximadamente **360px até telas desktop de 1920px**.
-
-### 📲 PWA
-
-O Fluxa pode ser instalado como **Progressive Web App**, proporcionando uma experiência semelhante à de uma aplicação nativa.
-
-### 🌲 Pine & Sage Design System
-
-O projeto possui um design system próprio desenvolvido com **Tailwind CSS**, incluindo:
-
-* Light Mode
-* Dark Mode
-* Componentes reutilizáveis
-* Tipografia e espaçamento padronizados
-* Alta legibilidade
-* Interface responsiva
-
-### 👁️ Modo privacidade
-
-Um modo global permite ocultar rapidamente valores financeiros da interface através de **React Context**, útil para situações em que o usuário está utilizando o sistema em ambientes públicos.
-
-### ⚡ Interface reativa
-
-As operações assíncronas são gerenciadas com **TanStack Query**, permitindo atualizações rápidas da interface e gerenciamento eficiente de cache e estados de requisição.
-
----
-
-## 🛠️ Stack tecnológica
-
-### Frontend
-
-| Tecnologia          | Utilização              |
-| ------------------- | ----------------------- |
-| **React**           | Interface               |
-| **TypeScript**      | Tipagem estática        |
-| **Vite**            | Build e desenvolvimento |
-| **Tailwind CSS**    | Estilização             |
-| **TanStack Query**  | Server state e cache    |
-| **React Hook Form** | Formulários             |
-| **Zod**             | Validação               |
-| **Lucide React**    | Ícones                  |
-| **PWA**             | Experiência instalável  |
+cd ../frontend
+npm install
+~~~
 
 ### Backend
 
-| Tecnologia             | Utilização                 |
-| ---------------------- | -------------------------- |
-| **Node.js**            | Runtime                    |
-| **Fastify**            | Framework HTTP             |
-| **TypeScript**         | Tipagem estática           |
-| **PostgreSQL**         | Banco de produção          |
-| **SQLite**             | Desenvolvimento local      |
-| **Knex.js**            | Query builder e migrations |
-| **Zod**                | Validação                  |
-| **JWT**                | Autenticação               |
-| **Bcrypt**             | Hash de senhas             |
-| **Fastify Rate Limit** | Proteção contra abuso      |
-| **Helmet**             | Headers de segurança       |
-| **Vitest**             | Testes automatizados       |
+1. Inicie uma instância PostgreSQL. O projeto inclui [docker-compose.yml](./backend/docker-compose.yml).
+2. Crie <code>backend/.env</code> com as variáveis necessárias e uma <code>DATABASE_URL</code> apontando para o banco local.
+3. Aplique as migrations e inicie a API:
 
-### Infraestrutura
-
-* **Vercel** — Frontend
-* **Render** — Backend
-* **Docker / Docker Compose** — Ambiente local
-* **Brevo SMTP + Nodemailer** — E-mails transacionais
-
----
-
-## 🏗️ Arquitetura
-
-O Fluxa utiliza uma arquitetura **cliente-servidor**, mantendo frontend e backend desacoplados.
-
-```text
-┌──────────────────────┐
-│       Frontend       │
-│ React + TypeScript   │
-│ Vite + Tailwind      │
-└──────────┬───────────┘
-           │ HTTP / JSON
-           ▼
-┌──────────────────────┐
-│        Backend       │
-│ Node.js + Fastify    │
-│ TypeScript + Zod     │
-└──────────┬───────────┘
-           │
-           ▼
-┌──────────────────────┐
-│      PostgreSQL      │
-│      Produção        │
-└──────────────────────┘
-```
-
-Para desenvolvimento local, o projeto utiliza **SQLite**, permitindo executar a aplicação sem depender de uma instalação local do PostgreSQL.
-
----
-
-## 🚀 Como executar localmente
-
-### Pré-requisitos
-
-* Node.js **18+**
-* npm
-
-### 1. Clone o repositório
-
-```bash
-git clone https://github.com/matssgit/fluxa.git
-cd fluxa
-```
-
-### 2. Configure o Backend
-
-```bash
+~~~bash
 cd backend
-
-npm install
-
-cp .env.example .env
-```
-
-Abra o arquivo `.env` e configure as variáveis necessárias, principalmente:
-
-```env
-JWT_SECRET=seu_secret_seguro
-```
-
-Execute as migrations:
-
-```bash
-npm run knex -- migrate:latest
-```
-
-Inicie o servidor:
-
-```bash
+docker compose up -d
+npm run migrate:latest
 npm run dev
-```
+~~~
 
-A API estará disponível em:
+A API utiliza a porta <code>3333</code> por padrão.
 
-```text
-http://localhost:3333
-```
+### Frontend
 
-### 3. Configure o Frontend
+Crie <code>frontend/.env.local</code> com <code>VITE_API_URL</code> apontando para a API local e execute:
 
-Em outro terminal:
-
-```bash
+~~~bash
 cd frontend
-
-npm install
 npm run dev
-```
+~~~
 
-A aplicação estará disponível em:
+O Vite utiliza a porta <code>5173</code> por padrão.
 
-```text
-http://localhost:5173
-```
+### Variáveis de ambiente
 
----
+Backend:
 
-## 📚 Documentação
+~~~text
+DATABASE_URL
+DATABASE_CLIENT
+JWT_SECRET
+FRONTEND_URL
+CORS_ORIGIN
+SMTP_HOST
+SMTP_PORT
+SMTP_USER
+SMTP_PASSWORD
+EMAIL_FROM
+DEMO_CLEANUP_ENABLED
+DEMO_DATA_RETENTION_DAYS
+~~~
 
-O projeto possui documentação técnica complementar na pasta `docs/`.
+Frontend:
 
-* [🏛️ Arquitetura do Sistema](./docs/architecture/SYSTEM_ARCHITECTURE.md)
-* [🎨 Design System](./docs/architecture/DESIGN_SYSTEM.md)
-* [⚙️ Roadmap do Backend](./docs/development/BACKEND_ROADMAP.md)
-* [💻 Roadmap do Frontend](./docs/development/FRONTEND_ROADMAP.md)
+~~~text
+VITE_API_URL
+~~~
 
----
+Nenhum secret deve ser versionado. A limpeza automática de contas demo permanece desativada por padrão e deve ser habilitada somente de forma deliberada.
 
-## 👨‍💻 Desenvolvedor
+## Documentação
+
+- [Arquitetura do sistema](./docs/architecture/SYSTEM_ARCHITECTURE.md)
+- [Design system](./docs/architecture/DESIGN_SYSTEM.md)
+- [Checklist de QA](./docs/development/QA_CHECKLIST.md)
+- [Histórico de sprints](./docs/development/SPRINTS.md)
+
+## Status
+
+**Projeto ativo — versão estável de portfólio.**
+
+Uma versão demo pública está disponível em [fluxa-core-app-five.vercel.app](https://fluxa-core-app-five.vercel.app/).
+
+## Autor
 
 **Matheus Santana**
 
-Desenvolvedor Full Stack com foco em **JavaScript, TypeScript, Node.js e React**.
-
-O Fluxa representa a consolidação prática de conhecimentos em desenvolvimento Full Stack, arquitetura de software, APIs, bancos de dados, segurança, testes automatizados e desenvolvimento de interfaces.
-
-<div align="left">
-
-🐙 **GitHub:** [@matssgit](https://github.com/matssgit)
-
-💼 **LinkedIn:** [Matheus Santana](https://linkedin.com/in/matheussantanadev)
-
-</div>
-
----
-
-<div align="center">
-
-**Fluxa — Gestão financeira simples, segura e completa.**
-
-</div>
+- [Portfólio](https://matheusantanadev.vercel.app/)
+- [GitHub](https://github.com/matssgit)
+- [LinkedIn](https://linkedin.com/in/matheussantanadev)
