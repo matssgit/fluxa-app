@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.fluxa.personal.core.preferences.LocalSettings
@@ -28,6 +29,22 @@ class FoundationTest {
             compose.onNodeWithTag("screen-$route").assertIsDisplayed()
         }
     }
+
+    @Test
+    fun opensAndDismissesTheCentralActionSheetWithoutChangingDestination() {
+        compose.onNodeWithTag("tab-cash").performClick()
+        compose.onNodeWithTag("screen-cash").assertIsDisplayed()
+
+        val description = compose.activity.getString(R.string.placeholder_sheet_body)
+        val close = compose.activity.getString(R.string.action_close)
+        compose.onNodeWithTag("action-new-entry").performClick()
+        compose.onNodeWithText(description).assertIsDisplayed()
+
+        compose.onNodeWithText(close).performClick()
+        compose.onNodeWithText(description).assertDoesNotExist()
+        compose.onNodeWithTag("screen-cash").assertIsDisplayed()
+    }
+
 
     @Test
     fun opensRoomWithForeignKeysAndReadsPreferenceDefaults() = runBlocking(Dispatchers.IO) {
