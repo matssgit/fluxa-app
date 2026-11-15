@@ -41,3 +41,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+# Recibos de auditoria gerados por hooks de plugins do agente (protect-mcp).
+# Regra restrita ao arquivo gerado, para não ignorar pastas "receipts" legítimas.
+**/receipts/receipts.jsonl
+**/review-receipts/receipts.jsonl

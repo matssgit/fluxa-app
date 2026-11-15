@@ -1,7 +1,38 @@
 <resources>
     <string name="app_name">Fluxa Personal</string>
-    <string name="dashboard">Dashboard</string>
+    <string name="dashboard">Início</string>
     <string name="cash">Caixa</string>
     <string name="cards">Cartões</string>
     <string name="more">Mais</string>
+
+    <string name="action_new_entry">Novo lançamento</string>
+    <string name="action_close">Fechar</string>
+    <string name="action_hide_amounts">Ocultar valores</string>
+    <string name="action_show_amounts">Mostrar valores</string>
+    <string name="amount_hidden">Valor oculto</string>
+    <string name="loading">Carregando</string>
+    <string name="coming_soon">Em breve</string>
+
+    <string name="placeholder_preview_note">Exemplo visual. Valores fictícios.</string>
+    <string name="placeholder_dashboard_overline">Seu fluxo</string>
+    <string name="placeholder_balance_label">Saldo disponível</string>
+    <string name="placeholder_dashboard_body">O Dashboard definitivo será desenhado na sprint dedicada.</string>
+    <string name="placeholder_cash_search_label">Buscar lançamentos</string>
+    <string name="placeholder_cash_search_hint">Loja, categoria ou valor</string>
+    <string name="placeholder_cash_body">A lista do Caixa chega com as transações.</string>
+    <string name="filter_all">Tudo</string>
+    <string name="filter_income">Entradas</string>
+    <string name="filter_expense">Saídas</string>
+    <string name="filter_pending">Pendentes</string>
+    <string name="placeholder_card_label">Cartão de exemplo</string>
+    <string name="placeholder_card_available">Disponível</string>
+    <string name="placeholder_cards_body">Os cartões reais chegam com o módulo de crédito.</string>
+    <string name="placeholder_more_overline">Outros destinos</string>
+    <string name="placeholder_sheet_body">O fluxo de lançamento será implementado em uma sprint futura.</string>
+
+    <string name="more_subscriptions">Assinaturas</string>
+    <string name="more_goals">Metas</string>
+    <string name="more_categories">Categorias</string>
+    <string name="more_analytics">Analytics</string>
+    <string name="more_settings">Configurações</string>
 </resources>
