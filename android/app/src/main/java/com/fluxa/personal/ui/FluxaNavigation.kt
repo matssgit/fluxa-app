@@ -22,7 +22,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.fluxa.personal.FluxaApplication
 import com.fluxa.personal.R
+import com.fluxa.personal.ui.feature.accounts.AccountFormScreen
+import com.fluxa.personal.ui.feature.accounts.AccountFormViewModel
+import com.fluxa.personal.ui.feature.accounts.AccountRoutes
+import com.fluxa.personal.ui.feature.accounts.AccountsScreen
+import com.fluxa.personal.ui.feature.accounts.AccountsViewModel
+import com.fluxa.personal.ui.feature.categories.CategoriesScreen
+import com.fluxa.personal.ui.feature.categories.CategoriesViewModel
+import com.fluxa.personal.ui.feature.categories.CategoryFormScreen
+import com.fluxa.personal.ui.feature.categories.CategoryFormViewModel
+import com.fluxa.personal.ui.feature.categories.CategoryRoutes
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaMotion
 import com.fluxa.personal.ui.designsystem.FluxaTheme
@@ -64,6 +81,9 @@ internal fun FluxaNavigation() {
     val toggleAmounts = { amountsOverride = !amountsHidden }
 
     val reducedMotion = LocalReducedMotion.current
+    val app = LocalContext.current.applicationContext as FluxaApplication
+    val currentRoute = entry?.destination?.route
+    val tabRoutes = remember { Destination.entries.map { it.route }.toSet() }
     val items = Destination.entries.map {
         FluxaNavItem(
             route = it.route,
@@ -84,14 +104,57 @@ internal fun FluxaNavigation() {
                 exitTransition = { if (reducedMotion) fadeOut(snapSpec()) else fadeOut(tweenSpec()) },
             ) {
                 composable(Destination.DASHBOARD.route) { DashboardPlaceholder(toggleAmounts) }
-                composable(Destination.CASH.route) { CashPlaceholder(toggleAmounts) }
+                composable(Destination.CASH.route) {
+                    val accounts: AccountsViewModel = viewModel(factory = AccountsViewModel.factory(app.accounts))
+                    val accountsState by accounts.uiState.collectAsStateWithLifecycle()
+                    CashPlaceholder(
+                        onToggleAmounts = toggleAmounts,
+                        activeAccounts = if (accountsState.isLoading) null else accountsState.active.size,
+                        onManageAccounts = { controller.navigate(AccountRoutes.LIST) },
+                    )
+                }
                 composable(Destination.CARDS.route) { CardsPlaceholder(toggleAmounts) }
-                composable(Destination.MORE.route) { MorePlaceholder(toggleAmounts) }
+                composable(Destination.MORE.route) {
+                    MorePlaceholder(toggleAmounts, onOpenCategories = { controller.navigate(CategoryRoutes.LIST) })
+                }
+
+                composable(AccountRoutes.LIST) {
+                    AccountsScreen(
+                        viewModel = viewModel(factory = AccountsViewModel.factory(app.accounts)),
+                        onBack = { controller.popBackStack() },
+                        onCreate = { controller.navigate(AccountRoutes.NEW) },
+                        onEdit = { controller.navigate(AccountRoutes.edit(it)) },
+                    )
+                }
+                composable(AccountRoutes.NEW) {
+                    AccountFormScreen(viewModel(factory = AccountFormViewModel.factory(app.accounts)), onDone = { controller.popBackStack() })
+                }
+                composable(AccountRoutes.EDIT, arguments = listOf(navArgument(AccountRoutes.ARG_ID) { type = NavType.StringType })) {
+                    AccountFormScreen(viewModel(factory = AccountFormViewModel.factory(app.accounts)), onDone = { controller.popBackStack() })
+                }
+                composable(CategoryRoutes.LIST) {
+                    CategoriesScreen(
+                        viewModel = viewModel(factory = CategoriesViewModel.factory(app.categories)),
+                        onBack = { controller.popBackStack() },
+                        onCreate = { controller.navigate(CategoryRoutes.new(it)) },
+                        onEdit = { controller.navigate(CategoryRoutes.edit(it)) },
+                    )
+                }
+                composable(
+                    CategoryRoutes.NEW,
+                    arguments = listOf(navArgument(CategoryRoutes.ARG_KIND) { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) {
+                    CategoryFormScreen(viewModel(factory = CategoryFormViewModel.factory(app.categories)), onDone = { controller.popBackStack() })
+                }
+                composable(CategoryRoutes.EDIT, arguments = listOf(navArgument(CategoryRoutes.ARG_ID) { type = NavType.StringType })) {
+                    CategoryFormScreen(viewModel(factory = CategoryFormViewModel.factory(app.categories)), onDone = { controller.popBackStack() })
+                }
             }
 
-            FluxaNavigationBar(
+            // A barra flutuante só aparece nas abas; telas de cadastro têm ação fixa no rodapé e não podem ser cobertas.
+            if (currentRoute in tabRoutes) FluxaNavigationBar(
                 items = items,
-                selectedRoute = entry?.destination?.route,
+                selectedRoute = currentRoute,
                 onItemSelected = { item ->
                     controller.navigate(item.route) {
                         popUpTo(controller.graph.findStartDestination().id) { saveState = true }

@@ -48,6 +48,8 @@ internal fun FluxaChip(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
     enabled: Boolean = true,
+    /** `Role.RadioButton` quando o chip faz parte de uma escolha única. */
+    role: Role = Role.Checkbox,
 ) {
     val colors = FluxaTheme.colors
     val shape = FluxaTheme.shapes.pill
@@ -76,7 +78,7 @@ internal fun FluxaChip(
                 interactionSource = interaction,
                 indication = LocalIndication.current,
                 enabled = enabled,
-                role = Role.Checkbox,
+                role = role,
                 onValueChange = onSelectedChange,
             )
             .heightIn(min = 40.dp)

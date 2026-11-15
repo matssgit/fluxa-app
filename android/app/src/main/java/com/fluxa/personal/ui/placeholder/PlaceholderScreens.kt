@@ -2,6 +2,7 @@ package com.fluxa.personal.ui.placeholder
 
 import com.fluxa.personal.core.money.Money
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
@@ -141,11 +144,17 @@ private fun BodyCard(text: String) {
 }
 
 @Composable
-internal fun CashPlaceholder(onToggleAmounts: () -> Unit) {
+internal fun CashPlaceholder(
+    onToggleAmounts: () -> Unit,
+    activeAccounts: Int? = null,
+    onManageAccounts: () -> Unit = {},
+) {
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(0) }
     val filters = listOf(R.string.filter_all, R.string.filter_income, R.string.filter_expense, R.string.filter_pending)
     PlaceholderScreen(route = "cash", title = stringResource(R.string.cash), onToggleAmounts = onToggleAmounts) {
+        // Contas ficam no topo do Caixa como atalho; o restante da aba continua reservado às movimentações.
+        item { AccountsShortcut(activeAccounts, onManageAccounts) }
         item {
             FluxaInput(
                 value = query,
@@ -217,14 +226,49 @@ private fun UsageBar(fraction: Float) {
     }
 }
 
-private data class MoreDestination(val label: Int, val icon: ImageVector)
+@Composable
+private fun AccountsShortcut(activeAccounts: Int?, onManage: () -> Unit) {
+    val colors = FluxaTheme.colors
+    val type = FluxaTheme.typography
+    FluxaCard(
+        modifier = Gutter.testTag("cash-accounts-card"),
+        onClick = onManage,
+        onClickLabel = stringResource(R.string.accounts_cash_card_action),
+        contentPadding = PaddingValues(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(
+                modifier = Modifier.size(44.dp).background(colors.brandTonal, FluxaTheme.shapes.pill),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(FluxaIcons.Wallet, contentDescription = null, tint = colors.onBrandTonal, modifier = Modifier.size(22.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.accounts_cash_card_title), style = type.bodyStrong, color = colors.textPrimary)
+                Text(
+                    text = when (activeAccounts) {
+                        null -> stringResource(R.string.loading)
+                        0 -> stringResource(R.string.accounts_cash_card_none)
+                        else -> pluralStringResource(R.plurals.accounts_cash_card_count, activeAccounts, activeAccounts)
+                    },
+                    style = type.caption,
+                    color = colors.textSecondary,
+                )
+                Text(stringResource(R.string.accounts_cash_card_action), style = type.label, color = colors.brand, modifier = Modifier.padding(top = 4.dp))
+            }
+            Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
+private data class MoreDestination(val label: Int, val icon: ImageVector, val route: String? = null)
 
 @Composable
-internal fun MorePlaceholder(onToggleAmounts: () -> Unit) {
+internal fun MorePlaceholder(onToggleAmounts: () -> Unit, onOpenCategories: () -> Unit = {}) {
     val destinations = listOf(
         MoreDestination(R.string.more_subscriptions, FluxaIcons.Repeat),
         MoreDestination(R.string.more_goals, FluxaIcons.Target),
-        MoreDestination(R.string.more_categories, FluxaIcons.Tag),
+        MoreDestination(R.string.more_categories, FluxaIcons.Tag, route = "categories"),
         MoreDestination(R.string.more_analytics, FluxaIcons.Analytics),
         MoreDestination(R.string.more_settings, FluxaIcons.Sliders),
     )
@@ -246,7 +290,12 @@ internal fun MorePlaceholder(onToggleAmounts: () -> Unit) {
                                 .background(FluxaTheme.colors.border),
                         )
                     }
-                    MoreRow(stringResource(destination.label), destination.icon)
+                    MoreRow(
+                        label = stringResource(destination.label),
+                        icon = destination.icon,
+                        onClick = if (destination.route != null) onOpenCategories else null,
+                        modifier = if (destination.route != null) Modifier.testTag("more-${destination.route}") else Modifier,
+                    )
                 }
             }
         }
@@ -254,15 +303,16 @@ internal fun MorePlaceholder(onToggleAmounts: () -> Unit) {
 }
 
 @Composable
-private fun MoreRow(label: String, icon: ImageVector) {
+private fun MoreRow(label: String, icon: ImageVector, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val colors = FluxaTheme.colors
     val soon = stringResource(R.string.coming_soon)
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .semantics(mergeDescendants = true) { stateDescription = soon },
+            .semantics(mergeDescendants = true) { if (onClick == null) stateDescription = soon },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -275,13 +325,17 @@ private fun MoreRow(label: String, icon: ImageVector) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
         }
-        Text(
-            soon,
-            style = FluxaTheme.typography.caption,
-            color = colors.textMuted,
-            modifier = Modifier
-                .background(colors.surfaceSunken, FluxaTheme.shapes.pill)
-                .padding(horizontal = 10.dp, vertical = 4.dp),
-        )
+        if (onClick != null) {
+            Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
+        } else {
+            Text(
+                soon,
+                style = FluxaTheme.typography.caption,
+                color = colors.textMuted,
+                modifier = Modifier
+                    .background(colors.surfaceSunken, FluxaTheme.shapes.pill)
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
     }
 }

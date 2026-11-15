@@ -127,6 +127,141 @@ internal object FluxaIcons {
         }
     }
 
+    // region Sprint 2-B: navegação, contas e categorias
+
+    val Back: ImageVector by lazy { outline("Back") { moveTo(14.5f, 6f); lineTo(8.5f, 12f); lineTo(14.5f, 18f) } }
+    val Archive: ImageVector by lazy {
+        outline("Archive") {
+            roundRect(3.5f, 4.5f, 20.5f, 8.5f, 1.5f)
+            moveTo(5f, 8.5f); lineTo(5f, 18f)
+            curveTo(5f, 18.83f, 5.67f, 19.5f, 6.5f, 19.5f); lineTo(17.5f, 19.5f)
+            curveTo(18.33f, 19.5f, 19f, 18.83f, 19f, 18f); lineTo(19f, 8.5f)
+            moveTo(10f, 12.5f); lineTo(14f, 12.5f)
+        }
+    }
+    val Restore: ImageVector by lazy {
+        outline("Restore") {
+            moveTo(4.5f, 12f)
+            curveTo(4.5f, 7.86f, 7.86f, 4.5f, 12f, 4.5f)
+            curveTo(16.14f, 4.5f, 19.5f, 7.86f, 19.5f, 12f)
+            curveTo(19.5f, 16.14f, 16.14f, 19.5f, 12f, 19.5f)
+            curveTo(9.6f, 19.5f, 7.46f, 18.37f, 6.09f, 16.62f)
+            moveTo(4.5f, 7.5f); lineTo(4.5f, 12f); lineTo(9f, 12f)
+        }
+    }
+    val Calendar: ImageVector by lazy {
+        outline("Calendar") {
+            roundRect(3.5f, 5f, 20.5f, 20f, 2.5f)
+            moveTo(3.5f, 9.5f); lineTo(20.5f, 9.5f)
+            moveTo(8f, 3f); lineTo(8f, 6.5f)
+            moveTo(16f, 3f); lineTo(16f, 6.5f)
+        }
+    }
+    val Bank: ImageVector by lazy {
+        outline("Bank") {
+            moveTo(3.5f, 9f); lineTo(12f, 4f); lineTo(20.5f, 9f); close()
+            moveTo(6f, 11.5f); lineTo(6f, 17f)
+            moveTo(10f, 11.5f); lineTo(10f, 17f)
+            moveTo(14f, 11.5f); lineTo(14f, 17f)
+            moveTo(18f, 11.5f); lineTo(18f, 17f)
+            moveTo(3.5f, 20f); lineTo(20.5f, 20f)
+        }
+    }
+    val Wallet: ImageVector by lazy {
+        outline("Wallet") {
+            roundRect(3.5f, 6f, 20.5f, 19f, 2.5f)
+            moveTo(3.5f, 9.5f); lineTo(17f, 9.5f)
+            roundRect(14.5f, 12f, 20.5f, 15.5f, 1.5f)
+        }
+    }
+    val Coins: ImageVector by lazy {
+        outline("Coins") {
+            roundRect(4f, 15.5f, 20f, 19.5f, 2f)
+            roundRect(5.5f, 10.5f, 18.5f, 14.5f, 2f)
+            roundRect(7f, 5.5f, 17f, 9.5f, 2f)
+        }
+    }
+    val Cart: ImageVector by lazy {
+        outline("Cart") {
+            moveTo(3.5f, 4.5f); lineTo(5.5f, 4.5f); lineTo(7.5f, 15f); lineTo(18f, 15f); lineTo(20f, 8f); lineTo(6.4f, 8f)
+            circle(9f, 19f, 1.25f)
+            circle(17f, 19f, 1.25f)
+        }
+    }
+    val Utensils: ImageVector by lazy {
+        outline("Utensils") {
+            moveTo(7f, 3.5f); lineTo(7f, 20.5f)
+            moveTo(4.5f, 3.5f); lineTo(4.5f, 8f)
+            curveTo(4.5f, 9.38f, 5.62f, 10.5f, 7f, 10.5f)
+            curveTo(8.38f, 10.5f, 9.5f, 9.38f, 9.5f, 8f); lineTo(9.5f, 3.5f)
+            moveTo(17f, 20.5f); lineTo(17f, 3.5f)
+            curveTo(15f, 4.5f, 14f, 7f, 14f, 10f); lineTo(14f, 13f); lineTo(17f, 13f)
+        }
+    }
+    val Car: ImageVector by lazy {
+        outline("Car") {
+            moveTo(4f, 16.5f); lineTo(4f, 12.5f); lineTo(6f, 7.5f)
+            curveTo(6.3f, 6.9f, 6.9f, 6.5f, 7.6f, 6.5f); lineTo(16.4f, 6.5f)
+            curveTo(17.1f, 6.5f, 17.7f, 6.9f, 18f, 7.5f); lineTo(20f, 12.5f); lineTo(20f, 16.5f); close()
+            moveTo(4f, 12.5f); lineTo(20f, 12.5f)
+            moveTo(6.5f, 16.5f); lineTo(6.5f, 19f)
+            moveTo(17.5f, 16.5f); lineTo(17.5f, 19f)
+        }
+    }
+    val Heart: ImageVector by lazy {
+        outline("Heart") {
+            moveTo(12f, 19.5f)
+            curveTo(7f, 16f, 3.5f, 12.8f, 3.5f, 9f)
+            curveTo(3.5f, 6.5f, 5.5f, 4.5f, 8f, 4.5f)
+            curveTo(9.6f, 4.5f, 11.1f, 5.4f, 12f, 6.8f)
+            curveTo(12.9f, 5.4f, 14.4f, 4.5f, 16f, 4.5f)
+            curveTo(18.5f, 4.5f, 20.5f, 6.5f, 20.5f, 9f)
+            curveTo(20.5f, 12.8f, 17f, 16f, 12f, 19.5f)
+            close()
+        }
+    }
+    val Briefcase: ImageVector by lazy {
+        outline("Briefcase") {
+            roundRect(3.5f, 7.5f, 20.5f, 19.5f, 2.5f)
+            moveTo(9f, 7.5f); lineTo(9f, 5.5f)
+            curveTo(9f, 4.95f, 9.45f, 4.5f, 10f, 4.5f); lineTo(14f, 4.5f)
+            curveTo(14.55f, 4.5f, 15f, 4.95f, 15f, 5.5f); lineTo(15f, 7.5f)
+            moveTo(3.5f, 12.5f); lineTo(20.5f, 12.5f)
+        }
+    }
+    val Gift: ImageVector by lazy {
+        outline("Gift") {
+            roundRect(4f, 9f, 20f, 12.5f, 1.5f)
+            moveTo(5.5f, 12.5f); lineTo(5.5f, 19f)
+            curveTo(5.5f, 19.55f, 5.95f, 20f, 6.5f, 20f); lineTo(17.5f, 20f)
+            curveTo(18.05f, 20f, 18.5f, 19.55f, 18.5f, 19f); lineTo(18.5f, 12.5f)
+            moveTo(12f, 9f); lineTo(12f, 20f)
+            moveTo(12f, 9f)
+            curveTo(10.5f, 5.5f, 7f, 5.5f, 7.5f, 7.5f)
+            curveTo(7.8f, 8.7f, 10f, 9f, 12f, 9f)
+            curveTo(14f, 9f, 16.2f, 8.7f, 16.5f, 7.5f)
+            curveTo(17f, 5.5f, 13.5f, 5.5f, 12f, 9f)
+        }
+    }
+    val Book: ImageVector by lazy {
+        outline("Book") {
+            moveTo(12f, 6.5f)
+            curveTo(10.5f, 5.2f, 8f, 4.5f, 4f, 4.5f); lineTo(4f, 18f)
+            curveTo(8f, 18f, 10.5f, 18.7f, 12f, 20f)
+            curveTo(13.5f, 18.7f, 16f, 18f, 20f, 18f); lineTo(20f, 4.5f)
+            curveTo(16f, 4.5f, 13.5f, 5.2f, 12f, 6.5f)
+            close()
+            moveTo(12f, 6.5f); lineTo(12f, 20f)
+        }
+    }
+    val Bolt: ImageVector by lazy {
+        outline("Bolt") {
+            moveTo(13f, 3f); lineTo(5f, 13.5f); lineTo(11.5f, 13.5f); lineTo(10.5f, 21f); lineTo(19f, 10.5f); lineTo(12.5f, 10.5f); close()
+        }
+    }
+
+    // endregion
+
     // region builders
 
     private fun icon(name: String, block: ImageVector.Builder.() -> Unit): ImageVector =
