@@ -16,9 +16,9 @@ Projeto Android nativo independente, com um módulo Gradle `app`. O Sprint 0 con
 
 ## Banco e preferências
 
-Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas e schema inicial 1. A tabela `local_schema_marker` existe para inicializar Room antes das entidades de produto. O plugin Room configura `room.schemaLocation` para exportar JSON em `app/schemas`. Versione o schema gerado. Os testes instrumentados usam esse diretório como assets para validar versões com `MigrationTestHelper`.
+Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v2 adiciona `accounts` e `categories` e mantém `local_schema_marker` do v1. A migration é registrada no builder de produção. Todos os builds exigem um caminho de migration explícito.
 
-Durante a exploração, debug pode reconstruir a base quando faltar uma migration entre versões. Ao alterar a estrutura exploratória, incremente a versão ou limpe os dados de teste. Release exige migration para um banco de versão anterior. Ao congelar a versão de uso real, remova o fallback de debug e preserve um caminho de migration testado.
+O plugin Room exporta os schemas em `app/schemas`. Os testes instrumentados criam um arquivo com o JSON v1, validam a estrutura v2, conferem o dado preexistente e reabrem o banco com o builder de produção. Ao introduzir uma versão, gere e versione o JSON antes de empacotar os testes instrumentados.
 
 DataStore lê tema e ocultação de valores, com padrão do sistema e valores visíveis. Auto-lock e proteção de captura passarão pelo mesmo armazenamento quando implementados.
 
@@ -37,6 +37,21 @@ O app funciona localmente e não declara permissão INTERNET. O primeiro build p
 
 - `Transaction.transferGroupId?` liga as duas pontas da transferência. Elas afetam o saldo das contas e aparecem no ledger. Ficam fora de receitas, despesas, savings rate e analytics de receita/despesa. Categoria é dispensável.
 - `availableCash = eligibleAccountBalance - goalReserves`. O Limite Seguro usa esse saldo sem repetir a dedução. A UI pode mostrar saldo elegível menos reservas, ou apresentar apenas o saldo disponível líquido. Receitas e obrigações usadas na explicação devem terminar no dia de menor folga.
+
+## Contas e categorias
+
+Os ViewModels podem usar `FluxaApplication.accounts` e `FluxaApplication.categories`. Os repositórios expõem modelos de domínio e operações suspensas, sem expor entities ou DAOs à UI.
+
+| Repositório | Leitura reativa | Escrita |
+|---|---|---|
+| `AccountRepository` | `observe(id: UUID): Flow<FinancialAccount?>` e `observeAll(includeArchived = false)` | `create(AccountDetails): UUID`, `update(id, details): Boolean` e `archive(id): Boolean` |
+| `CategoryRepository` | `observe(id: UUID): Flow<Category?>` e `observeAll(includeArchived = false, kind = null)` | `create(CategoryDetails): UUID`, `update(id, details): Boolean`, `archive(id): Boolean` e `reactivate(id): Boolean` |
+
+- A conta aceita `CHECKING`, `WALLET` e `SAVINGS`. `AccountDetails` inclui nome, tipo, saldo inicial `Money`, data de referência `LocalDate` e `includeInAvailable` (padrão `true`). O saldo inicial pode ser negativo. Cartões pertencem a outro fluxo.
+- `CategoryDetails` inclui nome, `TransactionDirection.INCOME` ou `EXPENSE` e valores opcionais de ícone e cor. O destino visual desses valores será definido nas telas.
+- Os IDs são UUIDs gerados na criação e preservados em edições, arquivamento e reativação. Os nomes precisam conter texto e podem repetir. Espaços no início e no fim são removidos ao salvar. As listas usam nome e ID para ordenar e excluem arquivados por padrão. A consulta por ID inclui registros arquivados.
+- `archivedAt` nulo identifica um registro ativo. `update` devolve `false` quando o ID não existe. Arquivar ou reativar devolve `false` quando o ID não existe ou já está no estado desejado. A transição condicional e cada edição são atômicas. O arquivamento preserva a linha e seus dados para uso histórico.
+- Quando as tabelas dependentes forem introduzidas, referenciar os UUIDs com FKs e decidir como tratar a mudança de tipo de uma categoria já referenciada. Nesta sprint as duas tabelas são independentes. Não há exclusão física nem reativação de conta no contrato atual.
 
 ## Validação
 
