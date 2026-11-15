@@ -84,7 +84,7 @@ class SchemaTest {
         val database = FluxaDatabase.create(context, name)
         try {
             val sqlite = database.openHelper.writableDatabase
-            assertEquals(2, sqlite.version)
+            assertEquals(3, sqlite.version)
             sqlite.query("SELECT id FROM local_schema_marker").use { rows ->
                 assertTrue(rows.moveToFirst())
                 assertEquals(42, rows.getInt(0))

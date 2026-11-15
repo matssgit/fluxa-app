@@ -1,5 +1,7 @@
 package com.fluxa.personal.data.repository
 
+import android.database.sqlite.SQLiteConstraintException
+import com.fluxa.personal.data.database.CATEGORY_KIND_IN_USE
 import com.fluxa.personal.data.database.dao.CategoryDao
 import com.fluxa.personal.data.database.mapper.toDomain
 import com.fluxa.personal.data.database.mapper.toEntity
@@ -11,6 +13,9 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+
+internal class CategoryKindInUse(cause: Throwable) :
+    IllegalStateException("A category referenced by a transaction cannot change direction.", cause)
 
 internal class CategoryRepository(
     private val dao: CategoryDao,
@@ -33,13 +38,18 @@ internal class CategoryRepository(
         return id
     }
 
-    suspend fun update(id: UUID, details: CategoryDetails): Boolean = dao.update(
-        id = id.toString(),
-        name = details.name.trim(),
-        kind = details.kind.name,
-        icon = details.icon,
-        color = details.color,
-    ) == 1
+    suspend fun update(id: UUID, details: CategoryDetails): Boolean = try {
+        dao.update(
+            id = id.toString(),
+            name = details.name.trim(),
+            kind = details.kind.name,
+            icon = details.icon,
+            color = details.color,
+        ) == 1
+    } catch (exception: SQLiteConstraintException) {
+        if (exception.message?.contains(CATEGORY_KIND_IN_USE) == true) throw CategoryKindInUse(exception)
+        throw exception
+    }
 
     suspend fun archive(id: UUID): Boolean =
         dao.archive(id.toString(), clock.instant().toString()) == 1

@@ -51,7 +51,7 @@ class FoundationTest {
         val application = compose.activity.application as FluxaApplication
         val database = application.database.openHelper.writableDatabase
 
-        assertEquals(2, database.version)
+        assertEquals(3, database.version)
         database.query("PRAGMA foreign_keys").use { cursor ->
             cursor.moveToFirst()
             assertEquals(1, cursor.getInt(0))
