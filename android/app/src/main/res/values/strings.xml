@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Fluxa Personal</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="cash">Caixa</string>
+    <string name="cards">Cartões</string>
+    <string name="more">Mais</string>
+</resources>
