@@ -45,7 +45,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fluxa.personal.R
 import com.fluxa.personal.domain.model.AccountType
 import com.fluxa.personal.domain.model.FinancialAccount
+import com.fluxa.personal.ui.common.BalanceAmount
+import com.fluxa.personal.ui.common.BrazilDate
 import com.fluxa.personal.ui.common.ConfirmArchiveSheet
+import com.fluxa.personal.ui.common.DateField
+import com.fluxa.personal.ui.common.FluxaDatePicker
+import com.fluxa.personal.domain.rules.CalculatedBalance
 import com.fluxa.personal.ui.common.EmptyStateCard
 import com.fluxa.personal.ui.common.ErrorBanner
 import com.fluxa.personal.ui.common.FeatureScreen
@@ -78,8 +83,6 @@ internal object AccountRoutes {
     const val EDIT = "accounts/{$ARG_ID}/edit"
     fun edit(id: UUID) = "accounts/$id/edit"
 }
-
-internal val BrazilDate: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale("pt", "BR"))
 
 // region Lista
 
@@ -124,7 +127,7 @@ internal fun AccountsScreen(
                         color = FluxaTheme.colors.textSecondary,
                     )
                 }
-                items(state.active, key = { it.id }) { account -> AccountRow(account, onClick = { onEdit(account.id) }) }
+                items(state.active, key = { it.id }) { account -> AccountRow(account, state.balances[account.id], onClick = { onEdit(account.id) }) }
                 if (state.archived.isNotEmpty()) {
                     item {
                         FluxaButton(
@@ -138,7 +141,7 @@ internal fun AccountsScreen(
                     }
                     if (state.showArchived) {
                         item { FluxaSectionHeader(title = stringResource(R.string.accounts_archived_section)) }
-                        items(state.archived, key = { it.id }) { account -> AccountRow(account, onClick = { onEdit(account.id) }) }
+                        items(state.archived, key = { it.id }) { account -> AccountRow(account, state.balances[account.id], onClick = { onEdit(account.id) }) }
                     }
                 }
             }
@@ -146,8 +149,9 @@ internal fun AccountsScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun AccountRow(account: FinancialAccount, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun AccountRow(account: FinancialAccount, balance: CalculatedBalance?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = FluxaTheme.colors
     val type = FluxaTheme.typography
     val details = account.details
@@ -170,20 +174,24 @@ internal fun AccountRow(account: FinancialAccount, onClick: () -> Unit, modifier
                 Text(details.name, style = type.bodyStrong, color = colors.textPrimary, maxLines = 2)
                 Text(stringResource(visual.label), style = type.caption, color = colors.textSecondary)
                 Text(
-                    stringResource(R.string.accounts_opening_balance),
+                    stringResource(R.string.cash_current_balance),
                     style = type.caption,
                     color = colors.textMuted,
                     modifier = Modifier.padding(top = 8.dp),
                 )
-                FluxaAmount(
-                    amount = details.openingBalance,
-                    color = if (details.openingBalance.cents < 0) colors.expense else colors.textPrimary,
+                BalanceAmount(
+                    balance = balance,
+                    color = if ((balance as? CalculatedBalance.Exact)?.amount?.cents?.let { it < 0 } == true) colors.expense else colors.textPrimary,
                 )
-                Text(
-                    stringResource(R.string.accounts_opening_balance_date, details.openingDate.format(BrazilDate)),
-                    style = type.caption,
-                    color = colors.textMuted,
-                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(stringResource(R.string.accounts_opening_balance), style = type.caption, color = colors.textMuted)
+                    FluxaAmount(amount = details.openingBalance, style = type.caption, color = colors.textMuted)
+                    Text(
+                        stringResource(R.string.accounts_opening_balance_date, details.openingDate.format(BrazilDate)),
+                        style = type.caption,
+                        color = colors.textMuted,
+                    )
+                }
                 if (archived || !details.includeInAvailable) {
                     FlowRowPills(archived = archived, outOfAvailable = !details.includeInAvailable)
                 }
@@ -233,17 +241,6 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
                     enabled = !state.isArchiving,
                     modifier = Modifier.fillMaxWidth().testTag("action-save"),
                 )
-                if (state.isEditing && !state.isArchived) {
-                    FluxaButton(
-                        text = stringResource(R.string.action_archive),
-                        onClick = { confirmArchive = true },
-                        variant = FluxaButtonVariant.Destructive,
-                        leadingIcon = FluxaIcons.Archive,
-                        loading = state.isArchiving,
-                        enabled = !state.isSaving,
-                        modifier = Modifier.fillMaxWidth().testTag("action-archive"),
-                    )
-                }
             }
         },
     ) {
@@ -322,6 +319,7 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
                         date = state.openingDate,
                         enabled = !state.isBusy,
                         onClick = { pickDate = true },
+                        modifier = Modifier.testTag("field-account-date"),
                     )
                 }
                 item {
@@ -332,6 +330,20 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
                         onCheckedChange = viewModel::onIncludeInAvailableChange,
                         enabled = !state.isBusy,
                     )
+                }
+                if (state.isEditing && !state.isArchived) {
+                    // Ação destrutiva no fim do conteúdo; o rodapé fixo fica só com Salvar (cabe com teclado em 320x640dp).
+                    item {
+                        FluxaButton(
+                            text = stringResource(R.string.action_archive),
+                            onClick = { confirmArchive = true },
+                            variant = FluxaButtonVariant.Destructive,
+                            leadingIcon = FluxaIcons.Archive,
+                            loading = state.isArchiving,
+                            enabled = !state.isSaving,
+                            modifier = Modifier.fillMaxWidth().testTag("action-archive"),
+                        )
+                    }
                 }
             }
         }
@@ -350,7 +362,7 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
         )
     }
     if (pickDate) {
-        OpeningDatePicker(
+        FluxaDatePicker(
             initial = state.openingDate,
             onPicked = {
                 viewModel.onOpeningDateChange(it)
@@ -361,55 +373,5 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
     }
 }
 
-/** Campo de data com a mesma aparência do FluxaInput; abre o seletor do M3. */
-@Composable
-private fun DateField(label: String, supporting: String, date: LocalDate, enabled: Boolean, onClick: () -> Unit) {
-    val colors = FluxaTheme.colors
-    val shape = FluxaTheme.shapes.medium
-    val formatted = date.format(BrazilDate)
-    val description = stringResource(R.string.date_change, formatted)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        FieldLabel(label)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .background(colors.surfaceSunken, shape)
-                .border(1.dp, colors.borderStrong, shape)
-                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .semantics { contentDescription = description }
-                .padding(horizontal = 16.dp, vertical = 14.dp)
-                .testTag("field-account-date"),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Icon(FluxaIcons.Calendar, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
-            Text(formatted, style = FluxaTheme.typography.body, color = colors.textPrimary, modifier = Modifier.weight(1f))
-        }
-        Text(supporting, style = FluxaTheme.typography.caption, color = colors.textMuted)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun OpeningDatePicker(initial: LocalDate, onPicked: (LocalDate) -> Unit, onDismiss: () -> Unit) {
-    // O DatePicker trabalha com meia-noite UTC em milissegundos; a conversão usa UTC nos dois sentidos.
-    val pickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-    )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                pickerState.selectedDateMillis
-                    ?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }
-                    ?.let(onPicked) ?: onDismiss()
-            }) { Text(stringResource(R.string.action_save)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    ) {
-        DatePicker(state = pickerState, title = { Text(stringResource(R.string.date_pick_title), modifier = Modifier.padding(start = 24.dp, top = 16.dp)) })
-    }
-}
 
 // endregion

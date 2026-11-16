@@ -83,6 +83,8 @@ internal class FakeCategoryDao : CategoryDao {
     var failWrites = false
     var inserts = 0
     var reactivations = 0
+    /** Simula o gatilho do Room que bloqueia a troca de tipo de categoria já referenciada. */
+    var kindLocked = false
 
     override suspend fun insert(category: CategoryEntity) {
         if (failWrites) throw IOException("disk full")
@@ -100,6 +102,9 @@ internal class FakeCategoryDao : CategoryDao {
 
     override suspend fun update(id: String, name: String, kind: String, icon: String?, color: String?): Int {
         if (failWrites) throw IOException("disk full")
+        if (kindLocked && rows.value.any { it.id == id && it.kind != kind }) {
+            throw com.fluxa.personal.data.repository.CategoryKindInUse(IllegalStateException("trigger"))
+        }
         var changed = 0
         rows.update { list ->
             list.map {

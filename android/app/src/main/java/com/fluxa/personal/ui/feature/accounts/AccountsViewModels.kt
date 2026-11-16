@@ -16,6 +16,9 @@ import com.fluxa.personal.domain.model.AccountType
 import com.fluxa.personal.domain.model.FinancialAccount
 import com.fluxa.personal.ui.common.MoneyInput
 import com.fluxa.personal.ui.common.runCatchingNonCancellation
+import com.fluxa.personal.domain.rules.BalanceSnapshot
+import com.fluxa.personal.domain.rules.CalculatedBalance
+import com.fluxa.personal.ui.feature.transactions.TransactionSource
 import java.time.Clock
 import java.time.LocalDate
 import java.util.UUID
@@ -38,6 +41,8 @@ internal data class AccountsUiState(
     val active: List<FinancialAccount> = emptyList(),
     val archived: List<FinancialAccount> = emptyList(),
     val showArchived: Boolean = false,
+    /** Saldo atual por conta, calculado pelo repositório de lançamentos (nunca na UI). */
+    val balances: Map<UUID, CalculatedBalance> = emptyMap(),
     @StringRes val errorMessage: Int? = null,
 ) {
     val isEmpty: Boolean get() = !isLoading && active.isEmpty() && archived.isEmpty()
@@ -50,15 +55,20 @@ private sealed interface Load<out T> {
 }
 
 /** Lista de contas: ativas e arquivadas, refletindo os Flows do repositório. */
-internal class AccountsViewModel(repository: AccountRepository) : ViewModel() {
+internal class AccountsViewModel(repository: AccountRepository, transactions: TransactionSource) : ViewModel() {
     private val showArchived = MutableStateFlow(false)
+
+    private val balances = transactions.observeBalances()
+        .map<BalanceSnapshot, Map<UUID, CalculatedBalance>> { it.accounts }
+        .catch { emit(emptyMap()) }
 
     val uiState: StateFlow<AccountsUiState> = combine(
         repository.observeAll(includeArchived = true)
             .map<List<FinancialAccount>, Load<List<FinancialAccount>>> { Load.Ready(it) }
             .catch { emit(Load.Failed) },
         showArchived,
-    ) { load, archivedVisible ->
+        balances,
+    ) { load, archivedVisible, balanceMap ->
         when (load) {
             Load.Loading -> AccountsUiState(showArchived = archivedVisible)
             Load.Failed -> AccountsUiState(isLoading = false, showArchived = archivedVisible, errorMessage = R.string.error_load)
@@ -67,6 +77,7 @@ internal class AccountsViewModel(repository: AccountRepository) : ViewModel() {
                 active = load.value.filter { it.archivedAt == null },
                 archived = load.value.filter { it.archivedAt != null },
                 showArchived = archivedVisible,
+                balances = balanceMap,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AccountsUiState())
@@ -74,8 +85,8 @@ internal class AccountsViewModel(repository: AccountRepository) : ViewModel() {
     fun setShowArchived(show: Boolean) = showArchived.update { show }
 
     companion object {
-        fun factory(repository: AccountRepository): ViewModelProvider.Factory = viewModelFactory {
-            initializer { AccountsViewModel(repository) }
+        fun factory(repository: AccountRepository, transactions: TransactionSource): ViewModelProvider.Factory = viewModelFactory {
+            initializer { AccountsViewModel(repository, transactions) }
         }
     }
 }

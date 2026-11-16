@@ -235,29 +235,6 @@ internal fun CategoryFormScreen(viewModel: CategoryFormViewModel, onDone: () -> 
                     enabled = !state.isChangingState,
                     modifier = Modifier.fillMaxWidth().testTag("action-save"),
                 )
-                if (state.isEditing) {
-                    if (state.isArchived) {
-                        FluxaButton(
-                            text = stringResource(R.string.action_reactivate),
-                            onClick = viewModel::reactivate,
-                            variant = FluxaButtonVariant.Secondary,
-                            leadingIcon = FluxaIcons.Restore,
-                            loading = state.isChangingState,
-                            enabled = !state.isSaving,
-                            modifier = Modifier.fillMaxWidth().testTag("action-reactivate"),
-                        )
-                    } else {
-                        FluxaButton(
-                            text = stringResource(R.string.action_archive),
-                            onClick = { confirmArchive = true },
-                            variant = FluxaButtonVariant.Destructive,
-                            leadingIcon = FluxaIcons.Archive,
-                            loading = state.isChangingState,
-                            enabled = !state.isSaving,
-                            modifier = Modifier.fillMaxWidth().testTag("action-archive"),
-                        )
-                    }
-                }
             }
         },
     ) {
@@ -350,6 +327,32 @@ internal fun CategoryFormScreen(viewModel: CategoryFormViewModel, onDone: () -> 
                                     modifier = Modifier.testTag("color-${option.hex}"),
                                 ) { ColorDot(option.color) }
                             }
+                        }
+                    }
+                }
+                if (state.isEditing) {
+                    // Arquivar/Reativar no fim do conteúdo; o rodapé fixo fica só com Salvar.
+                    item {
+                        if (state.isArchived) {
+                            FluxaButton(
+                                text = stringResource(R.string.action_reactivate),
+                                onClick = viewModel::reactivate,
+                                variant = FluxaButtonVariant.Secondary,
+                                leadingIcon = FluxaIcons.Restore,
+                                loading = state.isChangingState,
+                                enabled = !state.isSaving,
+                                modifier = Modifier.fillMaxWidth().testTag("action-reactivate"),
+                            )
+                        } else {
+                            FluxaButton(
+                                text = stringResource(R.string.action_archive),
+                                onClick = { confirmArchive = true },
+                                variant = FluxaButtonVariant.Destructive,
+                                leadingIcon = FluxaIcons.Archive,
+                                loading = state.isChangingState,
+                                enabled = !state.isSaving,
+                                modifier = Modifier.fillMaxWidth().testTag("action-archive"),
+                            )
                         }
                     }
                 }

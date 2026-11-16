@@ -148,6 +148,26 @@ class CategoriesViewModelsTest {
     }
 
     @Test
+    fun kindChangeOfAReferencedCategoryShowsItsOwnMessage() = runTest(dispatcher) {
+        val id = repository.create(CategoryDetails("Freela", EXPENSE))
+        dao.kindLocked = true
+        val vm = CategoryFormViewModel(repository, id)
+        advanceUntilIdle()
+        vm.onKindChange(INCOME)
+        vm.save()
+        advanceUntilIdle()
+        assertEquals(R.string.error_category_kind_in_use, vm.uiState.value.operationError)
+        assertNull(vm.uiState.value.completion)
+
+        vm.onKindChange(EXPENSE)
+        vm.onNameChange("Freelas")
+        vm.save()
+        advanceUntilIdle()
+        assertEquals(FormCompletion.Saved, vm.uiState.value.completion)
+        assertEquals("Freelas", repository.observe(id).firstValue()!!.details.name)
+    }
+
+    @Test
     fun failuresAreReportedWithoutLosingState() = runTest(dispatcher) {
         val id = repository.create(CategoryDetails("Saúde", EXPENSE))
         repository.archive(id)

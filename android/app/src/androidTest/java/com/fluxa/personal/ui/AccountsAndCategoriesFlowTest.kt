@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
@@ -47,9 +48,16 @@ class AccountsAndCategoriesFlowTest {
 
     private fun openAccounts() {
         compose.onNodeWithTag("tab-cash").performClick()
-        waitForTag("cash-accounts-card")
-        compose.onNodeWithTag("cash-accounts-card").performClick()
+        waitForTag("screen-cash")
+        compose.onNodeWithTag("list-cash").performScrollToNode(hasTestTag("action-manage-accounts"))
+        compose.onNodeWithTag("action-manage-accounts").performClick()
         waitForTag("screen-accounts")
+    }
+
+    /** Em telas baixas (320x640dp) com teclado aberto, itens da LazyColumn podem não estar compostos. */
+    private fun reveal(tag: String) {
+        compose.waitForIdle()
+        compose.onNodeWithTag("feature-list").performScrollToNode(hasTestTag(tag))
     }
 
     private fun openCategories() {
@@ -60,6 +68,7 @@ class AccountsAndCategoriesFlowTest {
     }
 
     private fun typeInto(tag: String, text: String) {
+        reveal(tag)
         compose.onNodeWithTag(tag).performTextClearance()
         compose.onNodeWithTag(tag).performTextInput(text)
     }
@@ -74,6 +83,7 @@ class AccountsAndCategoriesFlowTest {
             compose.onNodeWithTag("tab-cash").assertDoesNotExist()
 
             typeInto("field-account-name", "Conta teste")
+            reveal("type-SAVINGS")
             compose.onNodeWithTag("type-SAVINGS").performClick()
             typeInto("field-account-amount", "1.250,90")
             compose.onNodeWithTag("action-save").performClick()
@@ -92,7 +102,8 @@ class AccountsAndCategoriesFlowTest {
             assertEquals(created.id, runBlocking { app.accounts.observeAll().first().single().id })
 
             compose.onNodeWithTag("account-Conta editada").performClick()
-            waitForTag("action-archive")
+            waitForTag("screen-account-form")
+            reveal("action-archive")
             compose.onNodeWithTag("action-archive").performClick()
             waitForTag("action-confirm-archive")
             compose.onNodeWithTag("action-confirm-archive").performClick()
@@ -143,12 +154,14 @@ class AccountsAndCategoriesFlowTest {
             waitForTag("screen-category-form")
             compose.waitUntilAtLeastOneExists(hasText("Salário teste"), 5_000)
             typeInto("field-category-name", "Salário editado")
+            reveal("icon-work")
             compose.onNodeWithTag("icon-work").performClick()
             compose.onNodeWithTag("action-save").performClick()
             waitForTag("category-Salário editado")
 
             compose.onNodeWithTag("category-Salário editado").performClick()
-            waitForTag("action-archive")
+            waitForTag("screen-category-form")
+            reveal("action-archive")
             compose.onNodeWithTag("action-archive").performClick()
             waitForTag("action-confirm-archive")
             compose.onNodeWithTag("action-confirm-archive").performClick()

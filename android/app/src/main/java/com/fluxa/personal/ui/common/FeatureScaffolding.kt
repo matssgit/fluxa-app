@@ -83,7 +83,7 @@ internal fun FeatureScreen(
         )
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
             LazyColumn(
-                modifier = Modifier.widthIn(max = ContentMaxWidth).fillMaxSize(),
+                modifier = Modifier.widthIn(max = ContentMaxWidth).fillMaxSize().testTag("feature-list"),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 content = content,
@@ -215,13 +215,15 @@ internal fun ConfirmArchiveSheet(
     confirmLabel: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    dismissLabel: String = stringResource(R.string.action_cancel),
+    confirmIcon: ImageVector = FluxaIcons.Archive,
 ) {
     com.fluxa.personal.ui.designsystem.components.FluxaBottomSheet(
         title = title,
         onDismissRequest = onDismiss,
         footer = {
             FluxaButton(
-                text = stringResource(R.string.action_cancel),
+                text = dismissLabel,
                 onClick = onDismiss,
                 variant = FluxaButtonVariant.Secondary,
                 modifier = Modifier.weight(1f),
@@ -230,7 +232,7 @@ internal fun ConfirmArchiveSheet(
                 text = confirmLabel,
                 onClick = onConfirm,
                 variant = FluxaButtonVariant.Destructive,
-                leadingIcon = FluxaIcons.Archive,
+                leadingIcon = confirmIcon,
                 modifier = Modifier.weight(1f).testTag("action-confirm-archive"),
             )
         },

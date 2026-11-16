@@ -35,7 +35,7 @@ class FoundationTest {
         compose.onNodeWithTag("tab-cash").performClick()
         compose.onNodeWithTag("screen-cash").assertIsDisplayed()
 
-        val description = compose.activity.getString(R.string.placeholder_sheet_body)
+        val description = compose.activity.getString(R.string.new_entry_sheet_body)
         val close = compose.activity.getString(R.string.action_close)
         compose.onNodeWithTag("action-new-entry").performClick()
         compose.onNodeWithText(description).assertIsDisplayed()

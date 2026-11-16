@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.fluxa.personal.R
+import com.fluxa.personal.data.repository.CategoryKindInUse
 import com.fluxa.personal.data.repository.CategoryRepository
 import com.fluxa.personal.domain.model.Category
 import com.fluxa.personal.domain.model.CategoryDetails
@@ -185,7 +186,11 @@ internal class CategoryFormViewModel(
                         if (ok) current.copy(isSaving = false, completion = FormCompletion.Saved)
                         else current.copy(isSaving = false, notFound = true)
                     },
-                    onFailure = { current.copy(isSaving = false, operationError = R.string.error_save) },
+                    onFailure = { error ->
+                        // Contrato do Sprint 3-A: o tipo de uma categoria já usada em lançamentos fica bloqueado.
+                        if (error is CategoryKindInUse) current.copy(isSaving = false, operationError = R.string.error_category_kind_in_use)
+                        else current.copy(isSaving = false, operationError = R.string.error_save)
+                    },
                 )
             }
         }

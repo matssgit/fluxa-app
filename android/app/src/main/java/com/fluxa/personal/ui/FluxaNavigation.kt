@@ -24,6 +24,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fluxa.personal.FluxaApplication
 import com.fluxa.personal.R
+import com.fluxa.personal.domain.model.TransactionDirection
+import com.fluxa.personal.ui.common.FeedbackBanner
+import com.fluxa.personal.ui.feature.cash.CashScreen
+import com.fluxa.personal.ui.feature.cash.CashViewModel
+import com.fluxa.personal.ui.feature.cash.DashboardScreen
+import com.fluxa.personal.ui.feature.cash.DashboardViewModel
+import com.fluxa.personal.ui.feature.transactions.NewEntrySheet
+import com.fluxa.personal.ui.feature.transactions.RepositoryTransactionSource
+import com.fluxa.personal.ui.feature.transactions.TransactionCompletion
+import com.fluxa.personal.ui.feature.transactions.TransactionFormScreen
+import com.fluxa.personal.ui.feature.transactions.TransactionFormViewModel
+import com.fluxa.personal.ui.feature.transactions.TransactionRoutes
 import com.fluxa.personal.ui.feature.accounts.AccountFormScreen
 import com.fluxa.personal.ui.feature.accounts.AccountFormViewModel
 import com.fluxa.personal.ui.feature.accounts.AccountRoutes
@@ -52,8 +64,6 @@ import com.fluxa.personal.ui.designsystem.components.FluxaNavAction
 import com.fluxa.personal.ui.designsystem.components.FluxaNavItem
 import com.fluxa.personal.ui.designsystem.components.FluxaNavigationBar
 import com.fluxa.personal.ui.placeholder.CardsPlaceholder
-import com.fluxa.personal.ui.placeholder.CashPlaceholder
-import com.fluxa.personal.ui.placeholder.DashboardPlaceholder
 import com.fluxa.personal.ui.placeholder.MorePlaceholder
 
 private enum class Destination(
@@ -82,6 +92,15 @@ internal fun FluxaNavigation() {
 
     val reducedMotion = LocalReducedMotion.current
     val app = LocalContext.current.applicationContext as FluxaApplication
+    val transactions = remember(app) { RepositoryTransactionSource(app.transactions) }
+    var feedback by rememberSaveable { mutableStateOf<Int?>(null) }
+    val goToTab: (String) -> Unit = { route ->
+        controller.navigate(route) {
+            popUpTo(controller.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
     val currentRoute = entry?.destination?.route
     val tabRoutes = remember { Destination.entries.map { it.route }.toSet() }
     val items = Destination.entries.map {
@@ -103,14 +122,22 @@ internal fun FluxaNavigation() {
                 enterTransition = { if (reducedMotion) fadeIn(snapSpec()) else fadeIn(tweenSpec()) },
                 exitTransition = { if (reducedMotion) fadeOut(snapSpec()) else fadeOut(tweenSpec()) },
             ) {
-                composable(Destination.DASHBOARD.route) { DashboardPlaceholder(toggleAmounts) }
-                composable(Destination.CASH.route) {
-                    val accounts: AccountsViewModel = viewModel(factory = AccountsViewModel.factory(app.accounts))
-                    val accountsState by accounts.uiState.collectAsStateWithLifecycle()
-                    CashPlaceholder(
+                composable(Destination.DASHBOARD.route) {
+                    DashboardScreen(
+                        viewModel = viewModel(factory = DashboardViewModel.factory(transactions, app.accounts, app.categories)),
                         onToggleAmounts = toggleAmounts,
-                        activeAccounts = if (accountsState.isLoading) null else accountsState.active.size,
+                        onOpenCash = { goToTab(Destination.CASH.route) },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
+                        onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
+                    )
+                }
+                composable(Destination.CASH.route) {
+                    CashScreen(
+                        viewModel = viewModel(factory = CashViewModel.factory(transactions, app.accounts, app.categories)),
+                        onToggleAmounts = toggleAmounts,
                         onManageAccounts = { controller.navigate(AccountRoutes.LIST) },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
+                        onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
                     )
                 }
                 composable(Destination.CARDS.route) { CardsPlaceholder(toggleAmounts) }
@@ -120,7 +147,7 @@ internal fun FluxaNavigation() {
 
                 composable(AccountRoutes.LIST) {
                     AccountsScreen(
-                        viewModel = viewModel(factory = AccountsViewModel.factory(app.accounts)),
+                        viewModel = viewModel(factory = AccountsViewModel.factory(app.accounts, transactions)),
                         onBack = { controller.popBackStack() },
                         onCreate = { controller.navigate(AccountRoutes.NEW) },
                         onEdit = { controller.navigate(AccountRoutes.edit(it)) },
@@ -149,19 +176,44 @@ internal fun FluxaNavigation() {
                 composable(CategoryRoutes.EDIT, arguments = listOf(navArgument(CategoryRoutes.ARG_ID) { type = NavType.StringType })) {
                     CategoryFormScreen(viewModel(factory = CategoryFormViewModel.factory(app.categories)), onDone = { controller.popBackStack() })
                 }
+
+                val transactionForm: @Composable () -> Unit = {
+                    TransactionFormScreen(
+                        viewModel = viewModel(factory = TransactionFormViewModel.factory(transactions, app.accounts, app.categories)),
+                        onDone = { completion, direction ->
+                            feedback = when (completion) {
+                                TransactionCompletion.Created ->
+                                    if (direction == TransactionDirection.INCOME) R.string.feedback_income_created else R.string.feedback_expense_created
+                                TransactionCompletion.Updated -> R.string.feedback_updated
+                                TransactionCompletion.Cancelled -> R.string.feedback_cancelled
+                                null -> null
+                            }
+                            controller.popBackStack()
+                        },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
+                        onCreateCategory = { controller.navigate(CategoryRoutes.new(it)) },
+                    )
+                }
+                composable(
+                    TransactionRoutes.NEW,
+                    arguments = listOf(navArgument(TransactionRoutes.ARG_DIRECTION) { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) { transactionForm() }
+                composable(TransactionRoutes.DETAIL, arguments = listOf(navArgument(TransactionRoutes.ARG_ID) { type = NavType.StringType })) {
+                    transactionForm()
+                }
             }
+
+            FeedbackBanner(
+                message = feedback?.let { stringResource(it) },
+                onDismiss = { feedback = null },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
 
             // A barra flutuante só aparece nas abas; telas de cadastro têm ação fixa no rodapé e não podem ser cobertas.
             if (currentRoute in tabRoutes) FluxaNavigationBar(
                 items = items,
                 selectedRoute = currentRoute,
-                onItemSelected = { item ->
-                    controller.navigate(item.route) {
-                        popUpTo(controller.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onItemSelected = { item -> goToTab(item.route) },
                 primaryAction = FluxaNavAction(
                     contentDescription = stringResource(R.string.action_new_entry),
                     onClick = { showNewEntry = true },
@@ -172,26 +224,13 @@ internal fun FluxaNavigation() {
         }
 
         if (showNewEntry) {
-            // Placeholder visual do padrão de sheet. O fluxo de lançamento não faz parte do Sprint 0.
-            FluxaBottomSheet(
-                title = stringResource(R.string.action_new_entry),
-                onDismissRequest = { showNewEntry = false },
-                closeDescription = stringResource(R.string.action_close),
-                footer = {
-                    FluxaButton(
-                        text = stringResource(R.string.action_close),
-                        onClick = { showNewEntry = false },
-                        variant = FluxaButtonVariant.Secondary,
-                        modifier = Modifier.weight(1f),
-                    )
+            NewEntrySheet(
+                onChoose = { direction ->
+                    showNewEntry = false
+                    controller.navigate(TransactionRoutes.new(direction))
                 },
-            ) {
-                Text(
-                    stringResource(R.string.placeholder_sheet_body),
-                    style = FluxaTheme.typography.body,
-                    color = FluxaTheme.colors.textSecondary,
-                )
-            }
+                onDismiss = { showNewEntry = false },
+            )
         }
     }
 }

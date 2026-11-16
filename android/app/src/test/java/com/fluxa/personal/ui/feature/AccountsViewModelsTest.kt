@@ -50,6 +50,13 @@ class AccountsViewModelsTest {
 
     private fun form(id: UUID? = null) = AccountFormViewModel(repository, id, clock)
 
+    private fun transactions() = FakeTransactionSource(
+        repository,
+        com.fluxa.personal.data.repository.CategoryRepository(FakeCategoryDao(), clock),
+        LocalDate.of(2026, 11, 15),
+        Instant.parse("2026-11-15T12:00:00Z"),
+    )
+
     @Test
     fun createsAccountWithDomainValuesAndCompletes() = runTest(dispatcher) {
         val vm = form()
@@ -189,7 +196,7 @@ class AccountsViewModelsTest {
 
     @Test
     fun listSplitsActiveAndArchivedAndFollowsTheFlow() = runTest(dispatcher) {
-        val vm = AccountsViewModel(repository)
+        val vm = AccountsViewModel(repository, transactions())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         advanceUntilIdle()
         assertTrue(vm.uiState.value.isEmpty)
@@ -203,6 +210,8 @@ class AccountsViewModelsTest {
         advanceUntilIdle()
         assertEquals(listOf("A conta"), vm.uiState.value.active.map { it.details.name })
         assertEquals(listOf("b conta"), vm.uiState.value.archived.map { it.details.name })
+        // Saldo atual vem do repositório de lançamentos (inclusive para a arquivada).
+        assertEquals(com.fluxa.personal.domain.rules.CalculatedBalance.Exact(Money(100)), vm.uiState.value.balances[a])
         assertFalse(vm.uiState.value.showArchived)
         vm.setShowArchived(true)
         advanceUntilIdle()
@@ -212,7 +221,7 @@ class AccountsViewModelsTest {
     @Test
     fun listReportsLoadFailure() = runTest(dispatcher) {
         dao.failReads = true
-        val vm = AccountsViewModel(repository)
+        val vm = AccountsViewModel(repository, transactions())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
         advanceUntilIdle()
         assertEquals(R.string.error_load, vm.uiState.value.errorMessage)

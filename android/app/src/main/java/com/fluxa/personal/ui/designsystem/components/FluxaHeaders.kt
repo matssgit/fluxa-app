@@ -79,6 +79,7 @@ internal fun FluxaSectionHeader(
     overline: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
+    actionModifier: Modifier = Modifier,
 ) {
     val colors = FluxaTheme.colors
     val type = FluxaTheme.typography
@@ -95,7 +96,7 @@ internal fun FluxaSectionHeader(
         if (actionLabel != null && onAction != null) {
             val interaction = remember { MutableInteractionSource() }
             Box(
-                modifier = Modifier
+                modifier = actionModifier
                     .heightIn(min = 48.dp)
                     .clip(FluxaTheme.shapes.pill)
                     .clickable(interaction, LocalIndication.current, role = Role.Button, onClick = onAction)
