@@ -66,7 +66,7 @@ internal object TransactionRoutes {
 
 /** Sheet do botão central: escolhe despesa ou receita. Usa o padrão único de sheet do Design System. */
 @Composable
-internal fun NewEntrySheet(onChoose: (TransactionDirection) -> Unit, onDismiss: () -> Unit) {
+internal fun NewEntrySheet(onChoose: (TransactionDirection) -> Unit, onDismiss: () -> Unit, onNewPurchase: (() -> Unit)? = null) {
     FluxaBottomSheet(
         title = stringResource(R.string.action_new_entry),
         onDismissRequest = onDismiss,
@@ -96,11 +96,30 @@ internal fun NewEntrySheet(onChoose: (TransactionDirection) -> Unit, onDismiss: 
             onClick = { onChoose(TransactionDirection.INCOME) },
             modifier = Modifier.testTag("new-income"),
         )
+        if (onNewPurchase != null) {
+            EntryOption(
+                title = stringResource(R.string.new_purchase),
+                hint = stringResource(R.string.new_purchase_hint),
+                sign = "−",
+                income = false,
+                onClick = onNewPurchase,
+                modifier = Modifier.testTag("new-purchase"),
+                icon = com.fluxa.personal.ui.designsystem.FluxaIcons.Card,
+            )
+        }
     }
 }
 
 @Composable
-private fun EntryOption(title: String, hint: String, sign: String, income: Boolean, onClick: () -> Unit, modifier: Modifier) {
+private fun EntryOption(
+    title: String,
+    hint: String,
+    sign: String,
+    income: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+) {
     val colors = FluxaTheme.colors
     FluxaCard(modifier = modifier.fillMaxWidth(), onClick = onClick, contentPadding = PaddingValues(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -110,7 +129,8 @@ private fun EntryOption(title: String, hint: String, sign: String, income: Boole
                     .background(if (income) colors.incomeContainer else colors.expenseContainer, FluxaTheme.shapes.pill),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(sign, style = FluxaTheme.typography.title, color = if (income) colors.income else colors.expense)
+                if (icon != null) Icon(icon, contentDescription = null, tint = colors.expense, modifier = Modifier.size(22.dp))
+                else Text(sign, style = FluxaTheme.typography.title, color = if (income) colors.income else colors.expense)
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)

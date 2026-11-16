@@ -1,6 +1,5 @@
 package com.fluxa.personal.ui.placeholder
 
-import com.fluxa.personal.core.money.Money
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,11 +31,9 @@ import com.fluxa.personal.R
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
 import com.fluxa.personal.ui.designsystem.LocalAmountsHidden
-import com.fluxa.personal.ui.designsystem.components.FluxaAmount
 import com.fluxa.personal.ui.designsystem.components.FluxaCard
 import com.fluxa.personal.ui.designsystem.components.FluxaIconButton
 import com.fluxa.personal.ui.designsystem.components.FluxaNavigationBarDefaults
-import com.fluxa.personal.ui.designsystem.components.FluxaSurfaceTone
 import com.fluxa.personal.ui.designsystem.components.FluxaTopBar
 
 /*
@@ -81,56 +77,6 @@ private fun PlaceholderScreen(
 }
 
 private val Gutter = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-
-@Composable
-private fun BodyCard(text: String) {
-    FluxaCard(modifier = Gutter) {
-        Text(text, style = FluxaTheme.typography.body, color = FluxaTheme.colors.textSecondary)
-    }
-}
-
-@Composable
-internal fun CardsPlaceholder(onToggleAmounts: () -> Unit) {
-    val colors = FluxaTheme.colors
-    val type = FluxaTheme.typography
-    PlaceholderScreen(route = "cards", title = stringResource(R.string.cards), onToggleAmounts = onToggleAmounts) {
-        item {
-            FluxaCard(modifier = Gutter, tone = FluxaSurfaceTone.Inverse, featured = true, contentPadding = PaddingValues(24.dp)) {
-                Text(stringResource(R.string.placeholder_card_label), style = type.titleSmall, color = colors.onSurfaceInverse)
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.placeholder_card_available).uppercase(),
-                    style = type.overline,
-                    color = colors.onSurfaceInverseMuted,
-                )
-                FluxaAmount(amount = Money(3_400_00), style = type.headline)
-                Spacer(Modifier.height(16.dp))
-                UsageBar(fraction = 0.32f)
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.placeholder_preview_note), style = type.caption, color = colors.onSurfaceInverseMuted)
-            }
-        }
-        item { BodyCard(stringResource(R.string.placeholder_cards_body)) }
-    }
-}
-
-@Composable
-private fun UsageBar(fraction: Float) {
-    val on = FluxaTheme.colors.onSurfaceInverse
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(6.dp)
-            .background(on.copy(alpha = 0.18f), FluxaTheme.shapes.pill),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(fraction)
-                .height(6.dp)
-                .background(on, FluxaTheme.shapes.pill),
-        )
-    }
-}
 
 private data class MoreDestination(val label: Int, val icon: ImageVector, val route: String? = null)
 

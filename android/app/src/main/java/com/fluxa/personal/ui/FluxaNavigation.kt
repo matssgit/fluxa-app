@@ -63,7 +63,19 @@ import com.fluxa.personal.ui.designsystem.components.FluxaButtonVariant
 import com.fluxa.personal.ui.designsystem.components.FluxaNavAction
 import com.fluxa.personal.ui.designsystem.components.FluxaNavItem
 import com.fluxa.personal.ui.designsystem.components.FluxaNavigationBar
-import com.fluxa.personal.ui.placeholder.CardsPlaceholder
+import com.fluxa.personal.ui.feature.credit.CardDetailScreen
+import com.fluxa.personal.ui.feature.credit.CardDetailViewModel
+import com.fluxa.personal.ui.feature.credit.CardFormScreen
+import com.fluxa.personal.ui.feature.credit.CardFormViewModel
+import com.fluxa.personal.ui.feature.credit.CardsScreen
+import com.fluxa.personal.ui.feature.credit.CardsViewModel
+import com.fluxa.personal.ui.feature.credit.CreditCompletion
+import com.fluxa.personal.ui.feature.credit.CreditRoutes
+import com.fluxa.personal.ui.feature.credit.PurchaseDetailScreen
+import com.fluxa.personal.ui.feature.credit.PurchaseDetailViewModel
+import com.fluxa.personal.ui.feature.credit.PurchaseFormScreen
+import com.fluxa.personal.ui.feature.credit.PurchaseFormViewModel
+import com.fluxa.personal.ui.feature.credit.RepositoryCreditSource
 import com.fluxa.personal.ui.placeholder.MorePlaceholder
 
 private enum class Destination(
@@ -93,6 +105,7 @@ internal fun FluxaNavigation() {
     val reducedMotion = LocalReducedMotion.current
     val app = LocalContext.current.applicationContext as FluxaApplication
     val transactions = remember(app) { RepositoryTransactionSource(app.transactions) }
+    val credit = remember(app) { RepositoryCreditSource(app.credit) }
     var feedback by rememberSaveable { mutableStateOf<Int?>(null) }
     val goToTab: (String) -> Unit = { route ->
         controller.navigate(route) {
@@ -140,7 +153,70 @@ internal fun FluxaNavigation() {
                         onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
                     )
                 }
-                composable(Destination.CARDS.route) { CardsPlaceholder(toggleAmounts) }
+                composable(Destination.CARDS.route) {
+                    CardsScreen(
+                        viewModel = viewModel(factory = CardsViewModel.factory(credit)),
+                        onToggleAmounts = toggleAmounts,
+                        onCreate = { controller.navigate(CreditRoutes.NEW_CARD) },
+                        onOpen = { controller.navigate(CreditRoutes.detail(it)) },
+                    )
+                }
+                composable(CreditRoutes.NEW_CARD) {
+                    CardFormScreen(viewModel(factory = CardFormViewModel.factory(credit)), onDone = { completion ->
+                        if (completion != null) feedback = R.string.feedback_card_saved
+                        controller.popBackStack()
+                    })
+                }
+                composable(CreditRoutes.EDIT_CARD, arguments = listOf(navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType })) {
+                    CardFormScreen(viewModel(factory = CardFormViewModel.factory(credit)), onDone = { completion ->
+                        feedback = when (completion) {
+                            CreditCompletion.Archived -> R.string.feedback_card_archived
+                            null -> null
+                            else -> R.string.feedback_card_saved
+                        }
+                        controller.popBackStack()
+                    })
+                }
+                composable(CreditRoutes.CARD_DETAIL, arguments = listOf(navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType })) {
+                    CardDetailScreen(
+                        viewModel = viewModel(factory = CardDetailViewModel.factory(credit, app.categories)),
+                        onBack = { controller.popBackStack() },
+                        onEdit = { controller.navigate(CreditRoutes.edit(it)) },
+                        onNewPurchase = { controller.navigate(CreditRoutes.newPurchase(it)) },
+                        onOpenPurchase = { card, purchase -> controller.navigate(CreditRoutes.purchase(card, purchase)) },
+                    )
+                }
+                composable(
+                    CreditRoutes.NEW_PURCHASE,
+                    arguments = listOf(navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType; nullable = true; defaultValue = null }),
+                ) {
+                    PurchaseFormScreen(
+                        viewModel = viewModel(factory = PurchaseFormViewModel.factory(credit, app.categories)),
+                        onCreated = { created ->
+                            feedback = R.string.feedback_purchase_created
+                            // Abre o detalhe com as parcelas e vencimentos persistidos, sem empilhar o formulário.
+                            controller.navigate(CreditRoutes.purchase(created.cardId, created.purchaseId)) {
+                                popUpTo(CreditRoutes.NEW_PURCHASE) { inclusive = true }
+                            }
+                        },
+                        onBack = { controller.popBackStack() },
+                        onCreateCard = { controller.navigate(CreditRoutes.NEW_CARD) },
+                        onCreateCategory = { controller.navigate(CategoryRoutes.new(TransactionDirection.EXPENSE)) },
+                    )
+                }
+                composable(
+                    CreditRoutes.PURCHASE_DETAIL,
+                    arguments = listOf(
+                        navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType },
+                        navArgument(CreditRoutes.ARG_PURCHASE) { type = NavType.StringType },
+                    ),
+                ) {
+                    PurchaseDetailScreen(
+                        viewModel = viewModel(factory = PurchaseDetailViewModel.factory(credit, app.categories)),
+                        onBack = { controller.popBackStack() },
+                        onCancelled = { feedback = R.string.feedback_purchase_cancelled },
+                    )
+                }
                 composable(Destination.MORE.route) {
                     MorePlaceholder(toggleAmounts, onOpenCategories = { controller.navigate(CategoryRoutes.LIST) })
                 }
@@ -230,6 +306,10 @@ internal fun FluxaNavigation() {
                     controller.navigate(TransactionRoutes.new(direction))
                 },
                 onDismiss = { showNewEntry = false },
+                onNewPurchase = {
+                    showNewEntry = false
+                    controller.navigate(CreditRoutes.newPurchase(null))
+                },
             )
         }
     }

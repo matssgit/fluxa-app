@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.selection.selectable
@@ -94,7 +95,7 @@ internal fun FluxaNavigationBar(
         modifier = modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(PaddingValues(start = 16.dp, end = 16.dp, bottom = 12.dp)),
+            .padding(PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp)),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Row(
@@ -104,11 +105,12 @@ internal fun FluxaNavigationBar(
                 .fluxaGlass(FluxaTheme.shapes.pill)
                 .heightIn(min = 76.dp)
                 .selectableGroup()
-                .padding(horizontal = 6.dp, vertical = 6.dp),
+                .padding(horizontal = 2.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             items.take(half).forEach { item -> NavItem(item, item.route == selectedRoute, onItemSelected) }
-            PrimaryAction(primaryAction, Modifier.weight(1f))
+            // A ação central ocupa só o necessário (56dp + respiro); o espaço restante vai para os rótulos.
+            PrimaryAction(primaryAction, Modifier.width(64.dp))
             items.drop(half).forEach { item -> NavItem(item, item.route == selectedRoute, onItemSelected) }
         }
     }
@@ -133,8 +135,8 @@ private fun RowScope.NavItem(item: FluxaNavItem, selected: Boolean, onSelect: (F
     Column(
         modifier = Modifier
             .weight(1f)
-            .clip(FluxaTheme.shapes.extraLarge)
-            .then(if (focused) Modifier.border(2.dp, colors.brand, FluxaTheme.shapes.extraLarge) else Modifier)
+            .clip(FluxaTheme.shapes.medium)
+            .then(if (focused) Modifier.border(2.dp, colors.brand, FluxaTheme.shapes.medium) else Modifier)
             .selectable(
                 selected = selected,
                 interactionSource = interaction,
@@ -155,7 +157,7 @@ private fun RowScope.NavItem(item: FluxaNavItem, selected: Boolean, onSelect: (F
                     scaleY = indicatorScale
                 }
                 .background(indicator, FluxaTheme.shapes.pill)
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 12.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
