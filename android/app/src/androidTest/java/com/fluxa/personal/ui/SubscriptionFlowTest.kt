@@ -48,7 +48,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Sprint 5-B: assinaturas de ponta a ponta sobre o Room v6 real. */
+/** Assinaturas de ponta a ponta sobre o Room v6 real. */
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 class SubscriptionFlowTest {
@@ -291,4 +291,118 @@ class SubscriptionFlowTest {
         }
         assertEquals(SubscriptionStatus.PAUSED, runBlocking { app.subscriptions.observeSubscription(paused).first()!!.status })
     }
+    private fun undoOccurrence() {
+        tap("feature-list", "action-undo-occurrence")
+        waitForTag("action-confirm-archive")
+        compose.onNodeWithTag("action-confirm-archive").performClick()
+        compose.waitUntilDoesNotExist(hasTestTag("action-confirm-archive"), 5_000)
+    }
+
+    @Test
+    fun accountUndoRemovesCashEntryAndReturnsToAgenda() {
+        val id = subscription("Música", 2_190)
+        val before = balance()
+        ActivityScenario.launch(MainActivity::class.java).use {
+            openDetail("Música")
+            settleNext()
+            waitForText("occurrence-status", "Paga")
+            assertEquals(before.cents - 2_190, balance().cents)
+            tap("feature-list", "action-view-transaction")
+            waitForText("managed-payment", "Assinatura")
+            tap("feature-list", "action-view-subscription")
+            waitForTag("screen-subscription-detail")
+            tap("feature-list", "occurrence-Música-$today")
+            undoOccurrence()
+            waitForText("occurrence-status", "Pendente")
+            assertEquals(before, balance())
+            assertTrue(ledgerFor(id).isEmpty())
+            compose.onNodeWithTag("action-back").performClick()
+            waitForTag("screen-subscription-detail")
+            tap("feature-list", "action-subscription-agenda")
+            waitForTag("screen-subscription-agenda")
+            tap("feature-list", "occurrence-Música-$today")
+            waitForText("occurrence-status", "Pendente")
+            compose.onNodeWithTag("action-back").performClick()
+            compose.onNodeWithTag("action-back").performClick()
+            waitForTag("screen-subscription-detail")
+            compose.onNodeWithTag("action-back").performClick()
+            waitForTag("screen-occurrence")
+        }
+    }
+
+    @Test
+    fun cardUndoRemovesPurchaseAndRestoresLimit() {
+        val card = card(100_000)
+        val id = subscription("Nuvem", 1_000, source = SubscriptionSource.Card(card))
+        ActivityScenario.launch(MainActivity::class.java).use {
+            openDetail("Nuvem")
+            settleNext()
+            waitForText("occurrence-status", "Cobrada no cartão")
+            assertEquals(Money(1_000), runBlocking { app.credit.observeCard(card).first()!!.committedAmount })
+            undoOccurrence()
+            waitForText("occurrence-status", "Pendente")
+        }
+        assertEquals(SubscriptionOccurrenceStatus.PENDING, occurrenceStatus(id, today))
+        assertEquals(Money(0), runBlocking { app.credit.observeCard(card).first()!!.committedAmount })
+        assertTrue(runBlocking { app.credit.observePurchases(card).first().isEmpty() })
+    }
+
+    @Test
+    fun paidCardInstallmentMustBeUndoneSeparately() {
+        val card = card(100_000)
+        subscription("Nuvem", 1_000, source = SubscriptionSource.Card(card))
+        ActivityScenario.launch(MainActivity::class.java).use {
+            openDetail("Nuvem")
+            settleNext()
+            tap("feature-list", "action-view-installment")
+            waitForTag("screen-installment-detail")
+            tap("feature-list", "action-pay-installment")
+            waitForTag("sheet-pay-installment")
+            compose.onNodeWithTag("action-review-payment").performClick()
+            waitForTag("action-confirm-payment")
+            compose.onNodeWithTag("action-confirm-payment").performClick()
+            waitForText("installment-status", "Paga")
+            compose.onNodeWithTag("action-back").performClick()
+            waitForTag("screen-occurrence")
+            undoOccurrence()
+            inList("feature-list", "occurrence-error")
+            waitForText("occurrence-error", "Desfaça primeiro o pagamento da parcela")
+            tap("feature-list", "action-view-installment")
+            waitForTag("screen-installment-detail")
+            tap("feature-list", "action-undo-payment")
+            waitForTag("action-confirm-archive")
+            compose.onNodeWithTag("action-confirm-archive").performClick()
+            waitForText("installment-status", "Pendente")
+            compose.onNodeWithTag("action-back").performClick()
+            waitForTag("screen-occurrence")
+            undoOccurrence()
+            waitForText("occurrence-status", "Pendente")
+        }
+    }
+
+    @Test
+    fun pausedSubscriptionKeepsItsStatusAfterHistoricalUndo() = historicalUndo(SubscriptionStatus.PAUSED)
+
+    @Test
+    fun cancelledSubscriptionKeepsItsStatusAfterHistoricalUndo() = historicalUndo(SubscriptionStatus.CANCELLED)
+
+    private fun historicalUndo(status: SubscriptionStatus) {
+        val past = today.minusMonths(1)
+        val id = subscription("Jornal", 3_000, anchor = past)
+        runBlocking {
+            assertTrue(app.subscriptions.paySubscriptionOccurrence(id, past, today) is SubscriptionResult.Saved)
+            val changed = if (status == SubscriptionStatus.PAUSED) app.subscriptions.pause(id) else app.subscriptions.cancel(id)
+            assertTrue(changed is SubscriptionResult.Saved)
+        }
+        ActivityScenario.launch(MainActivity::class.java).use {
+            openDetail("Jornal")
+            tap("feature-list", "occurrence-Jornal-$past")
+            undoOccurrence()
+            waitForText("occurrence-status", "Vencida")
+            compose.onNodeWithTag("action-settle-occurrence").assertDoesNotExist()
+        }
+        assertEquals(status, runBlocking { app.subscriptions.observeSubscription(id).first()!!.status })
+        assertEquals(SubscriptionOccurrenceStatus.OVERDUE, occurrenceStatus(id, past))
+    }
+
 }

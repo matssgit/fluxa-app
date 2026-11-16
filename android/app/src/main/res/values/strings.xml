@@ -489,4 +489,16 @@
     <string name="managed_subscription_note">Este lançamento é gerenciado pela assinatura e não pode ser editado nem cancelado aqui.</string>
     <string name="managed_subscription_origin">Assinatura</string>
     <string name="purchase_from_subscription">Compra gerada por assinatura.</string>
+    <string name="occurrence_undo_payment">Desfazer pagamento</string>
+    <string name="occurrence_undo_charge">Desfazer cobrança</string>
+    <string name="occurrence_destructive_action">Ação destrutiva</string>
+    <string name="occurrence_undo_payment_title">Desfazer este pagamento?</string>
+    <string name="occurrence_undo_charge_title">Desfazer esta cobrança?</string>
+    <string name="occurrence_undo_payment_body">A saída será removida do Caixa e esta cobrança voltará a ficar pendente ou vencida, conforme a data.</string>
+    <string name="occurrence_undo_charge_body">A compra e a parcela geradas serão removidas e o limite será recomposto. A cobrança da assinatura voltará a ficar pendente ou vencida.</string>
+    <string name="occurrence_view_installment">Ver parcela</string>
+    <string name="error_occurrence_undo_installment_paid">Esta cobrança já teve a parcela paga. Desfaça primeiro o pagamento da parcela para depois desfazer a cobrança da assinatura.</string>
+    <string name="error_occurrence_undo_conflict">Esta cobrança foi alterada. O estado foi atualizado.</string>
+    <string name="error_occurrence_undo_skipped">Esta cobrança foi pulada e não possui pagamento para desfazer.</string>
+    <string name="feedback_occurrence_reopened">Cobrança reaberta.</string>
 </resources>

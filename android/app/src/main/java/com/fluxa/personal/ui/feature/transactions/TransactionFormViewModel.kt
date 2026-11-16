@@ -181,6 +181,14 @@ internal class TransactionFormViewModel(
                             direction.value = d.direction
                             if (tx.installmentId != null || tx.subscriptionOccurrence != null) loadManagedNames(d.accountId, d.categoryId)
                             tx.installmentId?.let(::loadInstallmentOrigin)
+                            if (tx.subscriptionOccurrence != null) {
+                                transactions.observe(transactionId)
+                                    .onEach { current ->
+                                        if (current == null) _uiState.update { it.copy(notFound = true) }
+                                    }
+                                    .catch { _uiState.update { it.copy(operationError = R.string.error_load) } }
+                                    .launchIn(viewModelScope)
+                            }
                         }
                     },
                     onFailure = { _uiState.update { it.copy(isLoading = false, operationError = R.string.error_load) } },

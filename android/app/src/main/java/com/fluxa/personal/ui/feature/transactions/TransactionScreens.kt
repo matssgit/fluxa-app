@@ -160,6 +160,9 @@ internal fun TransactionFormScreen(
     val colors = FluxaTheme.colors
 
     LaunchedEffect(state.completion) { state.completion?.let { onDone(it, state.direction) } }
+    LaunchedEffect(state.notFound) {
+        if (state.notFound && state.isManagedBySubscription) onDone(null, state.direction)
+    }
 
     val title = when {
         state.isManagedBySubscription -> stringResource(R.string.managed_subscription_title)

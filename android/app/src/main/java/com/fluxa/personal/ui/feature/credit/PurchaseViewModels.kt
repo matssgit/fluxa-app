@@ -217,7 +217,8 @@ internal data class PurchaseDetailUiState(
 ) {
     val isCancelled: Boolean get() = purchase?.cancelledAt != null
     /** Só oferece o cancelamento quando o contrato o aceitaria: compra ativa e nenhuma parcela paga. */
-    val canCancel: Boolean get() = purchase != null && !isCancelled && installments.none { it.status == InstallmentStatus.PAID }
+    val canCancel: Boolean get() = purchase != null && purchase.subscriptionOccurrence == null &&
+        !isCancelled && installments.none { it.status == InstallmentStatus.PAID }
 }
 
 /**

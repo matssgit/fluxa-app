@@ -21,9 +21,12 @@ import com.fluxa.personal.domain.model.SubscriptionError
 import com.fluxa.personal.domain.model.SubscriptionFrequency
 import com.fluxa.personal.domain.model.SubscriptionOccurrence
 import com.fluxa.personal.domain.model.SubscriptionOccurrenceStatus
+import com.fluxa.personal.domain.model.SubscriptionResolutionDetail
 import com.fluxa.personal.domain.model.SubscriptionResult
 import com.fluxa.personal.domain.model.SubscriptionSource
 import com.fluxa.personal.domain.model.SubscriptionStatus
+import com.fluxa.personal.domain.model.SubscriptionUndoError
+import com.fluxa.personal.domain.model.SubscriptionUndoResult
 import com.fluxa.personal.domain.model.TransactionDirection
 import com.fluxa.personal.ui.common.MoneyInput
 import com.fluxa.personal.ui.common.financialDays
@@ -415,7 +418,7 @@ internal data class SubscriptionDetailUiState(
 
 /**
  * Detalhe: cadastro atual, próxima cobrança (contrato), ocorrências em aberto e histórico de desfechos com os
- * termos gravados (snapshot) — lidos de `observeOccurrences` na janela [âncora, hoje + 1 ano] e filtrados por ID.
+ * termos gravados (snapshot) — lidos de `observeOccurrences` na janela [âncora, hoje + 1 ano] para esta assinatura.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SubscriptionDetailViewModel(
@@ -440,8 +443,8 @@ internal class SubscriptionDetailViewModel(
             if (sub == null) flowOf(Triple<Subscription?, SubscriptionOccurrence?, List<SubscriptionOccurrence>>(null, null, emptyList()))
             else combine(
                 source.observeNextOccurrence(id),
-                source.observeOccurrences(minOf(sub.anchorDate, today), today.plusYears(1).plusDays(1)),
-            ) { next, all -> Triple(sub, next, all.filter { it.key.subscriptionId == id }) }
+                source.observeOccurrences(id, minOf(sub.anchorDate, today), today.plusYears(1).plusDays(1)),
+            ) { next, all -> Triple(sub, next, all) }
         }
         combine(data, sourceNames(accounts, credit), categories.observeAll(includeArchived = true), action) { (sub, next, mine), names, cats, act ->
             SubscriptionDetailUiState(
@@ -450,7 +453,7 @@ internal class SubscriptionDetailViewModel(
                 subscription = sub,
                 next = next,
                 open = mine.filter { it.status == SubscriptionOccurrenceStatus.OVERDUE },
-                history = mine.filter { it.status.isResolved }.sortedByDescending { it.key.occurrenceDate },
+                history = mine.filter { it.status.isResolved },
                 source = sub?.let { names.label(it.details.source) },
                 category = sub?.let { s -> cats.firstOrNull { it.id == s.details.categoryId } },
                 names = names,
@@ -571,13 +574,24 @@ internal class SubscriptionAgendaViewModel(
 
 // region Ocorrência (pagar, lançar no cartão, pular)
 
-internal enum class OccurrenceOutcome { Paid, Charged, Skipped, AlreadyResolved }
+internal enum class OccurrenceOutcome { Paid, Charged, Skipped, AlreadyResolved, Reopened }
+
+internal data class UndoConfirmation(val resultId: UUID, val isCard: Boolean)
+
+private val SubscriptionResolutionDetail.resultId: UUID
+    get() = when (this) {
+        is SubscriptionResolutionDetail.Account -> transactionId
+        is SubscriptionResolutionDetail.Card -> purchaseId
+    }
 
 internal data class OccurrenceUiState(
     val isLoading: Boolean = true,
     val notFound: Boolean = false,
     val today: LocalDate,
     val occurrence: SubscriptionOccurrence? = null,
+    val resolution: SubscriptionResolutionDetail? = null,
+    val undoConfirmation: UndoConfirmation? = null,
+    val suppressUndoFor: UUID? = null,
     val subscription: Subscription? = null,
     val source: SourceLabel? = null,
     val paidOn: LocalDate,
@@ -593,11 +607,14 @@ internal data class OccurrenceUiState(
     /** Pagar/lançar: ocorrência em aberto, não futura e assinatura ativa (o backend continua decidindo). */
     val canSettle: Boolean get() = open && !isFuture && subscription?.status == SubscriptionStatus.ACTIVE
     val canSkip: Boolean get() = open
+    val undoTarget: UndoConfirmation?
+        get() = resolution?.takeUnless { it.resultId == suppressUndoFor }
+            ?.let { UndoConfirmation(it.resultId, it is SubscriptionResolutionDetail.Card) }
     val isSubmitting: Boolean get() = status == CommandStatus.Submitting
 }
 
 /**
- * Uma ocorrência (`observeOccurrence(id, data)`): os termos exibidos e usados são os da ocorrência. Pagar envia só
+ * Uma ocorrência (`observeOccurrenceDetail(id, data)`): os termos exibidos e usados são os da ocorrência. Pagar envia só
  * a identidade e a data da baixa; valor, categoria e fonte são decididos pelo backend. `ALREADY_RESOLVED`/`SKIPPED`
  * são tratados como estado atualizado (idempotente), não como erro.
  */
@@ -617,16 +634,20 @@ internal class SubscriptionOccurrenceViewModel(
 
     val uiState: StateFlow<OccurrenceUiState> = combine(
         days.flatMapLatest { today ->
-            combine(source.observeOccurrence(subscriptionId, date), source.observeSubscription(subscriptionId)) { occ, sub -> Triple(today, occ, sub) }
+            combine(source.observeOccurrenceDetail(subscriptionId, date), source.observeSubscription(subscriptionId)) { detail, sub ->
+                Triple(today, detail, sub)
+            }
         },
         sourceNames(accounts, credit),
         form,
-    ) { (today, occ, sub), names, f ->
+    ) { (today, detail, sub), names, f ->
+        val occ = detail?.occurrence
         f.copy(
             isLoading = false,
-            notFound = occ == null,
+            notFound = f.notFound || occ == null,
             today = today,
             occurrence = occ,
+            resolution = detail?.resolution,
             subscription = sub,
             source = occ?.let { names.label(it.details.source) },
         )
@@ -635,13 +656,60 @@ internal class SubscriptionOccurrenceViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), form.value)
 
     fun onPaidOnChange(value: LocalDate) = form.update { if (it.isSubmitting) it else it.copy(paidOn = value, dateError = null) }
-    fun dismissError() = form.update { it.copy(status = CommandStatus.Idle, error = null) }
+    fun dismissError() = form.update { if (it.isSubmitting) it else it.copy(status = CommandStatus.Idle, error = null) }
+
+    fun requestUndo(target: UndoConfirmation) {
+        if (form.value.isSubmitting || form.value.undoConfirmation != null ||
+            target.resultId == form.value.suppressUndoFor || target != uiState.value.undoTarget
+        ) return
+        form.update { it.copy(undoConfirmation = target, status = CommandStatus.Idle, error = null) }
+    }
+
+    fun dismissUndo() = form.update { it.copy(undoConfirmation = null) }
+
+    fun confirmUndo() {
+        val current = form.value
+        val target = current.undoConfirmation ?: return
+        if (current.isSubmitting) return
+        form.value = current.copy(undoConfirmation = null, status = CommandStatus.Submitting, error = null)
+        viewModelScope.launch {
+            val result = runCatchingNonCancellation { source.undoOccurrence(subscriptionId, date, target.resultId) }
+            form.update { state ->
+                when (val undo = result.getOrNull()) {
+                    is SubscriptionUndoResult.Reopened -> state.copy(
+                        status = CommandStatus.Success,
+                        outcome = OccurrenceOutcome.Reopened,
+                        completedCount = state.completedCount + 1,
+                        suppressUndoFor = target.resultId,
+                    )
+                    is SubscriptionUndoResult.Rejected -> when (undo.error) {
+                        SubscriptionUndoError.OCCURRENCE_NOT_FOUND -> state.copy(status = CommandStatus.Idle, notFound = true)
+                        SubscriptionUndoError.NOT_RESOLVED -> state.copy(
+                            status = CommandStatus.Idle, suppressUndoFor = target.resultId,
+                        )
+                        SubscriptionUndoError.SKIPPED -> state.copy(
+                            status = CommandStatus.Error,
+                            error = R.string.error_occurrence_undo_skipped,
+                            suppressUndoFor = target.resultId,
+                        )
+                        SubscriptionUndoError.CONFLICT -> state.copy(
+                            status = CommandStatus.Error, error = R.string.error_occurrence_undo_conflict,
+                        )
+                        SubscriptionUndoError.CARD_CHARGE_ALREADY_PAID -> state.copy(
+                            status = CommandStatus.Error, error = R.string.error_occurrence_undo_installment_paid,
+                        )
+                    }
+                    null -> state.copy(status = CommandStatus.Error, error = R.string.error_subscription_action)
+                }
+            }
+        }
+    }
 
     /** Pagar em conta ou lançar no cartão, conforme a fonte gravada na ocorrência. */
     fun settle() {
         val state = uiState.value
         // `form` é atualizado na hora; o `uiState` combinado só reflete o envio depois (toque duplo).
-        if (form.value.isSubmitting || !state.canSettle) return
+        if (form.value.isSubmitting || form.value.undoConfirmation != null || !state.canSettle) return
         val paidOn = form.value.paidOn // escolha mais recente, mesmo antes de o estado combinado emitir
         if (paidOn > state.today) {
             form.update { it.copy(dateError = R.string.error_subscription_future_date) }
@@ -652,7 +720,7 @@ internal class SubscriptionOccurrenceViewModel(
 
     fun skip() {
         val state = uiState.value
-        if (form.value.isSubmitting || !state.canSkip) return
+        if (form.value.isSubmitting || form.value.undoConfirmation != null || !state.canSkip) return
         command(OccurrenceOutcome.Skipped) { source.skip(subscriptionId, date) }
     }
 

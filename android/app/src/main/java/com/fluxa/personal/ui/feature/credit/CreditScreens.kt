@@ -770,7 +770,7 @@ internal fun PurchaseDetailScreen(
                         }
                     }
                 }
-                if (!state.isCancelled && !state.canCancel) {
+                if (purchase.subscriptionOccurrence == null && !state.isCancelled && !state.canCancel) {
                     item { StatePill(stringResource(R.string.purchase_paid_blocks_cancel), FluxaIcons.Alert) }
                 }
                 if (state.canCancel) {

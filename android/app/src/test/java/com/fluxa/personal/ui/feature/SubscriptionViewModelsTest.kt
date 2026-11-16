@@ -18,6 +18,7 @@ import com.fluxa.personal.domain.model.SubscriptionFrequency
 import com.fluxa.personal.domain.model.SubscriptionFrequency.MONTHLY
 import com.fluxa.personal.domain.model.SubscriptionFrequency.YEARLY
 import com.fluxa.personal.domain.model.SubscriptionOccurrenceStatus
+import com.fluxa.personal.domain.model.SubscriptionResolutionDetail
 import com.fluxa.personal.domain.model.SubscriptionResult
 import com.fluxa.personal.domain.model.SubscriptionSource
 import com.fluxa.personal.domain.model.SubscriptionStatus
@@ -480,4 +481,122 @@ class SubscriptionViewModelsTest {
     }
 
     // endregion
+    @Test
+    fun subscriptionDetailUsesScopedHistoryInDescendingOrder() = runTest(dispatcher) {
+        val previous = today.minusMonths(1)
+        val id = create("Música", 2_190, anchor = previous)
+        val other = create("Nuvem", 1_000)
+        subs.skip(other, today)
+        subs.skip(id, previous)
+        subs.pay(id, today, today)
+        val vm = SubscriptionDetailViewModel(subs, accounts, credit, categories, id, days)
+        collect(vm.uiState)
+        advanceUntilIdle()
+
+        assertEquals(0, subs.globalOccurrenceQueries)
+        assertEquals(listOf(today, previous), vm.uiState.value.history.map { it.key.occurrenceDate })
+        assertTrue(vm.uiState.value.history.all { it.key.subscriptionId == id })
+    }
+
+    @Test
+    fun accountUndoRequiresConfirmationAndSubmitsOnce() = runTest(dispatcher) {
+        val past = today.minusMonths(1)
+        val id = create("Música", 2_190, anchor = past)
+        subs.pay(id, past, today)
+        val vm = occurrenceVm(id, past)
+        collect(vm.uiState)
+        advanceUntilIdle()
+        val target = vm.uiState.value.undoTarget!!
+        assertEquals(today, vm.uiState.value.resolution!!.occurredOn)
+
+        vm.confirmUndo()
+        vm.requestUndo(target)
+        advanceUntilIdle()
+        assertEquals(target, vm.uiState.value.undoConfirmation)
+        assertTrue(subs.undoCalls.isEmpty())
+        vm.confirmUndo()
+        vm.confirmUndo()
+        advanceUntilIdle()
+
+        assertEquals(listOf(target.resultId), subs.undoCalls)
+        assertEquals(OccurrenceOutcome.Reopened, vm.uiState.value.outcome)
+        assertEquals(SubscriptionOccurrenceStatus.OVERDUE, vm.uiState.value.occurrence!!.status)
+        assertNull(vm.uiState.value.undoTarget)
+        assertNull(ledger.observe(target.resultId).first())
+        assertTrue(vm.uiState.value.canSettle)
+    }
+
+    @Test
+    fun cardUndoBlocksPaidInstallmentAndKeepsItsStructuralId() = runTest(dispatcher) {
+        val id = create("Nuvem", 1_000, source = SubscriptionSource.Card(card))
+        subs.pay(id, today, today)
+        val vm = occurrenceVm(id, today)
+        collect(vm.uiState)
+        advanceUntilIdle()
+        val resolution = vm.uiState.value.resolution as SubscriptionResolutionDetail.Card
+        credit.payInstallment(resolution.installmentId, main, today)
+        val target = vm.uiState.value.undoTarget!!
+        vm.requestUndo(target)
+        vm.confirmUndo()
+        advanceUntilIdle()
+
+        assertEquals(R.string.error_occurrence_undo_installment_paid, vm.uiState.value.error)
+        assertEquals(resolution, vm.uiState.value.resolution)
+        val payment = credit.observeInstallmentPayment(resolution.installmentId).first()!!
+        credit.undoInstallmentPayment(resolution.installmentId, payment.id)
+        vm.requestUndo(target)
+        vm.confirmUndo()
+        advanceUntilIdle()
+
+        assertEquals(SubscriptionOccurrenceStatus.PENDING, vm.uiState.value.occurrence!!.status)
+        assertEquals(OccurrenceOutcome.Reopened, vm.uiState.value.outcome)
+        assertEquals(Money(0), credit.observeCard(card).first()!!.committedAmount)
+    }
+
+    @Test
+    fun staleConfirmationCannotUndoReplacementPayment() = runTest(dispatcher) {
+        val id = create("Música", 2_190)
+        subs.pay(id, today, today)
+        val vm = occurrenceVm(id, today)
+        collect(vm.uiState)
+        advanceUntilIdle()
+        val original = vm.uiState.value.undoTarget!!
+        vm.requestUndo(original)
+        subs.undoOccurrence(id, today, original.resultId)
+        subs.pay(id, today, today)
+        advanceUntilIdle()
+        val replacement = vm.uiState.value.undoTarget!!
+        assertTrue(replacement != original)
+        assertEquals(original, vm.uiState.value.undoConfirmation)
+
+        vm.confirmUndo()
+        advanceUntilIdle()
+
+        assertEquals(R.string.error_occurrence_undo_conflict, vm.uiState.value.error)
+        assertEquals(replacement, vm.uiState.value.undoTarget)
+        assertEquals(SubscriptionOccurrenceStatus.PAID, vm.uiState.value.occurrence!!.status)
+        assertEquals(original.resultId, subs.undoCalls.last())
+    }
+
+    @Test
+    fun historicalUndoPreservesPausedAndCancelledSubscriptions() = runTest(dispatcher) {
+        val past = today.minusMonths(1)
+        for (status in listOf(SubscriptionStatus.PAUSED, SubscriptionStatus.CANCELLED)) {
+            val id = create("Música", 2_190, anchor = past)
+            subs.pay(id, past, today)
+            if (status == SubscriptionStatus.PAUSED) subs.pause(id) else subs.cancel(id)
+            val vm = occurrenceVm(id, past)
+            collect(vm.uiState)
+            advanceUntilIdle()
+
+            vm.requestUndo(vm.uiState.value.undoTarget!!)
+            vm.confirmUndo()
+            advanceUntilIdle()
+
+            assertEquals(status, vm.uiState.value.subscription!!.status)
+            assertEquals(SubscriptionOccurrenceStatus.OVERDUE, vm.uiState.value.occurrence!!.status)
+            assertFalse(vm.uiState.value.canSettle)
+        }
+    }
+
 }

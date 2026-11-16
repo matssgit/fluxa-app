@@ -565,7 +565,7 @@ internal fun SubscriptionDetailScreen(
                 item {
                     FluxaButton(
                         text = stringResource(R.string.subscriptions_open_agenda), onClick = onAgenda, variant = FluxaButtonVariant.Secondary,
-                        leadingIcon = FluxaIcons.Calendar, modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = FluxaIcons.Calendar, modifier = Modifier.fillMaxWidth().testTag("action-subscription-agenda"),
                     )
                 }
                 if (state.canEdit) item {

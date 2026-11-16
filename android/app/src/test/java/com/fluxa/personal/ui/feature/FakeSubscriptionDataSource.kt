@@ -6,18 +6,23 @@ import com.fluxa.personal.data.repository.CategoryRepository
 import com.fluxa.personal.domain.model.CreditError
 import com.fluxa.personal.domain.model.CreditResult
 import com.fluxa.personal.domain.model.FinancialTransaction
+import com.fluxa.personal.domain.model.InstallmentStatus
 import com.fluxa.personal.domain.model.PurchaseDraft
 import com.fluxa.personal.domain.model.Subscription
 import com.fluxa.personal.domain.model.SubscriptionDetails
 import com.fluxa.personal.domain.model.SubscriptionError
 import com.fluxa.personal.domain.model.SubscriptionFrequency
 import com.fluxa.personal.domain.model.SubscriptionOccurrence
+import com.fluxa.personal.domain.model.SubscriptionOccurrenceDetail
 import com.fluxa.personal.domain.model.SubscriptionOccurrenceKey
 import com.fluxa.personal.domain.model.SubscriptionOccurrenceStatus
+import com.fluxa.personal.domain.model.SubscriptionResolutionDetail
 import com.fluxa.personal.domain.model.SubscriptionResult
 import com.fluxa.personal.domain.model.SubscriptionSource
 import com.fluxa.personal.domain.model.SubscriptionStatus
 import com.fluxa.personal.domain.model.SubscriptionTerms
+import com.fluxa.personal.domain.model.SubscriptionUndoError
+import com.fluxa.personal.domain.model.SubscriptionUndoResult
 import com.fluxa.personal.domain.model.TransactionDirection.EXPENSE
 import com.fluxa.personal.domain.model.TransactionDraft
 import com.fluxa.personal.domain.rules.SubscriptionCalendar
@@ -50,6 +55,10 @@ internal class FakeSubscriptionDataSource(
 
     private val store = MutableStateFlow<Map<UUID, Row>>(emptyMap())
     var failWrites = false
+    val undoCalls = mutableListOf<UUID>()
+    var globalOccurrenceQueries = 0
+        private set
+
     val payCalls = mutableListOf<Pair<SubscriptionOccurrenceKey, LocalDate>>()
 
     private fun Row.agenda(from: LocalDate, until: LocalDate) =
@@ -119,7 +128,7 @@ internal class FakeSubscriptionDataSource(
         if (failWrites) throw IOException("disk full")
         if (paidOn != null) payCalls += key to paidOn
         val row = store.value[key.subscriptionId] ?: return SubscriptionResult.Rejected(SubscriptionError.NOT_FOUND)
-        row.resolutions.firstOrNull { it.key == key }?.let {
+        row.resolutions.firstOrNull { it.key == key && it.status !in setOf(SubscriptionOccurrenceStatus.PENDING, SubscriptionOccurrenceStatus.OVERDUE) }?.let {
             return SubscriptionResult.Rejected(if (it.status == SubscriptionOccurrenceStatus.SKIPPED) SubscriptionError.SKIPPED else SubscriptionError.ALREADY_RESOLVED)
         }
         if (paidOn != null) {
@@ -134,7 +143,7 @@ internal class FakeSubscriptionDataSource(
         val outcome: SubscriptionResult<SubscriptionOccurrence> =
             if (paidOn == null) SubscriptionResult.Saved(pending.copy(status = SubscriptionOccurrenceStatus.SKIPPED)) else settle(pending, paidOn)
         if (outcome is SubscriptionResult.Saved) {
-            store.update { s -> s + (key.subscriptionId to s.getValue(key.subscriptionId).let { it.copy(resolutions = it.resolutions + outcome.value) }) }
+            store.update { s -> s + (key.subscriptionId to s.getValue(key.subscriptionId).let { it.copy(resolutions = it.resolutions.filterNot { occurrence -> occurrence.key == key } + outcome.value) }) }
         }
         return outcome
     }
@@ -169,14 +178,68 @@ internal class FakeSubscriptionDataSource(
 
     override fun observeSubscriptions(): Flow<List<Subscription>> = store.map { s -> s.values.map { it.subscription }.sortedBy { it.details.name } }
     override fun observeSubscription(id: UUID): Flow<Subscription?> = store.map { it[id]?.subscription }
-    override fun observeOccurrence(id: UUID, date: LocalDate): Flow<SubscriptionOccurrence?> = store.map { it[id]?.onDate(date) }
+    fun observeOccurrence(id: UUID, date: LocalDate): Flow<SubscriptionOccurrence?> = store.map { it[id]?.onDate(date) }
+    override fun observeOccurrenceDetail(id: UUID, date: LocalDate): Flow<SubscriptionOccurrenceDetail?> =
+        observeOccurrence(id, date).map { occurrence ->
+            occurrence ?: return@map null
+            val resolution = occurrence.resultId?.let { resultId ->
+                when (val source = occurrence.details.source) {
+                    is SubscriptionSource.Account -> ledger.observe(resultId).first()?.let {
+                        SubscriptionResolutionDetail.Account(resultId, it.details.occurredOn)
+                    }
+                    is SubscriptionSource.Card -> {
+                        val purchase = credit.observePurchases(source.id).first().firstOrNull { it.id == resultId }
+                        val installment = credit.observeInstallments(resultId).first().singleOrNull()
+                        if (purchase != null && installment != null) {
+                            SubscriptionResolutionDetail.Card(resultId, installment.id, purchase.details.purchaseDate)
+                        } else null
+                    }
+                }
+            }
+            SubscriptionOccurrenceDetail(occurrence, resolution)
+        }
+
+    override suspend fun undoOccurrence(id: UUID, date: LocalDate, expectedResultId: UUID): SubscriptionUndoResult {
+        undoCalls += expectedResultId
+        val occurrence = observeOccurrence(id, date).first()
+            ?: return SubscriptionUndoResult.Rejected(SubscriptionUndoError.OCCURRENCE_NOT_FOUND)
+        if (occurrence.status == SubscriptionOccurrenceStatus.SKIPPED) {
+            return SubscriptionUndoResult.Rejected(SubscriptionUndoError.SKIPPED)
+        }
+        val resultId = occurrence.resultId ?: return SubscriptionUndoResult.Rejected(SubscriptionUndoError.NOT_RESOLVED)
+        if (resultId != expectedResultId) return SubscriptionUndoResult.Rejected(SubscriptionUndoError.CONFLICT)
+        when (occurrence.details.source) {
+            is SubscriptionSource.Account -> ledger.rows.update { it - resultId }
+            is SubscriptionSource.Card -> {
+                if (credit.observeInstallments(resultId).first().single().status == InstallmentStatus.PAID) {
+                    return SubscriptionUndoResult.Rejected(SubscriptionUndoError.CARD_CHARGE_ALREADY_PAID)
+                }
+                check(credit.cancelPurchase(resultId) is CreditResult.Saved)
+            }
+        }
+        val reopened = occurrence.copy(
+            status = if (date < today) SubscriptionOccurrenceStatus.OVERDUE else SubscriptionOccurrenceStatus.PENDING,
+            resultId = null,
+        )
+        store.update { rows ->
+            val row = rows.getValue(id)
+            rows + (id to row.copy(resolutions = row.resolutions.map { if (it.key == reopened.key) reopened.copy(status = SubscriptionOccurrenceStatus.PENDING) else it }))
+        }
+        return SubscriptionUndoResult.Reopened(reopened)
+    }
+
+    override fun observeOccurrences(id: UUID, fromInclusive: LocalDate, untilExclusive: LocalDate): Flow<List<SubscriptionOccurrence>> =
+        store.map { it[id]?.agenda(fromInclusive, untilExclusive)?.asReversed().orEmpty() }
+
     override fun observeNextOccurrence(id: UUID): Flow<SubscriptionOccurrence?> =
         store.map { s -> s[id]?.let { SubscriptionCalendar.next(it.subscription, it.terms, it.resolutions, today) } }
 
     private fun List<SubscriptionOccurrence>.ordered() = sortedWith(compareBy({ it.key.occurrenceDate }, { it.key.subscriptionId }))
 
-    override fun observeOccurrences(fromInclusive: LocalDate, untilExclusive: LocalDate): Flow<List<SubscriptionOccurrence>> =
-        store.map { s -> s.values.flatMap { it.agenda(fromInclusive, untilExclusive) }.ordered() }
+    override fun observeOccurrences(fromInclusive: LocalDate, untilExclusive: LocalDate): Flow<List<SubscriptionOccurrence>> {
+        globalOccurrenceQueries++
+        return store.map { s -> s.values.flatMap { it.agenda(fromInclusive, untilExclusive) }.ordered() }
+    }
 
     override fun observeUpcomingOccurrences(days: Long): Flow<List<SubscriptionOccurrence>> =
         store.map { s -> s.values.flatMap { it.agenda(today, today.plusDays(days)) }.filter { it.status == SubscriptionOccurrenceStatus.PENDING }.ordered() }

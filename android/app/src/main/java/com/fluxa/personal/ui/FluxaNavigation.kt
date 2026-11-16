@@ -331,6 +331,7 @@ internal fun FluxaNavigation() {
                         onFeedback = { feedback = it },
                         onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
                         onOpenPurchase = { card, purchase -> controller.navigate(CreditRoutes.purchase(card, purchase)) },
+                        onOpenInstallment = { card, purchase, installment -> controller.navigate(CreditRoutes.installment(card, purchase, installment)) },
                     )
                 }
                 composable(Destination.MORE.route) {

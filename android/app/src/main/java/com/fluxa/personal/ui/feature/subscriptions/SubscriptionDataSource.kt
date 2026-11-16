@@ -6,7 +6,9 @@ import com.fluxa.personal.domain.model.Subscription
 import com.fluxa.personal.domain.model.SubscriptionDetails
 import com.fluxa.personal.domain.model.SubscriptionFrequency
 import com.fluxa.personal.domain.model.SubscriptionOccurrence
+import com.fluxa.personal.domain.model.SubscriptionOccurrenceDetail
 import com.fluxa.personal.domain.model.SubscriptionResult
+import com.fluxa.personal.domain.model.SubscriptionUndoResult
 import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
@@ -25,7 +27,9 @@ internal interface SubscriptionDataSource {
     suspend fun skip(subscriptionId: UUID, occurrenceDate: LocalDate): SubscriptionResult<SubscriptionOccurrence>
     fun observeSubscriptions(): Flow<List<Subscription>>
     fun observeSubscription(id: UUID): Flow<Subscription?>
-    fun observeOccurrence(id: UUID, date: LocalDate): Flow<SubscriptionOccurrence?>
+    fun observeOccurrenceDetail(id: UUID, date: LocalDate): Flow<SubscriptionOccurrenceDetail?>
+    fun observeOccurrences(id: UUID, fromInclusive: LocalDate, untilExclusive: LocalDate): Flow<List<SubscriptionOccurrence>>
+    suspend fun undoOccurrence(id: UUID, date: LocalDate, expectedResultId: UUID): SubscriptionUndoResult
     fun observeNextOccurrence(id: UUID): Flow<SubscriptionOccurrence?>
     fun observeOccurrences(fromInclusive: LocalDate, untilExclusive: LocalDate): Flow<List<SubscriptionOccurrence>>
     fun observeUpcomingOccurrences(days: Long): Flow<List<SubscriptionOccurrence>>
@@ -45,7 +49,11 @@ internal class RepositorySubscriptionDataSource(private val repository: Subscrip
         repository.skipSubscriptionOccurrence(subscriptionId, occurrenceDate)
     override fun observeSubscriptions() = repository.observeSubscriptions()
     override fun observeSubscription(id: UUID) = repository.observeSubscription(id)
-    override fun observeOccurrence(id: UUID, date: LocalDate) = repository.observeOccurrence(id, date)
+    override fun observeOccurrenceDetail(id: UUID, date: LocalDate) = repository.observeOccurrenceDetail(id, date)
+    override fun observeOccurrences(id: UUID, fromInclusive: LocalDate, untilExclusive: LocalDate) =
+        repository.observeOccurrences(id, fromInclusive, untilExclusive)
+    override suspend fun undoOccurrence(id: UUID, date: LocalDate, expectedResultId: UUID) =
+        repository.undoSubscriptionOccurrence(id, date, expectedResultId)
     override fun observeNextOccurrence(id: UUID) = repository.observeNextOccurrence(id)
     override fun observeOccurrences(fromInclusive: LocalDate, untilExclusive: LocalDate) =
         repository.observeOccurrences(fromInclusive, untilExclusive)
