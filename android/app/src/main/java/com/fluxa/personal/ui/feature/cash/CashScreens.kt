@@ -1,6 +1,12 @@
 package com.fluxa.personal.ui.feature.cash
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.foundation.layout.heightIn
+import com.fluxa.personal.ui.designsystem.components.FluxaAmount
+import com.fluxa.personal.ui.common.BrazilLocale
+import com.fluxa.personal.domain.model.PeriodSummary
+import com.fluxa.personal.core.money.Money
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -202,7 +208,8 @@ internal fun CashScreen(
                         modifier = Modifier.weight(1f).semantics { heading() },
                     )
                     Text(
-                        pluralStringResource(R.plurals.cash_entries, state.entryCount, state.entryCount),
+                        if (state.hasMore) pluralStringResource(R.plurals.cash_entries_more, state.entryCount, state.entryCount)
+                        else pluralStringResource(R.plurals.cash_entries, state.entryCount, state.entryCount),
                         style = FluxaTheme.typography.caption,
                         color = FluxaTheme.colors.textSecondary,
                         modifier = Modifier.testTag("history-count"),
@@ -252,6 +259,16 @@ internal fun CashScreen(
             }
         } else {
             items(state.days, key = { it.date.toEpochDay() }) { day -> LedgerDayCard(day, today, onOpenTransaction) }
+            if (state.hasMore) {
+                item {
+                    FluxaButton(
+                        text = stringResource(R.string.cash_load_more),
+                        onClick = viewModel::loadMore,
+                        variant = FluxaButtonVariant.Secondary,
+                        modifier = Modifier.fillMaxWidth().testTag("action-load-more"),
+                    )
+                }
+            }
         }
     }
 }
@@ -375,6 +392,9 @@ internal fun DashboardScreen(
                 caption = pluralStringResource(R.plurals.dashboard_accounts, state.activeAccounts, state.activeAccounts),
             )
         }
+        state.summary?.let { summary ->
+            item { MonthSummaryCard(summary, state.monthStart) }
+        }
         item {
             FluxaSectionHeader(
                 title = stringResource(R.string.dashboard_recent_title),
@@ -397,6 +417,74 @@ internal fun DashboardScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Resumo do mês vindo de `observePeriodSummary`. Os três valores são exibidos como chegam do repositório:
+ * nenhuma soma na UI. Sinal e texto indicam entrada/saída/resultado (não só cor); valores passam pela ocultação.
+ */
+@Composable
+private fun MonthSummaryCard(summary: PeriodSummary, monthStart: LocalDate?) {
+    val colors = FluxaTheme.colors
+    val monthLabel = monthStart?.format(MonthTitle)?.replaceFirstChar { it.titlecase(BrazilLocale) }.orEmpty()
+    FluxaCard(modifier = Modifier.fillMaxWidth().testTag("month-summary")) {
+        Text(stringResource(R.string.summary_overline).uppercase(), style = FluxaTheme.typography.overline, color = colors.textMuted)
+        Text(monthLabel, style = FluxaTheme.typography.title, color = colors.textPrimary, modifier = Modifier.semantics { heading() })
+        Spacer(Modifier.height(12.dp))
+        SummaryRow(stringResource(R.string.summary_income), summary.income, SummaryKind.Income, "summary-income")
+        SummaryRow(stringResource(R.string.summary_expenses), summary.expenses, SummaryKind.Expense, "summary-expenses")
+        Box(Modifier.padding(vertical = 8.dp).fillMaxWidth().height(1.dp).background(colors.border))
+        SummaryRow(stringResource(R.string.summary_net), summary.net, SummaryKind.Net, "summary-net")
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.summary_explain), style = FluxaTheme.typography.caption, color = colors.textMuted)
+    }
+}
+
+private enum class SummaryKind { Income, Expense, Net }
+
+private val MonthTitle = java.time.format.DateTimeFormatter.ofPattern("MMMM 'de' yyyy", BrazilLocale)
+
+@Composable
+private fun SummaryRow(label: String, value: CalculatedBalance, kind: SummaryKind, tag: String) {
+    val colors = FluxaTheme.colors
+    val hidden = LocalAmountsHidden.current
+    val exact = (value as? CalculatedBalance.Exact)?.amount
+    val netState = if (kind == SummaryKind.Net && exact != null) {
+        when {
+            exact.cents > 0 -> R.string.summary_net_positive
+            exact.cents < 0 -> R.string.summary_net_negative
+            else -> R.string.summary_net_zero
+        }
+    } else null
+    val color = when {
+        kind == SummaryKind.Income && (exact?.cents ?: 0) != 0L -> colors.income
+        kind == SummaryKind.Expense && (exact?.cents ?: 0) != 0L -> colors.expense
+        netState == R.string.summary_net_positive -> colors.income
+        netState == R.string.summary_net_negative -> colors.expense
+        else -> colors.textPrimary
+    }
+    val stateText = netState?.let { stringResource(it) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .semantics(mergeDescendants = true) { if (stateText != null && !hidden) stateDescription = stateText }
+            .testTag(tag),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(label, style = FluxaTheme.typography.label, color = colors.textSecondary)
+            // O estado do resultado não é exibido com valores ocultos (revelaria o sinal).
+            if (stateText != null && !hidden) Text(stateText, style = FluxaTheme.typography.caption, color = colors.textMuted)
+        }
+        when {
+            exact == null -> BalanceAmount(value, color = color)
+            // Entradas e saídas chegam como magnitudes: o sinal é só apresentação (+ entrada, − saída).
+            kind == SummaryKind.Expense && exact.cents != 0L -> FluxaAmount(amount = Money(-exact.cents), signed = true, color = color)
+            else -> FluxaAmount(amount = exact, signed = kind != SummaryKind.Net || exact.cents != 0L, color = color)
         }
     }
 }

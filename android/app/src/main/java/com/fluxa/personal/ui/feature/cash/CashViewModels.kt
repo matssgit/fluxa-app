@@ -14,7 +14,9 @@ import com.fluxa.personal.domain.model.Category
 import com.fluxa.personal.domain.model.FinancialAccount
 import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.TransactionDirection
+import com.fluxa.personal.domain.model.PeriodSummary
 import com.fluxa.personal.domain.model.TransactionHistoryFilter
+import com.fluxa.personal.domain.model.TransactionHistoryPage
 import com.fluxa.personal.domain.rules.BalanceSnapshot
 import com.fluxa.personal.domain.rules.CalculatedBalance
 import com.fluxa.personal.ui.feature.transactions.TransactionSource
@@ -78,20 +80,30 @@ internal data class CashUiState(
     val filters: CashFilters = CashFilters(),
     val historyLoading: Boolean = true,
     val days: List<LedgerDay> = emptyList(),
+    /** Quantidade exibida (páginas carregadas). */
     val entryCount: Int = 0,
+    /** Há mais lançamentos além das páginas carregadas para os filtros atuais. */
+    val hasMore: Boolean = false,
     @StringRes val errorMessage: Int? = null,
 ) {
     val hasAccounts: Boolean get() = accounts.isNotEmpty()
 }
 
 private data class Catalog(val accounts: List<FinancialAccount>, val categories: List<Category>)
-private data class History(val transactions: List<FinancialTransaction>?, val failed: Boolean)
+private data class History(val transactions: List<FinancialTransaction>?, val hasMore: Boolean, val failed: Boolean)
 private data class Balances(val snapshot: BalanceSnapshot?, val failed: Boolean)
 
+/** Parâmetros da consulta do histórico: filtros + quantidade de páginas carregadas a partir do offset zero. */
+private data class HistoryQuery(val filters: CashFilters = CashFilters(), val pages: Int = 1)
+
 /**
- * Caixa: saldo disponível e saldos por conta vêm de `observeBalances()` (Codex); o histórico vem de
- * `observeHistory()` com conta e período aplicados na consulta. O filtro receita/despesa é aplicado sobre o
- * resultado do período porque o contrato ainda não filtra por direção (documentado no handoff).
+ * Caixa. Toda a parte financeira vem do repositório (Sprint 3-C):
+ * - saldo disponível e saldos por conta: `observeBalances()`;
+ * - histórico: `observeHistoryPage()` com período, conta e direção na própria consulta SQL.
+ *
+ * O ViewModel só monta os parâmetros. "Carregar mais" aumenta o `limit` a partir do offset zero (como orienta o
+ * handoff, para que inserções/edições não desalinhem páginas observadas separadamente); trocar qualquer filtro volta
+ * para a primeira página. Pede-se `limit + 1` só para saber se existe próxima página.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class CashViewModel(
@@ -101,7 +113,7 @@ internal class CashViewModel(
     calendar: FinancialCalendar = FinancialCalendar(),
 ) : ViewModel() {
     private val today = calendar.today()
-    private val filters = MutableStateFlow(CashFilters())
+    private val query = MutableStateFlow(HistoryQuery())
 
     private val catalog: Flow<Catalog> = combine(
         accounts.observeAll(includeArchived = true),
@@ -112,42 +124,54 @@ internal class CashViewModel(
         .map { Balances(it, failed = false) }
         .catch { emit(Balances(null, failed = true)) }
 
-    private val history: Flow<History> = filters.flatMapLatest { f ->
-        val (from, until) = f.period.range(today)
-        transactions.observeHistory(TransactionHistoryFilter(accountId = f.accountId, fromInclusive = from, untilExclusive = until))
-            .map { History(it, failed = false) }
-            .catch { emit(History(null, failed = true)) }
+    private val history: Flow<History> = query.flatMapLatest { q ->
+        val limit = PAGE_SIZE * q.pages
+        transactions.observeHistoryPage(q.filters.toHistoryFilter(today), TransactionHistoryPage(limit = limit + 1))
+            .map { rows -> History(rows.take(limit), hasMore = rows.size > limit, failed = false) }
+            .catch { emit(History(null, hasMore = false, failed = true)) }
     }
 
-    val uiState: StateFlow<CashUiState> = combine(catalog, balances, history, filters) { cat, bal, hist, f ->
+    val uiState: StateFlow<CashUiState> = combine(catalog, balances, history, query) { cat, bal, hist, q ->
         val byAccount = cat.accounts.associateBy { it.id }
         val byCategory = cat.categories.associateBy { it.id }
-        val active = cat.accounts.filter { it.archivedAt == null }
         val entries = hist.transactions.orEmpty()
-            .filter { f.direction.direction == null || it.details.direction == f.direction.direction }
             .map { LedgerEntry(it, byAccount[it.details.accountId], byCategory[it.details.categoryId]) }
         CashUiState(
             isLoading = false,
             available = bal.snapshot?.available,
-            accounts = active.map { AccountBalanceItem(it, bal.snapshot?.accounts?.get(it.id)) },
-            filters = f,
+            accounts = cat.accounts.filter { it.archivedAt == null }.map { AccountBalanceItem(it, bal.snapshot?.accounts?.get(it.id)) },
+            filters = q.filters,
             historyLoading = false,
+            // Agrupamento por dia é só apresentação; a ordem é a do repositório (occurredOn DESC, id ASC).
             days = entries.groupBy { it.transaction.details.occurredOn }.map { (d, e) -> LedgerDay(d, e) },
             entryCount = entries.size,
+            hasMore = hist.hasMore,
             errorMessage = if (bal.failed || hist.failed) R.string.error_load else null,
         )
     }
         .catch { emit(CashUiState(isLoading = false, historyLoading = false, errorMessage = R.string.error_load)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CashUiState())
 
-    fun setPeriod(value: HistoryPeriod) = filters.update { it.copy(period = value) }
-    fun setAccount(value: UUID?) = filters.update { it.copy(accountId = value) }
-    fun setDirection(value: DirectionFilter) = filters.update { it.copy(direction = value) }
+    fun setPeriod(value: HistoryPeriod) = updateFilters { it.copy(period = value) }
+    fun setAccount(value: UUID?) = updateFilters { it.copy(accountId = value) }
+    fun setDirection(value: DirectionFilter) = updateFilters { it.copy(direction = value) }
+    fun loadMore() = query.update { if (uiState.value.hasMore) it.copy(pages = it.pages + 1) else it }
+
+    private fun updateFilters(change: (CashFilters) -> CashFilters) =
+        query.update { current -> HistoryQuery(filters = change(current.filters), pages = 1) }
 
     companion object {
+        const val PAGE_SIZE = 50
+
         fun factory(transactions: TransactionSource, accounts: AccountRepository, categories: CategoryRepository): ViewModelProvider.Factory =
             viewModelFactory { initializer { CashViewModel(transactions, accounts, categories) } }
     }
+}
+
+/** Converte os filtros da tela no filtro do contrato (início inclusivo, fim exclusivo, direção opcional). */
+internal fun CashFilters.toHistoryFilter(today: LocalDate): TransactionHistoryFilter {
+    val (from, until) = period.range(today)
+    return TransactionHistoryFilter(accountId = accountId, fromInclusive = from, untilExclusive = until, direction = direction.direction)
 }
 
 // region Início
@@ -156,13 +180,19 @@ internal data class DashboardUiState(
     val isLoading: Boolean = true,
     val available: CalculatedBalance? = null,
     val activeAccounts: Int = 0,
+    /** Mês corrente exibido: [monthStart, monthEnd). */
+    val monthStart: LocalDate? = null,
+    val summary: PeriodSummary? = null,
     val recent: List<LedgerEntry> = emptyList(),
     @StringRes val errorMessage: Int? = null,
 )
 
+private data class DashboardData(val snapshot: BalanceSnapshot?, val summary: PeriodSummary?, val recent: List<FinancialTransaction>?)
+
 /**
- * Início com dados reais suportados pelo backend: saldo disponível e lançamentos recentes (últimos 30 dias,
- * efetivados). Totais de entradas/saídas do período não são calculados na UI: aguardam contrato do Codex.
+ * Início com contratos reais: saldo disponível (`observeBalances`), resumo do mês corrente
+ * (`observePeriodSummary` em [primeiro dia do mês, primeiro dia do mês seguinte)) e recentes
+ * (`observeRecentTransactions(5)`: até 5 efetivados, na ordem do repositório). Nenhuma soma ou recorte no ViewModel.
  */
 internal class DashboardViewModel(
     transactions: TransactionSource,
@@ -170,31 +200,36 @@ internal class DashboardViewModel(
     categories: CategoryRepository,
     calendar: FinancialCalendar = FinancialCalendar(),
 ) : ViewModel() {
-    private val today = calendar.today()
+    private val monthStart: LocalDate = calendar.today().withDayOfMonth(1)
+    private val monthEnd: LocalDate = monthStart.plusMonths(1)
+
+    private val data: Flow<DashboardData> = combine(
+        transactions.observeBalances().map<BalanceSnapshot, BalanceSnapshot?> { it }.catch { emit(null) },
+        transactions.observePeriodSummary(monthStart, monthEnd).map<PeriodSummary, PeriodSummary?> { it }.catch { emit(null) },
+        transactions.observeRecentTransactions(RECENT_LIMIT).map<List<FinancialTransaction>, List<FinancialTransaction>?> { it }.catch { emit(null) },
+    ) { snapshot, summary, recent -> DashboardData(snapshot, summary, recent) }
 
     val uiState: StateFlow<DashboardUiState> = combine(
         accounts.observeAll(includeArchived = true),
         categories.observeAll(includeArchived = true),
-        transactions.observeBalances().map<BalanceSnapshot, BalanceSnapshot?> { it }.catch { emit(null) },
-        transactions.observeHistory(
-            TransactionHistoryFilter(fromInclusive = today.minusDays(RECENT_DAYS - 1), untilExclusive = today.plusDays(1), includeCancelled = false),
-        ).map<List<FinancialTransaction>, List<FinancialTransaction>?> { it }.catch { emit(null) },
-    ) { accountList, categoryList, snapshot, recent ->
+        data,
+    ) { accountList, categoryList, d ->
         val byAccount = accountList.associateBy { it.id }
         val byCategory = categoryList.associateBy { it.id }
         DashboardUiState(
             isLoading = false,
-            available = snapshot?.available,
+            available = d.snapshot?.available,
             activeAccounts = accountList.count { it.archivedAt == null },
-            recent = recent.orEmpty().take(RECENT_LIMIT).map { LedgerEntry(it, byAccount[it.details.accountId], byCategory[it.details.categoryId]) },
-            errorMessage = if (snapshot == null || recent == null) R.string.error_load else null,
+            monthStart = monthStart,
+            summary = d.summary,
+            recent = d.recent.orEmpty().map { LedgerEntry(it, byAccount[it.details.accountId], byCategory[it.details.categoryId]) },
+            errorMessage = if (d.snapshot == null || d.summary == null || d.recent == null) R.string.error_load else null,
         )
     }
         .catch { emit(DashboardUiState(isLoading = false, errorMessage = R.string.error_load)) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
     companion object {
-        const val RECENT_DAYS = 30L
         const val RECENT_LIMIT = 5
 
         fun factory(transactions: TransactionSource, accounts: AccountRepository, categories: CategoryRepository): ViewModelProvider.Factory =

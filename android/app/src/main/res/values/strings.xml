@@ -205,4 +205,19 @@
         <item quantity="one">%1$d conta ativa</item>
         <item quantity="other">%1$d contas ativas</item>
     </plurals>
+
+    <!-- Sprint 3-D: resumo do mês e paginação -->
+    <string name="summary_overline">Mês atual</string>
+    <string name="summary_income">Entradas</string>
+    <string name="summary_expenses">Saídas</string>
+    <string name="summary_net">Resultado do mês</string>
+    <string name="summary_net_positive">Positivo</string>
+    <string name="summary_net_negative">Negativo</string>
+    <string name="summary_net_zero">Neutro</string>
+    <string name="summary_explain">Lançamentos efetivados do mês, de todas as contas. Cancelados não contam.</string>
+    <string name="cash_load_more">Carregar mais</string>
+    <plurals name="cash_entries_more">
+        <item quantity="one">Mais de %1$d movimentação</item>
+        <item quantity="other">Mais de %1$d movimentações</item>
+    </plurals>
 </resources>
