@@ -2,6 +2,11 @@ package com.fluxa.personal.data.database
 
 import android.content.Context
 import androidx.room.Database
+import com.fluxa.personal.data.database.dao.GoalDao
+import com.fluxa.personal.data.database.entity.GoalEntity
+import com.fluxa.personal.data.database.entity.GoalMovementEntity
+import com.fluxa.personal.data.database.migration.MIGRATION_6_7
+import com.fluxa.personal.data.database.migration.installGoalGuards
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -31,8 +36,9 @@ import com.fluxa.personal.data.database.migration.MIGRATION_5_6
         LocalSchemaMarker::class, AccountEntity::class, CategoryEntity::class, TransactionEntity::class,
         CreditCardEntity::class, PurchaseEntity::class, InstallmentEntity::class,
         SubscriptionEntity::class, SubscriptionTermsEntity::class, SubscriptionResolutionEntity::class,
+        GoalEntity::class, GoalMovementEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 internal abstract class FluxaDatabase : RoomDatabase() {
@@ -41,15 +47,17 @@ internal abstract class FluxaDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun creditDao(): CreditDao
     abstract fun subscriptionDao(): SubscriptionDao
+    abstract fun goalDao(): GoalDao
 
     companion object {
         fun create(context: Context, name: String = "fluxa.db"): FluxaDatabase =
             Room.databaseBuilder(context, FluxaDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         installCategoryKindGuard(db, includePurchases = true, includeSubscriptions = true)
                         installSubscriptionGuards(db)
+                        installGoalGuards(db)
                     }
 
                     override fun onOpen(db: SupportSQLiteDatabase) {

@@ -41,7 +41,7 @@ internal object BalanceCalculator {
         return BalanceSnapshot(balances, available.toCalculatedBalance())
     }
 
-    private fun balanceOf(account: AccountBalanceInput): BigInteger =
+    fun balanceOf(account: AccountBalanceInput): BigInteger =
         account.movements.fold(BigInteger.valueOf(account.openingBalance.cents)) { total, movement ->
             if (movement.occurredOn < account.openingDate) {
                 total

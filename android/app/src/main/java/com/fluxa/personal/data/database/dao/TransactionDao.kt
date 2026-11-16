@@ -118,13 +118,16 @@ internal interface TransactionDao {
     )
     suspend fun readWidePeriodTotals(startInclusive: Long, endExclusive: Long): List<WidePeriodDirectionTotal>
 
-    @Query(
-        """
+    @Query(BALANCE_ROWS)
+    fun observeBalanceRows(): Flow<List<BalanceRow>>
+
+    @Query(BALANCE_ROWS + " WHERE :id IS NULL OR a.id = :id")
+    suspend fun readBalanceRows(id: String? = null): List<BalanceRow>
+}
+
+private const val BALANCE_ROWS = """
         SELECT a.id AS accountId, a.openingBalanceCents, a.openingDate, a.includeInAvailable,
                a.archivedAt, t.direction, t.amountCents, t.occurredOn
         FROM accounts a
         LEFT JOIN financial_transactions t ON t.accountId = a.id AND t.cancelledAt IS NULL
-        """,
-    )
-    fun observeBalanceRows(): Flow<List<BalanceRow>>
-}
+    """

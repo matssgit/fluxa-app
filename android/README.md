@@ -16,7 +16,7 @@ Projeto Android nativo independente, com um módulo Gradle `app`. O Sprint 0 con
 
 ## Banco e preferências
 
-Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v6 registra assinaturas e seus desfechos, incluindo vínculos opcionais com lançamentos e compras. O builder de produção registra toda a cadeia de migrations de v1 a v6. Consulte o [handoff da Sprint 5-A](docs/sprint-5a/HANDOFF.md) para os contratos de assinatura. Todos os builds exigem um caminho de migration explícito.
+Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v7 acrescenta metas e movimentos de reserva. O builder de produção registra toda a cadeia de migrations de v1 a v7. Consulte o [handoff da Sprint 6-A](docs/sprint-6a/HANDOFF.md) para os contratos de reserva e disponibilidade. Todos os builds exigem um caminho de migration explícito.
 
 O plugin Room exporta os schemas em `app/schemas`. Os testes instrumentados usam os schemas exportados para validar as migrations, conferir dados preexistentes e reabrir o banco com o builder de produção. Ao introduzir uma versão, gere e versione o JSON antes de empacotar os testes instrumentados.
 

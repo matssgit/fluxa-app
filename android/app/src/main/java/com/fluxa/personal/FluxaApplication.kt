@@ -4,6 +4,7 @@ import android.app.Application
 import com.fluxa.personal.core.preferences.LocalPreferences
 import com.fluxa.personal.data.database.FluxaDatabase
 import com.fluxa.personal.data.repository.AccountRepository
+import com.fluxa.personal.data.repository.GoalRepository
 import com.fluxa.personal.data.repository.CategoryRepository
 import com.fluxa.personal.data.repository.CreditRepository
 import com.fluxa.personal.data.repository.TransactionRepository
@@ -17,4 +18,5 @@ internal class FluxaApplication : Application() {
     val transactions by lazy { TransactionRepository(database) }
     val credit by lazy { CreditRepository(database) }
     val subscriptions by lazy { SubscriptionRepository(database, credit) }
+    val goals by lazy { GoalRepository(database) }
 }
