@@ -32,6 +32,7 @@ internal class TransactionRules(private val today: LocalDate, private val now: I
         category: Category?,
     ): TransactionResult {
         if (existing == null) return Rejected(TransactionError.NOT_FOUND)
+        if (existing.installmentId != null) return Rejected(TransactionError.MANAGED_BY_INSTALLMENT)
         if (existing.cancelledAt != null) return Rejected(TransactionError.CANCELLED)
         validate(draft, account, category)?.let { return Rejected(it) }
         return Saved(existing.copy(details = draft.normalized(), updatedAt = now))
@@ -39,6 +40,7 @@ internal class TransactionRules(private val today: LocalDate, private val now: I
 
     fun cancel(existing: FinancialTransaction?): TransactionResult {
         if (existing == null) return Rejected(TransactionError.NOT_FOUND)
+        if (existing.installmentId != null) return Rejected(TransactionError.MANAGED_BY_INSTALLMENT)
         if (existing.cancelledAt != null) return Rejected(TransactionError.CANCELLED)
         return Saved(existing.copy(updatedAt = now, cancelledAt = now))
     }

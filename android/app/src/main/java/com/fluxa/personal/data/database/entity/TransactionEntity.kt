@@ -22,11 +22,19 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.RESTRICT,
             onUpdate = ForeignKey.RESTRICT,
         ),
+        ForeignKey(
+            entity = InstallmentEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["installmentId"],
+            onDelete = ForeignKey.RESTRICT,
+            onUpdate = ForeignKey.RESTRICT,
+        ),
     ],
     indices = [
         Index(value = ["accountId", "occurredOn"]),
         Index(value = ["categoryId", "occurredOn"]),
         Index(value = ["occurredOn"]),
+        Index(value = ["installmentId"], unique = true),
     ],
 )
 internal data class TransactionEntity(
@@ -40,4 +48,5 @@ internal data class TransactionEntity(
     val createdAt: String,
     val updatedAt: String,
     val cancelledAt: String?,
+    val installmentId: String? = null,
 )

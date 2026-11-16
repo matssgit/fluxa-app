@@ -16,7 +16,7 @@ Projeto Android nativo independente, com um módulo Gradle `app`. O Sprint 0 con
 
 ## Banco e preferências
 
-Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v4 inclui cartões, compras e parcelas. O builder de produção registra toda a cadeia de migrations de v1 a v4. Todos os builds exigem um caminho de migration explícito.
+Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v5 vincula baixas financeiras a parcelas. O builder de produção registra toda a cadeia de migrations de v1 a v5. Todos os builds exigem um caminho de migration explícito.
 
 O plugin Room exporta os schemas em `app/schemas`. Os testes instrumentados usam os schemas exportados para validar as migrations, conferir dados preexistentes e reabrir o banco com o builder de produção. Ao introduzir uma versão, gere e versione o JSON antes de empacotar os testes instrumentados.
 
@@ -59,7 +59,7 @@ Veja o [handoff da Sprint 3-A](docs/sprint-3a/HANDOFF.md) para o contrato de cri
 
 ## Crédito
 
-Veja o [handoff da Sprint 4-A](docs/sprint-4a/HANDOFF.md) para os contratos de cartão, compras, parcelas, datas e limite derivado.
+Veja o [handoff da Sprint 4-A](docs/sprint-4a/HANDOFF.md) para os contratos de cartão, compras, parcelas, datas e limite derivado. O [handoff da Sprint 4-C](docs/sprint-4c/HANDOFF.md) detalha pagamento, estorno e o vínculo com o ledger.
 
 ## Validação
 

@@ -1,6 +1,7 @@
 package com.fluxa.personal.data.repository
 
 import androidx.room.withTransaction
+import com.fluxa.personal.core.date.FinancialCalendar
 import com.fluxa.personal.data.database.FluxaDatabase
 import com.fluxa.personal.data.database.mapper.toDomain
 import com.fluxa.personal.data.database.mapper.toEntity
@@ -12,13 +13,20 @@ import com.fluxa.personal.domain.model.CreditResult
 import com.fluxa.personal.domain.model.CreditResult.Rejected
 import com.fluxa.personal.domain.model.CreditResult.Saved
 import com.fluxa.personal.domain.model.Installment
+import com.fluxa.personal.domain.model.FinancialTransaction
+import com.fluxa.personal.domain.model.InstallmentPaymentError
+import com.fluxa.personal.domain.model.InstallmentPaymentResult
+import com.fluxa.personal.domain.model.InstallmentPaymentResult.Rejected as PaymentRejected
 import com.fluxa.personal.domain.model.InstallmentStatus
 import com.fluxa.personal.domain.model.Purchase
 import com.fluxa.personal.domain.model.PurchaseDraft
 import com.fluxa.personal.domain.model.PurchaseStatus
 import com.fluxa.personal.domain.rules.CreditLimit
 import com.fluxa.personal.domain.rules.CreditPurchaseRules
+import com.fluxa.personal.domain.rules.InstallmentPaymentRules
+import com.fluxa.personal.domain.rules.matchesPayment
 import java.time.Clock
+import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -27,8 +35,10 @@ import kotlinx.coroutines.flow.map
 internal class CreditRepository(
     private val database: FluxaDatabase,
     private val clock: Clock = Clock.systemUTC(),
+    private val calendar: FinancialCalendar = FinancialCalendar(clock),
 ) {
     private val dao = database.creditDao()
+    private val transactions = database.transactionDao()
 
     suspend fun createCard(details: CreditCardDetails): CreditResult<CreditCard> {
         validateCard(details)?.let { return Rejected(it) }
@@ -86,6 +96,86 @@ internal class CreditRepository(
         dao.cancelPendingInstallments(id.toString())
         Saved(cancelled)
     }
+
+    suspend fun payInstallment(
+        installmentId: UUID,
+        accountId: UUID,
+        paidOn: LocalDate,
+    ): InstallmentPaymentResult = database.withTransaction {
+        val key = installmentId.toString()
+        val installment = dao.findInstallment(key)?.toDomain()
+            ?: return@withTransaction PaymentRejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND)
+        val purchase = dao.findPurchase(installment.purchaseId.toString())?.toDomain()
+            ?: return@withTransaction PaymentRejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        val existing = transactions.findInstallmentPayment(key)?.toDomain()
+        val account = if (installment.status == InstallmentStatus.PENDING) {
+            transactions.findAccount(accountId.toString())?.toDomain()
+        } else {
+            null
+        }
+        val result = InstallmentPaymentRules(calendar.today(), clock.instant()).prepare(
+            UUID.randomUUID(), installment, purchase, existing, accountId, account, paidOn,
+        )
+        if (result is InstallmentPaymentResult.Paid) {
+            if (dao.markInstallmentPaid(key) != 1) {
+                val current = dao.findInstallment(key)?.toDomain()
+                val payment = transactions.findInstallmentPayment(key)?.toDomain()
+                return@withTransaction when {
+                    current == null -> PaymentRejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND)
+                    current.status == InstallmentStatus.CANCELLED ->
+                        PaymentRejected(InstallmentPaymentError.INSTALLMENT_CANCELLED)
+                    current.status == InstallmentStatus.PAID && payment != null && payment.matchesPayment(current, purchase) ->
+                        InstallmentPaymentResult.AlreadyPaid(payment.id)
+                    else -> PaymentRejected(InstallmentPaymentError.PAYMENT_CHANGED)
+                }
+            }
+            transactions.insert(result.transaction.toEntity())
+        }
+        result
+    }
+
+    suspend fun undoInstallmentPayment(
+        installmentId: UUID,
+        expectedTransactionId: UUID,
+    ): InstallmentPaymentResult = database.withTransaction {
+        val key = installmentId.toString()
+        val installment = dao.findInstallment(key)?.toDomain()
+            ?: return@withTransaction PaymentRejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND)
+        if (installment.status == InstallmentStatus.CANCELLED) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.INSTALLMENT_CANCELLED)
+        }
+        if (installment.status != InstallmentStatus.PAID) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.INSTALLMENT_NOT_PAID)
+        }
+        val purchase = dao.findPurchase(installment.purchaseId.toString())?.toDomain()
+            ?: return@withTransaction PaymentRejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        if (purchase.status != PurchaseStatus.ACTIVE) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.PURCHASE_CANCELLED)
+        }
+        val payment = transactions.findInstallmentPayment(key)?.toDomain()
+        if (payment == null || !payment.matchesPayment(installment, purchase)) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        }
+        if (payment.id != expectedTransactionId) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.PAYMENT_CHANGED)
+        }
+        val card = dao.findCardSummary(purchase.details.cardId.toString())?.toDomain()
+            ?: return@withTransaction PaymentRejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        if (!CreditLimit(card.totalLimit, card.committedAmount).canCommit(installment.amount)) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.INSUFFICIENT_LIMIT_TO_UNDO)
+        }
+        if (dao.reopenPaidInstallment(key) != 1) {
+            return@withTransaction PaymentRejected(InstallmentPaymentError.PAYMENT_CHANGED)
+        }
+        check(transactions.deleteInstallmentPayment(payment.id.toString(), key) == 1) { "Payment changed during undo." }
+        InstallmentPaymentResult.Undone(payment.id)
+    }
+
+    fun observeInstallmentPayment(installmentId: UUID): Flow<FinancialTransaction?> =
+        transactions.observeInstallmentPayment(installmentId.toString())
+            .map { it?.toDomain() }
+            .distinctUntilChanged()
+
 
     fun observeCards(includeArchived: Boolean = false): Flow<List<CreditCardSummary>> =
         dao.observeCards(includeArchived).map { rows -> rows.map { it.toDomain() } }.distinctUntilChanged()

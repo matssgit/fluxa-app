@@ -25,6 +25,7 @@ internal fun TransactionEntity.toDomain() = FinancialTransaction(
     createdAt = Instant.parse(createdAt),
     updatedAt = Instant.parse(updatedAt),
     cancelledAt = cancelledAt?.let(Instant::parse),
+    installmentId = installmentId?.let(UUID::fromString),
 )
 
 internal fun FinancialTransaction.toEntity() = TransactionEntity(
@@ -38,6 +39,7 @@ internal fun FinancialTransaction.toEntity() = TransactionEntity(
     createdAt = createdAt.toString(),
     updatedAt = updatedAt.toString(),
     cancelledAt = cancelledAt?.toString(),
+    installmentId = installmentId?.toString(),
 )
 
 internal fun List<BalanceRow>.toBalanceInputs(): List<AccountBalanceInput> =

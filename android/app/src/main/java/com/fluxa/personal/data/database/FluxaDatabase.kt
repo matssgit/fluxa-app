@@ -19,13 +19,14 @@ import com.fluxa.personal.data.database.entity.TransactionEntity
 import com.fluxa.personal.data.database.migration.MIGRATION_1_2
 import com.fluxa.personal.data.database.migration.MIGRATION_2_3
 import com.fluxa.personal.data.database.migration.MIGRATION_3_4
+import com.fluxa.personal.data.database.migration.MIGRATION_4_5
 
 @Database(
     entities = [
         LocalSchemaMarker::class, AccountEntity::class, CategoryEntity::class, TransactionEntity::class,
         CreditCardEntity::class, PurchaseEntity::class, InstallmentEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 internal abstract class FluxaDatabase : RoomDatabase() {
@@ -37,7 +38,7 @@ internal abstract class FluxaDatabase : RoomDatabase() {
     companion object {
         fun create(context: Context, name: String = "fluxa.db"): FluxaDatabase =
             Room.databaseBuilder(context, FluxaDatabase::class.java, name)
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         installCategoryKindGuard(db, includePurchases = true)

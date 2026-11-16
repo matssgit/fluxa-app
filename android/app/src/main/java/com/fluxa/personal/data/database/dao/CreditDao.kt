@@ -70,6 +70,15 @@ internal interface CreditDao {
     @Insert
     suspend fun insertInstallments(installments: List<InstallmentEntity>)
 
+    @Query("SELECT * FROM credit_installments WHERE id = :id")
+    suspend fun findInstallment(id: String): InstallmentEntity?
+
+    @Query("UPDATE credit_installments SET status = 'PAID' WHERE id = :id AND status = 'PENDING'")
+    suspend fun markInstallmentPaid(id: String): Int
+
+    @Query("UPDATE credit_installments SET status = 'PENDING' WHERE id = :id AND status = 'PAID'")
+    suspend fun reopenPaidInstallment(id: String): Int
+
     @Query("SELECT EXISTS(SELECT 1 FROM credit_installments WHERE purchaseId = :purchaseId AND status = 'PAID')")
     suspend fun hasPaidInstallments(purchaseId: String): Boolean
 

@@ -20,6 +20,7 @@ internal data class FinancialTransaction(
     val createdAt: Instant,
     val updatedAt: Instant,
     val cancelledAt: Instant? = null,
+    val installmentId: UUID? = null,
 ) {
     val status: TransactionStatus
         get() = if (cancelledAt == null) TransactionStatus.COMPLETED else TransactionStatus.CANCELLED
@@ -36,6 +37,7 @@ internal enum class TransactionError {
     CATEGORY_NOT_FOUND,
     CATEGORY_ARCHIVED,
     CATEGORY_DIRECTION_MISMATCH,
+    MANAGED_BY_INSTALLMENT,
 }
 
 internal sealed interface TransactionResult {

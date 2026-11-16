@@ -37,6 +37,15 @@ internal interface TransactionDao {
     @Query("SELECT * FROM financial_transactions WHERE id = :id")
     suspend fun find(id: String): TransactionEntity?
 
+    @Query("SELECT * FROM financial_transactions WHERE installmentId = :installmentId")
+    suspend fun findInstallmentPayment(installmentId: String): TransactionEntity?
+
+    @Query("SELECT * FROM financial_transactions WHERE installmentId = :installmentId AND cancelledAt IS NULL")
+    fun observeInstallmentPayment(installmentId: String): Flow<TransactionEntity?>
+
+    @Query("DELETE FROM financial_transactions WHERE id = :id AND installmentId = :installmentId AND cancelledAt IS NULL")
+    suspend fun deleteInstallmentPayment(id: String, installmentId: String): Int
+
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun findAccount(id: String): AccountEntity?
 
