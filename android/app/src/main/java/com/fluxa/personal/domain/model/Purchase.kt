@@ -59,6 +59,7 @@ internal enum class CreditError {
     PURCHASE_NOT_FOUND,
     PURCHASE_CANCELLED,
     HAS_PAID_INSTALLMENT,
+    MANAGED_BY_SUBSCRIPTION,
 }
 
 internal sealed interface CreditResult<out T> {

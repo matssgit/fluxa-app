@@ -45,6 +45,25 @@ internal data class SubscriptionOccurrence(
     val resultId: UUID? = null,
 )
 
+internal enum class SubscriptionUndoError { OCCURRENCE_NOT_FOUND, NOT_RESOLVED, SKIPPED, CARD_CHARGE_ALREADY_PAID, CONFLICT }
+
+internal sealed interface SubscriptionUndoResult {
+    data class Reopened(val occurrence: SubscriptionOccurrence) : SubscriptionUndoResult
+    data class Rejected(val error: SubscriptionUndoError) : SubscriptionUndoResult
+}
+
+internal sealed interface SubscriptionResolutionDetail {
+    val occurredOn: LocalDate
+
+    data class Account(val transactionId: UUID, override val occurredOn: LocalDate) : SubscriptionResolutionDetail
+    data class Card(val purchaseId: UUID, val installmentId: UUID, override val occurredOn: LocalDate) : SubscriptionResolutionDetail
+}
+
+internal data class SubscriptionOccurrenceDetail(
+    val occurrence: SubscriptionOccurrence,
+    val resolution: SubscriptionResolutionDetail?,
+)
+
 internal data class SubscriptionTerms(
     val effectiveOn: LocalDate,
     val details: SubscriptionDetails,

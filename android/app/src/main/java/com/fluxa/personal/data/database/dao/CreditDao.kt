@@ -95,6 +95,18 @@ internal interface CreditDao {
     @Update
     suspend fun updatePurchase(purchase: PurchaseEntity)
 
+    @Query("SELECT * FROM credit_installments WHERE purchaseId = :purchaseId ORDER BY number")
+    suspend fun findPurchaseInstallments(purchaseId: String): List<InstallmentEntity>
+
+    @Query("DELETE FROM credit_installments WHERE purchaseId = :purchaseId AND status = 'CANCELLED'")
+    suspend fun deleteCancelledInstallments(purchaseId: String): Int
+
+    @Query("""
+        DELETE FROM credit_purchases WHERE id = :id AND subscriptionId = :subscriptionId
+          AND occurrenceDate = :date AND cancelledAt IS NOT NULL
+    """)
+    suspend fun deleteCancelledSubscriptionPurchase(id: String, subscriptionId: String, date: Long): Int
+
     @Query("UPDATE credit_installments SET status = 'CANCELLED' WHERE purchaseId = :purchaseId AND status = 'PENDING'")
     suspend fun cancelPendingInstallments(purchaseId: String)
 }

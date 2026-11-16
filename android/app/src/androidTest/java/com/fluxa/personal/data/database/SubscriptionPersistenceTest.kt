@@ -28,6 +28,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -198,6 +199,195 @@ class SubscriptionPersistenceTest {
         assertEquals(skipped, subscriptions.observeOccurrence(subscription.id, start).first())
         assertTrue(ledger.observeHistory().first().isEmpty())
     }
+
+    @Test
+    fun undoAccountRecomposesCashAndReopensTheSameAnnualSnapshot() = runBlocking {
+        val date = clock.day.minusMonths(1)
+        val subscription = create(date, SubscriptionSource.Account(account), 60000, SubscriptionFrequency.YEARLY)
+        val paid = pay(subscription, date)
+        val transaction = ledger.observeHistory().first().single()
+        assertEquals(TransactionResult.Rejected(TransactionError.MANAGED_BY_SUBSCRIPTION), ledger.update(transaction.id, transaction.details))
+        assertEquals(Exact(Money(40000)), ledger.observeAccountBalance(account).first())
+        assertEquals(SubscriptionResolutionDetail.Account(transaction.id, clock.day),
+            subscriptions.observeOccurrenceDetail(subscription.id, date).first()?.resolution)
+        assertTrue(subscriptions.update(subscription.id, subscription.details.copy(amount = Money(64000))) is Saved)
+
+        val balances = async {
+            withTimeout(5000) {
+                ledger.observeAccountBalance(account).first { it == Exact(Money(100000)) }
+            }
+        }
+        val reopened = (undo(paid) as SubscriptionUndoResult.Reopened).occurrence
+        assertEquals(Exact(Money(100000)), balances.await())
+        assertTrue(ledger.observeHistory().first().isEmpty())
+        assertEquals(Exact(Money(0)), ledger.observePeriodSummary(clock.day, clock.day.plusDays(1)).first().expenses)
+        assertEquals(SubscriptionOccurrenceStatus.OVERDUE, reopened.status)
+        assertEquals(paid.details, reopened.details)
+        assertEquals(reopened, subscriptions.observeOverdueOccurrences().first().single())
+        assertEquals(SubscriptionOccurrenceDetail(reopened, null), subscriptions.observeOccurrenceDetail(subscription.id, date).first())
+        assertEquals(SubscriptionUndoResult.Rejected(SubscriptionUndoError.NOT_RESOLVED), undo(paid))
+
+        val paidAgain = pay(subscription, date)
+        assertNotEquals(paid.resultId, paidAgain.resultId)
+        assertEquals(SubscriptionUndoResult.Rejected(SubscriptionUndoError.CONFLICT), undo(paid))
+        assertEquals(paidAgain.resultId, ledger.observeHistory().first().single().id)
+        assertEquals(date.plusYears(1), subscriptions.observeNextOccurrence(subscription.id).first()?.key?.occurrenceDate)
+    }
+
+    @Test
+    fun undoCardRestoresLimitAndCanChargeAgain() = runBlocking {
+        val card = card(1000)
+        val subscription = create(clock.day, SubscriptionSource.Card(card), 700)
+        val charge = pay(subscription)
+        val id = requireNotNull(charge.resultId)
+        val part = credit.observeInstallments(id).first().single()
+        assertEquals(SubscriptionResolutionDetail.Card(id, part.id, clock.day),
+            subscriptions.observeOccurrenceDetail(subscription.id, clock.day).first()?.resolution)
+        assertEquals(Money(300), credit.observeCard(card).first()?.availableLimit)
+        assertEquals(CreditResult.Rejected(CreditError.MANAGED_BY_SUBSCRIPTION), credit.cancelPurchase(id))
+        val reopened = (undo(charge) as SubscriptionUndoResult.Reopened).occurrence
+        assertEquals(reopened, subscriptions.observeUpcomingOccurrences(7).first().single())
+        assertEquals(reopened, subscriptions.observeNextOccurrence(subscription.id).first())
+        assertEquals(Money(1000), credit.observeCard(card).first()?.availableLimit)
+        assertTrue(credit.observePurchases(card).first().isEmpty())
+        assertTrue(credit.observeInstallments(id).first().isEmpty())
+        val restored = pay(subscription)
+        assertNotEquals(id, restored.resultId)
+        assertEquals(restored.resultId, credit.observePurchases(card).first().single().id)
+    }
+
+    @Test
+    fun payingAnInstallmentBlocksUndoUntilTheInstallmentPaymentIsUndone() = runBlocking {
+        val card = card(1000)
+        val subscription = create(clock.day, SubscriptionSource.Card(card), 700)
+        val charge = pay(subscription)
+        val part = credit.observeInstallments(requireNotNull(charge.resultId)).first().single()
+        val paid = credit.payInstallment(part.id, account, clock.day) as InstallmentPaymentResult.Paid
+        assertEquals(SubscriptionUndoResult.Rejected(SubscriptionUndoError.CARD_CHARGE_ALREADY_PAID), undo(charge))
+        assertEquals(charge, subscriptions.observeOccurrence(subscription.id, clock.day).first())
+        assertTrue(credit.undoInstallmentPayment(part.id, paid.transaction.id) is InstallmentPaymentResult.Undone)
+        assertTrue(undo(charge) is SubscriptionUndoResult.Reopened)
+    }
+
+    @Test
+    fun legacyCancelledChargeCanBeReconciledAfterCardArchiveAndSubscriptionCancellation() = runBlocking {
+        val card = card(1000)
+        val subscription = create(clock.day, SubscriptionSource.Card(card), 700)
+        val charge = pay(subscription)
+        val id = requireNotNull(charge.resultId).toString()
+        val dao = database.creditDao()
+        val original = checkNotNull(dao.findPurchase(id))
+        // Recreate the state allowed by the v6 repository before Sprint 5-C.
+        dao.updatePurchase(original.copy(cancelledAt = clock.instant().toString()))
+        dao.cancelPendingInstallments(id)
+        assertTrue(credit.archiveCard(card))
+        assertTrue(subscriptions.cancel(subscription.id) is Saved)
+        val reopened = (undo(charge) as SubscriptionUndoResult.Reopened).occurrence
+        assertEquals(reopened, subscriptions.observeOccurrence(subscription.id, clock.day).first())
+        assertEquals(SubscriptionStatus.CANCELLED, subscriptions.observeSubscription(subscription.id).first()?.status)
+        assertNull(dao.findPurchase(id))
+    }
+
+    @Test
+    fun scopedHistoryContainsOnlyItsOwnDatesAndOutcomes() = runBlocking {
+        val start = clock.day.minusMonths(2)
+        val a = create(start, SubscriptionSource.Account(account), 700)
+        val b = create(start, SubscriptionSource.Account(account), 700)
+        val paid = pay(a, start)
+        assertTrue(subscriptions.skipSubscriptionOccurrence(a.id, start.plusMonths(1)) is Saved)
+        pay(b)
+        val history = subscriptions.observeOccurrences(a.id, start, clock.day.plusDays(1)).first()
+        assertEquals(listOf(SubscriptionOccurrenceStatus.PENDING, SubscriptionOccurrenceStatus.SKIPPED, SubscriptionOccurrenceStatus.PAID),
+            history.map { it.status })
+        assertTrue(history.all { it.key.subscriptionId == a.id })
+        assertEquals(history.take(2), subscriptions.observeOccurrences(a.id, start, clock.day.plusDays(1), limit = 2).first())
+        assertEquals(SubscriptionUndoResult.Rejected(SubscriptionUndoError.SKIPPED),
+            subscriptions.undoSubscriptionOccurrence(a.id, start.plusMonths(1), UUID.randomUUID()))
+
+        assertTrue(AccountRepository(database.accountDao(), clock).archive(account))
+        assertTrue(subscriptions.pause(a.id) is Saved)
+        assertTrue(undo(paid) is SubscriptionUndoResult.Reopened)
+        assertEquals(SubscriptionStatus.PAUSED, subscriptions.observeSubscription(a.id).first()?.status)
+        assertEquals(SubscriptionOccurrenceStatus.OVERDUE, subscriptions.observeOccurrence(a.id, start).first()?.status)
+        assertEquals(Rejected(SubscriptionError.INVALID_SOURCE),
+            subscriptions.paySubscriptionOccurrence(b.id, start, clock.day))
+    }
+
+    @Test
+    fun concurrentUndoAndResolutionKeepExactlyOneMatchingEffectOrAnOpenOccurrence() = runBlocking {
+        for (source in listOf(SubscriptionSource.Account(account), SubscriptionSource.Card(card(1000)))) {
+            val subscription = create(clock.day, source, 700)
+            val original = pay(subscription)
+            val settling = async(Dispatchers.Default) { subscriptions.paySubscriptionOccurrence(subscription.id, clock.day, clock.day) }
+            val reopening = async(Dispatchers.Default) { undo(original) }
+            val outcome = settling.await()
+            assertTrue(reopening.await() is SubscriptionUndoResult.Reopened)
+            val final = subscriptions.observeOccurrence(subscription.id, clock.day).first()
+            val ids = when (source) {
+                is SubscriptionSource.Account -> ledger.observeHistory().first().filter { it.subscriptionOccurrence == original.key }.map { it.id }
+                is SubscriptionSource.Card -> credit.observePurchases(source.id).first().filter { it.subscriptionOccurrence == original.key }.map { it.id }
+            }
+            if (outcome is Saved) {
+                assertEquals(outcome.value, final)
+                assertEquals(listOf(outcome.value.resultId), ids)
+            } else {
+                assertEquals(Rejected(SubscriptionError.ALREADY_RESOLVED), outcome)
+                assertEquals(SubscriptionOccurrenceStatus.PENDING, final?.status)
+                assertTrue(ids.isEmpty())
+            }
+        }
+    }
+
+    @Test
+    fun concurrentUndoAndInstallmentPaymentKeepPurchaseAndCashConsistent() = runBlocking {
+        val card = card(1000)
+        val subscription = create(clock.day, SubscriptionSource.Card(card), 700)
+        val original = pay(subscription)
+        val part = credit.observeInstallments(requireNotNull(original.resultId)).first().single()
+        val paying = async(Dispatchers.Default) { credit.payInstallment(part.id, account, clock.day) }
+        val undoing = async(Dispatchers.Default) { undo(original) }
+        when (val outcome = undoing.await()) {
+            is SubscriptionUndoResult.Reopened -> {
+                assertEquals(InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND), paying.await())
+                assertEquals(outcome.occurrence, subscriptions.observeOccurrence(subscription.id, clock.day).first())
+                assertTrue(credit.observePurchases(card).first().isEmpty())
+                assertTrue(ledger.observeHistory().first().isEmpty())
+            }
+            is SubscriptionUndoResult.Rejected -> {
+                assertEquals(SubscriptionUndoError.CARD_CHARGE_ALREADY_PAID, outcome.error)
+                val paid = paying.await() as InstallmentPaymentResult.Paid
+                assertEquals(original, subscriptions.observeOccurrence(subscription.id, clock.day).first())
+                assertEquals(original.resultId, credit.observePurchases(card).first().single().id)
+                assertEquals(paid.transaction.id, ledger.observeHistory().first().single().id)
+            }
+        }
+    }
+
+    @Test
+    fun aFailedReopenRollsBackTheRemovalOfItsCardPurchaseAndInstallment() = runBlocking {
+        val card = card(1000)
+        val subscription = create(clock.day, SubscriptionSource.Card(card), 700)
+        val charge = pay(subscription)
+        val purchaseId = requireNotNull(charge.resultId)
+        val part = credit.observeInstallments(purchaseId).first().single()
+        withContext(Dispatchers.IO) {
+            database.openHelper.writableDatabase.execSQL(
+                "CREATE TRIGGER fail_reopen BEFORE UPDATE ON subscription_resolutions BEGIN SELECT RAISE(ABORT, 'test'); END",
+            )
+        }
+        assertTrue(runCatching { undo(charge) }.exceptionOrNull() is SQLiteConstraintException)
+        assertEquals(charge, subscriptions.observeOccurrence(subscription.id, clock.day).first())
+        assertEquals(PurchaseStatus.ACTIVE, credit.observePurchases(card).first().single().status)
+        assertEquals(part, credit.observeInstallments(purchaseId).first().single())
+        assertEquals(Money(300), credit.observeCard(card).first()?.availableLimit)
+    }
+
+    private suspend fun pay(subscription: Subscription, date: LocalDate = clock.day): SubscriptionOccurrence =
+        (subscriptions.paySubscriptionOccurrence(subscription.id, date, clock.day) as Saved).value
+
+    private suspend fun undo(occurrence: SubscriptionOccurrence) = subscriptions.undoSubscriptionOccurrence(
+        occurrence.key.subscriptionId, occurrence.key.occurrenceDate, requireNotNull(occurrence.resultId),
+    )
 
     private suspend fun card(limit: Long): UUID =
         (credit.createCard(CreditCardDetails("Cartão", Money(limit), BillingDay(10), BillingDay(17))) as CreditResult.Saved).value.id

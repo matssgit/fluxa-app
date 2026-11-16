@@ -20,7 +20,10 @@ internal object SubscriptionCalendar {
         today: LocalDate,
     ): List<SubscriptionOccurrence> {
         require(fromInclusive <= untilExclusive)
-        val outcomes = resolved.filter { it.key.occurrenceDate in fromInclusive..<untilExclusive }
+        val outcomes = resolved.filter { it.key.occurrenceDate in fromInclusive..<untilExclusive }.map {
+            if (it.status == SubscriptionOccurrenceStatus.PENDING) it.copy(status = openStatus(it.key.occurrenceDate, today))
+            else it
+        }
         val resolvedKeys = outcomes.map { it.key }.toSet()
         val pending = terms.sortedBy { it.effectiveOn }.let { ordered ->
             ordered.flatMapIndexed { index, term ->
@@ -31,7 +34,7 @@ internal object SubscriptionCalendar {
                     val key = SubscriptionOccurrenceKey(subscription.id, it.dueDate)
                     if (key in resolvedKeys) null else SubscriptionOccurrence(
                         key, term.details,
-                        if (it.dueDate < today) SubscriptionOccurrenceStatus.OVERDUE else SubscriptionOccurrenceStatus.PENDING,
+                        openStatus(it.dueDate, today),
                     )
                 }
             }
@@ -45,6 +48,9 @@ internal object SubscriptionCalendar {
         resolved: List<SubscriptionOccurrence>,
         today: LocalDate,
     ): SubscriptionOccurrence? {
+        val reopened = resolved.asSequence()
+            .filter { it.status == SubscriptionOccurrenceStatus.PENDING && it.key.occurrenceDate >= today }
+            .minByOrNull { it.key.occurrenceDate }
         val ordered = terms.sortedBy { it.effectiveOn }
         for ((index, term) in ordered.withIndex()) {
             if (!term.enabled) continue
@@ -52,14 +58,20 @@ internal object SubscriptionCalendar {
             val end = ordered.getOrNull(index + 1)?.effectiveOn ?: LocalDate.MAX
             while (start < end) {
                 val windowEnd = if (start.year < LocalDate.MAX.year - 1) minOf(end, start.plusYears(2)) else end
+                if (reopened != null && reopened.key.occurrenceDate < start) return reopened
                 val pending = agenda(subscription, listOf(term), resolved, start, windowEnd, today)
                     .firstOrNull { it.status == SubscriptionOccurrenceStatus.PENDING }
-                if (pending != null) return pending
+                if (pending != null) {
+                    return reopened?.takeIf { it.key.occurrenceDate < pending.key.occurrenceDate } ?: pending
+                }
                 start = windowEnd
             }
         }
-        return null
+        return reopened
     }
+
+    fun openStatus(date: LocalDate, today: LocalDate) =
+        if (date < today) SubscriptionOccurrenceStatus.OVERDUE else SubscriptionOccurrenceStatus.PENDING
 
     private fun schedule(subscription: Subscription) = OccurrenceSchedule(
         subscription.id.toString(), subscription.anchorDate,

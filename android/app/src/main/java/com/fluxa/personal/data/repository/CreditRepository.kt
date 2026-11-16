@@ -103,13 +103,28 @@ internal class CreditRepository(
         val purchase = dao.findPurchase(id.toString())?.toDomain()
             ?: return@withTransaction Rejected(CreditError.PURCHASE_NOT_FOUND)
         if (purchase.status == PurchaseStatus.CANCELLED) return@withTransaction Rejected(CreditError.PURCHASE_CANCELLED)
-        if (dao.hasPaidInstallments(id.toString())) return@withTransaction Rejected(CreditError.HAS_PAID_INSTALLMENT)
+        if (purchase.subscriptionOccurrence != null) return@withTransaction Rejected(CreditError.MANAGED_BY_SUBSCRIPTION)
+        cancelActivePurchase(purchase)
+    }
 
+    internal suspend fun removeSubscriptionCharge(purchase: Purchase) {
+        val key = requireNotNull(purchase.subscriptionOccurrence)
+        val id = purchase.id.toString()
+        if (purchase.status == PurchaseStatus.ACTIVE) check(cancelActivePurchase(purchase) is Saved)
+        check(dao.deleteCancelledInstallments(id) == 1) { "Subscription installment changed during undo." }
+        check(dao.deleteCancelledSubscriptionPurchase(id, key.subscriptionId.toString(), key.occurrenceDate.toEpochDay()) == 1) {
+            "Subscription purchase changed during undo."
+        }
+    }
+
+    private suspend fun cancelActivePurchase(purchase: Purchase): CreditResult<Purchase> {
+        val id = purchase.id
+        if (dao.hasPaidInstallments(id.toString())) return Rejected(CreditError.HAS_PAID_INSTALLMENT)
         val now = clock.instant()
         val cancelled = purchase.copy(cancelledAt = now, updatedAt = now)
         dao.updatePurchase(cancelled.toEntity())
         dao.cancelPendingInstallments(id.toString())
-        Saved(cancelled)
+        return Saved(cancelled)
     }
 
     suspend fun payInstallment(

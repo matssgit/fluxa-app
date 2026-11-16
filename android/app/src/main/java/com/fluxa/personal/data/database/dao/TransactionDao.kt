@@ -37,6 +37,13 @@ internal interface TransactionDao {
     @Query("SELECT * FROM financial_transactions WHERE id = :id")
     suspend fun find(id: String): TransactionEntity?
 
+    @Query("""
+        DELETE FROM financial_transactions
+        WHERE id = :id AND subscriptionId = :subscriptionId AND occurrenceDate = :date
+          AND installmentId IS NULL AND cancelledAt IS NULL
+    """)
+    suspend fun deleteSubscriptionPayment(id: String, subscriptionId: String, date: Long): Int
+
     @Query("SELECT * FROM financial_transactions WHERE installmentId = :installmentId")
     suspend fun findInstallmentPayment(installmentId: String): TransactionEntity?
 

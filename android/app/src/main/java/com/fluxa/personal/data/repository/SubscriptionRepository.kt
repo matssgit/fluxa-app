@@ -13,6 +13,11 @@ import com.fluxa.personal.domain.model.CreditError
 import com.fluxa.personal.domain.model.CreditResult
 import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.PurchaseDraft
+import com.fluxa.personal.domain.model.SubscriptionOccurrenceDetail
+import com.fluxa.personal.domain.model.SubscriptionResolutionDetail
+import com.fluxa.personal.domain.model.SubscriptionUndoError
+import com.fluxa.personal.domain.model.SubscriptionUndoResult
+import com.fluxa.personal.domain.rules.SubscriptionUndoRules
 import com.fluxa.personal.domain.model.Subscription
 import com.fluxa.personal.domain.model.SubscriptionDetails
 import com.fluxa.personal.domain.model.SubscriptionError
@@ -109,7 +114,7 @@ internal class SubscriptionRepository(
         database.withTransaction {
             val data = dao.find(key.subscriptionId.toString()) ?: return@withTransaction Rejected(SubscriptionError.NOT_FOUND)
             val resolved = data.resolutions.firstOrNull { it.occurrenceDate == key.occurrenceDate.toEpochDay() }
-            if (resolved != null) {
+            if (resolved != null && resolved.status != SubscriptionOccurrenceStatus.PENDING.name) {
                 return@withTransaction Rejected(
                     if (resolved.status == SubscriptionOccurrenceStatus.SKIPPED.name) SubscriptionError.SKIPPED
                     else SubscriptionError.ALREADY_RESOLVED,
@@ -126,14 +131,54 @@ internal class SubscriptionRepository(
                 if (paidOn > today || date > today) return@withTransaction Rejected(SubscriptionError.FUTURE_DATE)
             }
             val pending = data.onDate(date, today) ?: return@withTransaction Rejected(SubscriptionError.INVALID_OCCURRENCE)
+            if (resolved != null) check(dao.deleteReopened(key.subscriptionId.toString(), date.toEpochDay()) == 1)
             val outcome = if (paidOn == null) {
                 Saved(pending.copy(status = SubscriptionOccurrenceStatus.SKIPPED))
             } else {
                 settle(pending, paidOn)
             }
             if (outcome is Saved) dao.resolve(outcome.value.toEntity())
+            else if (resolved != null) dao.resolve(resolved)
             outcome
         }
+
+    suspend fun undoSubscriptionOccurrence(
+        subscriptionId: UUID,
+        occurrenceDate: LocalDate,
+        expectedResultId: UUID,
+    ): SubscriptionUndoResult = database.withTransaction {
+        val data = dao.find(subscriptionId.toString())
+        val today = calendar.today()
+        val occurrence = data?.onDate(occurrenceDate, today)
+            ?: return@withTransaction SubscriptionUndoResult.Rejected(SubscriptionUndoError.OCCURRENCE_NOT_FOUND)
+        SubscriptionUndoRules.validateOccurrence(occurrence, expectedResultId)?.let {
+            return@withTransaction SubscriptionUndoResult.Rejected(it)
+        }
+        val id = expectedResultId.toString()
+        when (occurrence.details.source) {
+            is SubscriptionSource.Account -> {
+                val payment = transactions.find(id)?.toDomain()
+                SubscriptionUndoRules.validateAccount(occurrence, payment)?.let {
+                    return@withTransaction SubscriptionUndoResult.Rejected(it)
+                }
+                check(transactions.deleteSubscriptionPayment(id, subscriptionId.toString(), occurrenceDate.toEpochDay()) == 1)
+            }
+            is SubscriptionSource.Card -> {
+                val creditDao = database.creditDao()
+                val purchase = creditDao.findPurchase(id)?.toDomain()
+                val installment = creditDao.findPurchaseInstallments(id).singleOrNull()?.toDomain()
+                val hasPayment = installment?.let { transactions.findInstallmentPayment(it.id.toString()) != null } ?: false
+                SubscriptionUndoRules.validateCard(occurrence, purchase, installment, hasPayment)?.let {
+                    return@withTransaction SubscriptionUndoResult.Rejected(it)
+                }
+                credit.removeSubscriptionCharge(checkNotNull(purchase))
+            }
+        }
+        // A reopened occurrence keeps the original terms, even if today's schedule was disabled.
+        val reopened = occurrence.copy(status = SubscriptionOccurrenceStatus.PENDING, resultId = null)
+        check(dao.updateResolution(reopened.toEntity()) == 1)
+        SubscriptionUndoResult.Reopened(reopened.copy(status = SubscriptionCalendar.openStatus(occurrenceDate, today)))
+    }
 
     private suspend fun settle(occurrence: SubscriptionOccurrence, paidOn: LocalDate): SubscriptionResult<SubscriptionOccurrence> {
         val details = occurrence.details
@@ -176,6 +221,21 @@ internal class SubscriptionRepository(
     fun observeOccurrence(id: UUID, date: LocalDate): Flow<SubscriptionOccurrence?> =
         dao.observe(id.toString()).map { it?.onDate(date, calendar.today()) }.distinctUntilChanged()
 
+    fun observeOccurrenceDetail(id: UUID, date: LocalDate): Flow<SubscriptionOccurrenceDetail?> =
+        dao.observeDetail(id.toString(), date.toEpochDay()).map { row ->
+            val occurrence = row?.aggregate?.onDate(date, calendar.today()) ?: return@map null
+            val resultId = occurrence.resultId
+            val resolution = when {
+                resultId == null -> null
+                row.transactionDate != null -> SubscriptionResolutionDetail.Account(resultId, LocalDate.ofEpochDay(row.transactionDate))
+                row.purchaseDate != null && row.installmentId != null -> SubscriptionResolutionDetail.Card(
+                    resultId, UUID.fromString(row.installmentId), LocalDate.ofEpochDay(row.purchaseDate),
+                )
+                else -> null
+            }
+            SubscriptionOccurrenceDetail(occurrence, resolution)
+        }.distinctUntilChanged()
+
     fun observeNextOccurrence(id: UUID): Flow<SubscriptionOccurrence?> =
         dao.observe(id.toString()).map { row ->
             row?.let { SubscriptionCalendar.next(it.subscription.toDomain(), it.terms.map { term -> term.toDomain() },
@@ -187,6 +247,19 @@ internal class SubscriptionRepository(
         return dao.observeAll().map { rows ->
             val today = calendar.today()
             rows.flatMap { it.agenda(fromInclusive, untilExclusive, today) }.ordered()
+        }.distinctUntilChanged()
+    }
+
+    fun observeOccurrences(
+        subscriptionId: UUID,
+        fromInclusive: LocalDate,
+        untilExclusive: LocalDate,
+        limit: Int = Int.MAX_VALUE,
+    ): Flow<List<SubscriptionOccurrence>> {
+        require(fromInclusive <= untilExclusive)
+        require(limit > 0)
+        return dao.observe(subscriptionId.toString()).map { row ->
+            row?.agenda(fromInclusive, untilExclusive, calendar.today())?.asReversed()?.take(limit).orEmpty()
         }.distinctUntilChanged()
     }
 
