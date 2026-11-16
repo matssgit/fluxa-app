@@ -10,6 +10,7 @@ import com.fluxa.personal.domain.model.CreditError
 import com.fluxa.personal.domain.model.CreditResult
 import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.Installment
+import com.fluxa.personal.domain.model.InstallmentOrigin
 import com.fluxa.personal.domain.model.InstallmentPaymentError
 import com.fluxa.personal.domain.model.InstallmentPaymentResult
 import com.fluxa.personal.domain.model.InstallmentStatus
@@ -219,4 +220,10 @@ internal class FakeCreditSource(
         ledger!!.rows.map { rows -> rows.values.firstOrNull { it.installmentId == installmentId && it.cancelledAt == null } }
 
     // endregion
+
+    override fun observeInstallmentOrigin(installmentId: UUID): Flow<InstallmentOrigin?> = store.map { s ->
+        s.installments.values.flatten().firstOrNull { it.id == installmentId }?.let { i ->
+            s.purchases[i.purchaseId]?.let { p -> InstallmentOrigin(i.id, p.id, p.details.cardId) }
+        }
+    }
 }

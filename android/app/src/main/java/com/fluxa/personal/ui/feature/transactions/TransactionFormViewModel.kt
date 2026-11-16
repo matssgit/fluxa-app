@@ -58,6 +58,10 @@ internal data class TransactionFormUiState(
     val updatedAt: Instant? = null,
     /** Saída gerada pelo pagamento de uma parcela: o contrato devolve `MANAGED_BY_INSTALLMENT` para editar/cancelar. */
     val installmentId: UUID? = null,
+    /** Saída gerada pelo pagamento de uma assinatura: `MANAGED_BY_SUBSCRIPTION` para editar/cancelar. */
+    val subscriptionId: UUID? = null,
+    /** Origem da parcela paga (cartão/compra/parcela), lida de `observeInstallmentOrigin` para o atalho "Ver parcela". */
+    val installmentOrigin: com.fluxa.personal.domain.model.InstallmentOrigin? = null,
     /** Conta e categoria do lançamento gerenciado (podem ter sido arquivadas depois). */
     val managedAccount: FinancialAccount? = null,
     val managedCategory: Category? = null,
@@ -76,7 +80,9 @@ internal data class TransactionFormUiState(
     val isCancelled: Boolean get() = cancelledAt != null
     val isBusy: Boolean get() = isLoading || isSaving || isCancelling
     val isManagedByInstallment: Boolean get() = installmentId != null
-    val isReadOnly: Boolean get() = isCancelled || notFound || isManagedByInstallment
+    val isManagedBySubscription: Boolean get() = subscriptionId != null
+    val isManaged: Boolean get() = isManagedByInstallment || isManagedBySubscription
+    val isReadOnly: Boolean get() = isCancelled || notFound || isManaged
     /** A conta escolhida (edição) pode ter sido arquivada depois do lançamento. */
     val selectedAccountInactive: Boolean get() = accountsLoaded && accountId != null && accounts.none { it.id == accountId }
     val selectedCategoryInactive: Boolean get() = categoriesLoaded && categoryId != null && categories.none { it.id == categoryId }
@@ -100,6 +106,7 @@ internal class TransactionFormViewModel(
     transactionId: UUID?,
     initialDirection: TransactionDirection = TransactionDirection.EXPENSE,
     calendar: FinancialCalendar = FinancialCalendar(),
+    private val installmentOrigins: ((UUID) -> kotlinx.coroutines.flow.Flow<com.fluxa.personal.domain.model.InstallmentOrigin?>)? = null,
 ) : ViewModel() {
 
     private val today = calendar.today()
@@ -165,18 +172,29 @@ internal class TransactionFormViewModel(
                                     createdAt = tx.createdAt,
                                     updatedAt = tx.updatedAt,
                                     installmentId = tx.installmentId,
-                                    managedAmount = d.amount.takeIf { tx.installmentId != null },
+                                    subscriptionId = tx.subscriptionOccurrence?.subscriptionId,
+                                    managedAmount = d.amount.takeIf { tx.installmentId != null || tx.subscriptionOccurrence != null },
                                     categories = if (sameDirection) it.categories else emptyList(),
                                     categoriesLoaded = sameDirection && it.categoriesLoaded,
                                 )
                             }
                             direction.value = d.direction
-                            if (tx.installmentId != null) loadManagedNames(d.accountId, d.categoryId)
+                            if (tx.installmentId != null || tx.subscriptionOccurrence != null) loadManagedNames(d.accountId, d.categoryId)
+                            tx.installmentId?.let(::loadInstallmentOrigin)
                         }
                     },
                     onFailure = { _uiState.update { it.copy(isLoading = false, operationError = R.string.error_load) } },
                 )
             }
+        }
+    }
+
+    /** Origem da parcela pelo contrato `observeInstallmentOrigin` (um join por PK; nada de varrer listas). */
+    private fun loadInstallmentOrigin(installmentId: UUID) {
+        val source = installmentOrigins ?: return
+        viewModelScope.launch {
+            val origin = runCatchingNonCancellation { source(installmentId).first() }.getOrNull()
+            _uiState.update { it.copy(installmentOrigin = origin) }
         }
     }
 
@@ -317,7 +335,7 @@ internal class TransactionFormViewModel(
         TransactionError.NOT_FOUND -> copy(notFound = true, operationError = R.string.error_transaction_not_found)
         TransactionError.CANCELLED -> copy(operationError = R.string.error_transaction_cancelled)
         TransactionError.DUPLICATE_ID -> copy(operationError = R.string.error_save)
-        TransactionError.MANAGED_BY_SUBSCRIPTION -> copy(operationError = R.string.error_save)
+        TransactionError.MANAGED_BY_SUBSCRIPTION -> copy(operationError = R.string.managed_subscription_note)
         TransactionError.MANAGED_BY_INSTALLMENT -> copy(operationError = R.string.managed_payment_note)
     }
 
@@ -338,6 +356,7 @@ internal class TransactionFormViewModel(
             transactions: TransactionSource,
             accounts: AccountRepository,
             categories: CategoryRepository,
+            installmentOrigins: ((UUID) -> kotlinx.coroutines.flow.Flow<com.fluxa.personal.domain.model.InstallmentOrigin?>)? = null,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val handle = createSavedStateHandle()
@@ -345,7 +364,7 @@ internal class TransactionFormViewModel(
                 val direction = handle.get<String>(TransactionRoutes.ARG_DIRECTION)
                     ?.let { runCatching { TransactionDirection.valueOf(it) }.getOrNull() }
                     ?: TransactionDirection.EXPENSE
-                TransactionFormViewModel(transactions, accounts, categories, id, direction)
+                TransactionFormViewModel(transactions, accounts, categories, id, direction, installmentOrigins = installmentOrigins)
             }
         }
     }

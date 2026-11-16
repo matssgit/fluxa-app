@@ -151,6 +151,8 @@ internal fun TransactionFormScreen(
     onDone: (TransactionCompletion?, TransactionDirection) -> Unit,
     onCreateAccount: () -> Unit,
     onCreateCategory: (TransactionDirection) -> Unit,
+    onOpenSubscription: (UUID) -> Unit = {},
+    onOpenInstallment: (cardId: UUID, purchaseId: UUID, installmentId: UUID) -> Unit = { _, _, _ -> },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmCancel by rememberSaveable { mutableStateOf(false) }
@@ -160,6 +162,7 @@ internal fun TransactionFormScreen(
     LaunchedEffect(state.completion) { state.completion?.let { onDone(it, state.direction) } }
 
     val title = when {
+        state.isManagedBySubscription -> stringResource(R.string.managed_subscription_title)
         state.isManagedByInstallment -> stringResource(R.string.managed_payment_title)
         state.isEditing -> stringResource(R.string.transaction_edit)
         state.direction == TransactionDirection.INCOME -> stringResource(R.string.new_income)
@@ -190,7 +193,7 @@ internal fun TransactionFormScreen(
         when {
             state.isLoading -> item { LoadingBlock() }
             state.notFound -> item { ErrorBanner(stringResource(R.string.error_transaction_not_found), onDismiss = null) }
-            state.isManagedByInstallment -> managedPaymentItems(state)
+            state.isManaged -> managedPaymentItems(state, onOpenSubscription, onOpenInstallment)
             else -> {
                 state.operationError?.let { error -> item { ErrorBanner(stringResource(error), onDismiss = viewModel::dismissError) } }
                 state.cancelledAt?.let { cancelled ->
@@ -407,7 +410,11 @@ internal fun TransactionFormScreen(
  * Lançamento gerado pelo pagamento de parcela: somente leitura (editar/cancelar retornariam
  * `MANAGED_BY_INSTALLMENT`). O estorno é feito pela parcela, com `undoInstallmentPayment`.
  */
-private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(state: TransactionFormUiState) {
+private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(
+    state: TransactionFormUiState,
+    onOpenSubscription: (UUID) -> Unit,
+    onOpenInstallment: (cardId: UUID, purchaseId: UUID, installmentId: UUID) -> Unit,
+) {
     item {
         com.fluxa.personal.ui.designsystem.components.FluxaCard(modifier = Modifier.fillMaxWidth().testTag("managed-payment")) {
             val type = FluxaTheme.typography
@@ -425,7 +432,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(s
             ManagedLine(stringResource(R.string.managed_field_account), state.managedAccount?.details?.name.orEmpty())
             ManagedLine(stringResource(R.string.managed_field_date), state.occurredOn.format(com.fluxa.personal.ui.common.BrazilDate))
             ManagedLine(stringResource(R.string.managed_field_category), state.managedCategory?.details?.name.orEmpty())
-            ManagedLine(stringResource(R.string.managed_payment_origin_label), stringResource(R.string.managed_payment_origin))
+            ManagedLine(
+                stringResource(R.string.managed_payment_origin_label),
+                stringResource(if (state.isManagedBySubscription) R.string.managed_subscription_origin else R.string.managed_payment_origin),
+            )
         }
     }
     item {
@@ -437,8 +447,33 @@ private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(s
                 .testTag("managed-payment-note"),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(FluxaIcons.Card, contentDescription = null, tint = FluxaTheme.colors.textSecondary, modifier = Modifier.size(20.dp))
-            Text(stringResource(R.string.managed_payment_note), style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary)
+            Icon(
+                if (state.isManagedBySubscription) FluxaIcons.Repeat else FluxaIcons.Card,
+                contentDescription = null, tint = FluxaTheme.colors.textSecondary, modifier = Modifier.size(20.dp),
+            )
+            Text(
+                stringResource(if (state.isManagedBySubscription) R.string.managed_subscription_note else R.string.managed_payment_note),
+                style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary,
+            )
+        }
+    }
+    // Navegação de origem só quando o vínculo existe (assinatura pelo ID gravado; parcela pelo contrato de origem).
+    state.subscriptionId?.let { id ->
+        item {
+            com.fluxa.personal.ui.designsystem.components.FluxaButton(
+                text = stringResource(R.string.origin_view_subscription), onClick = { onOpenSubscription(id) },
+                variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Repeat,
+                modifier = Modifier.fillMaxWidth().testTag("action-view-subscription"),
+            )
+        }
+    }
+    state.installmentOrigin?.let { o ->
+        item {
+            com.fluxa.personal.ui.designsystem.components.FluxaButton(
+                text = stringResource(R.string.origin_view_installment), onClick = { onOpenInstallment(o.cardId, o.purchaseId, o.installmentId) },
+                variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Card,
+                modifier = Modifier.fillMaxWidth().testTag("action-view-installment"),
+            )
         }
     }
 }

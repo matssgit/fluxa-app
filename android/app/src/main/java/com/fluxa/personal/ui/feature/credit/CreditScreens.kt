@@ -689,6 +689,7 @@ internal fun PurchaseDetailScreen(
     onBack: () -> Unit,
     onCancelled: () -> Unit,
     onOpenInstallment: (UUID) -> Unit = {},
+    onOpenSubscription: (UUID) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmCancel by rememberSaveable { mutableStateOf(false) }
@@ -741,6 +742,19 @@ internal fun PurchaseDetailScreen(
                             if (state.isCancelled) FluxaIcons.Close else FluxaIcons.Check,
                             modifier = Modifier.padding(top = 8.dp),
                         )
+                    }
+                }
+                // Compra gerada pela cobrança de uma assinatura: indica a origem e leva até ela.
+                purchase.subscriptionOccurrence?.let { key ->
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.testTag("purchase-from-subscription")) {
+                            Text(stringResource(R.string.purchase_from_subscription), style = type.label, color = colors.textSecondary)
+                            FluxaButton(
+                                text = stringResource(R.string.origin_view_subscription), onClick = { onOpenSubscription(key.subscriptionId) },
+                                variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Repeat,
+                                modifier = Modifier.fillMaxWidth().testTag("action-view-subscription"),
+                            )
+                        }
                     }
                 }
                 item { FluxaSectionHeader(title = stringResource(R.string.purchase_detail_installments)) }

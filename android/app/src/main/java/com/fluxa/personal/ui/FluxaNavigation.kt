@@ -81,6 +81,19 @@ import com.fluxa.personal.ui.feature.credit.PurchaseDetailViewModel
 import com.fluxa.personal.ui.feature.credit.PurchaseFormScreen
 import com.fluxa.personal.ui.feature.credit.PurchaseFormViewModel
 import com.fluxa.personal.ui.feature.credit.RepositoryCreditSource
+import com.fluxa.personal.ui.feature.subscriptions.RepositorySubscriptionDataSource
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionAgendaScreen
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionAgendaViewModel
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionCompletion
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionDetailScreen
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionDetailViewModel
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionFormScreen
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionFormViewModel
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionOccurrenceScreen
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionOccurrenceViewModel
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionRoutes
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionsScreen
+import com.fluxa.personal.ui.feature.subscriptions.SubscriptionsViewModel
 import com.fluxa.personal.ui.placeholder.MorePlaceholder
 
 private enum class Destination(
@@ -111,6 +124,7 @@ internal fun FluxaNavigation() {
     val app = LocalContext.current.applicationContext as FluxaApplication
     val transactions = remember(app) { RepositoryTransactionSource(app.transactions) }
     val credit = remember(app) { RepositoryCreditSource(app.credit) }
+    val subscriptions = remember(app) { RepositorySubscriptionDataSource(app.subscriptions) }
     var feedback by rememberSaveable { mutableStateOf<Int?>(null) }
     val goToTab: (String) -> Unit = { route ->
         controller.navigate(route) {
@@ -225,6 +239,7 @@ internal fun FluxaNavigation() {
                         viewModel = viewModel(factory = PurchaseDetailViewModel.factory(credit, app.categories)),
                         onBack = { controller.popBackStack() },
                         onCancelled = { feedback = R.string.feedback_purchase_cancelled },
+                        onOpenSubscription = { controller.navigate(SubscriptionRoutes.detail(it)) },
                         onOpenInstallment = { installment ->
                             if (cardArg != null && purchaseArg != null) {
                                 controller.navigate(CreditRoutes.installment(UUID.fromString(cardArg), UUID.fromString(purchaseArg), installment))
@@ -254,8 +269,76 @@ internal fun FluxaNavigation() {
                         onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
                     )
                 }
+                // Sprint 5-B: assinaturas
+                composable(SubscriptionRoutes.LIST) {
+                    SubscriptionsScreen(
+                        viewModel = viewModel(factory = SubscriptionsViewModel.factory(subscriptions, app.accounts, credit)),
+                        onBack = { controller.popBackStack() },
+                        onNew = { controller.navigate(SubscriptionRoutes.NEW) },
+                        onOpen = { controller.navigate(SubscriptionRoutes.detail(it)) },
+                        onAgenda = { controller.navigate(SubscriptionRoutes.AGENDA) },
+                    )
+                }
+                composable(SubscriptionRoutes.AGENDA) {
+                    SubscriptionAgendaScreen(
+                        viewModel = viewModel(factory = SubscriptionAgendaViewModel.factory(subscriptions, app.accounts, credit)),
+                        onBack = { controller.popBackStack() },
+                        onOpenOccurrence = { id, date -> controller.navigate(SubscriptionRoutes.occurrence(id, date)) },
+                    )
+                }
+                val subscriptionForm: @Composable () -> Unit = {
+                    SubscriptionFormScreen(
+                        viewModel = viewModel(factory = SubscriptionFormViewModel.factory(subscriptions, app.categories, app.accounts, credit)),
+                        onDone = { completion ->
+                            if (completion != null) feedback = R.string.feedback_subscription_saved
+                            if (completion is SubscriptionCompletion.Created) {
+                                controller.navigate(SubscriptionRoutes.detail(completion.id)) {
+                                    popUpTo(SubscriptionRoutes.NEW) { inclusive = true }
+                                }
+                            } else {
+                                controller.popBackStack()
+                            }
+                        },
+                        onCreateCategory = { controller.navigate(CategoryRoutes.new(TransactionDirection.EXPENSE)) },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
+                        onCreateCard = { controller.navigate(CreditRoutes.NEW_CARD) },
+                    )
+                }
+                composable(SubscriptionRoutes.NEW) { subscriptionForm() }
+                composable(SubscriptionRoutes.EDIT, arguments = listOf(navArgument(SubscriptionRoutes.ARG_ID) { type = NavType.StringType })) {
+                    subscriptionForm()
+                }
+                composable(SubscriptionRoutes.DETAIL, arguments = listOf(navArgument(SubscriptionRoutes.ARG_ID) { type = NavType.StringType })) {
+                    SubscriptionDetailScreen(
+                        viewModel = viewModel(factory = SubscriptionDetailViewModel.factory(subscriptions, app.accounts, credit, app.categories)),
+                        onBack = { controller.popBackStack() },
+                        onEdit = { controller.navigate(SubscriptionRoutes.edit(it)) },
+                        onOpenOccurrence = { id, date -> controller.navigate(SubscriptionRoutes.occurrence(id, date)) },
+                        onAgenda = { controller.navigate(SubscriptionRoutes.AGENDA) },
+                        onFeedback = { feedback = it },
+                    )
+                }
+                composable(
+                    SubscriptionRoutes.OCCURRENCE,
+                    arguments = listOf(
+                        navArgument(SubscriptionRoutes.ARG_ID) { type = NavType.StringType },
+                        navArgument(SubscriptionRoutes.ARG_DATE) { type = NavType.StringType },
+                    ),
+                ) {
+                    SubscriptionOccurrenceScreen(
+                        viewModel = viewModel(factory = SubscriptionOccurrenceViewModel.factory(subscriptions, app.accounts, credit)),
+                        onBack = { controller.popBackStack() },
+                        onFeedback = { feedback = it },
+                        onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
+                        onOpenPurchase = { card, purchase -> controller.navigate(CreditRoutes.purchase(card, purchase)) },
+                    )
+                }
                 composable(Destination.MORE.route) {
-                    MorePlaceholder(toggleAmounts, onOpenCategories = { controller.navigate(CategoryRoutes.LIST) })
+                    MorePlaceholder(
+                        toggleAmounts,
+                        onOpenCategories = { controller.navigate(CategoryRoutes.LIST) },
+                        onOpenSubscriptions = { controller.navigate(SubscriptionRoutes.LIST) },
+                    )
                 }
 
                 composable(AccountRoutes.LIST) {
@@ -292,7 +375,13 @@ internal fun FluxaNavigation() {
 
                 val transactionForm: @Composable () -> Unit = {
                     TransactionFormScreen(
-                        viewModel = viewModel(factory = TransactionFormViewModel.factory(transactions, app.accounts, app.categories)),
+                        viewModel = viewModel(
+                            factory = TransactionFormViewModel.factory(transactions, app.accounts, app.categories, app.credit::observeInstallmentOrigin),
+                        ),
+                        onOpenSubscription = { controller.navigate(SubscriptionRoutes.detail(it)) },
+                        onOpenInstallment = { card, purchase, installment ->
+                            controller.navigate(CreditRoutes.installment(card, purchase, installment))
+                        },
                         onDone = { completion, direction ->
                             feedback = when (completion) {
                                 TransactionCompletion.Created ->

@@ -7,6 +7,7 @@ import com.fluxa.personal.domain.model.CreditCardSummary
 import com.fluxa.personal.domain.model.CreditResult
 import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.Installment
+import com.fluxa.personal.domain.model.InstallmentOrigin
 import com.fluxa.personal.domain.model.InstallmentPaymentResult
 import com.fluxa.personal.domain.model.Purchase
 import com.fluxa.personal.domain.model.PurchaseDraft
@@ -32,6 +33,7 @@ internal interface CreditSource {
     suspend fun payInstallment(installmentId: UUID, accountId: UUID, paidOn: LocalDate): InstallmentPaymentResult
     suspend fun undoInstallmentPayment(installmentId: UUID, expectedTransactionId: UUID): InstallmentPaymentResult
     fun observeInstallmentPayment(installmentId: UUID): Flow<FinancialTransaction?>
+    fun observeInstallmentOrigin(installmentId: UUID): Flow<InstallmentOrigin?>
 }
 
 internal class RepositoryCreditSource(private val repository: CreditRepository) : CreditSource {
@@ -49,4 +51,5 @@ internal class RepositoryCreditSource(private val repository: CreditRepository) 
     override suspend fun undoInstallmentPayment(installmentId: UUID, expectedTransactionId: UUID) =
         repository.undoInstallmentPayment(installmentId, expectedTransactionId)
     override fun observeInstallmentPayment(installmentId: UUID) = repository.observeInstallmentPayment(installmentId)
+    override fun observeInstallmentOrigin(installmentId: UUID) = repository.observeInstallmentOrigin(installmentId)
 }

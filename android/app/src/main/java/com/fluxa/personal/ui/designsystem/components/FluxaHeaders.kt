@@ -62,7 +62,7 @@ internal fun FluxaTopBar(
                 text = title,
                 style = type.headline,
                 color = colors.textPrimary,
-                maxLines = 1,
+                maxLines = 2, // nomes longos (assinatura, compra, cartão) quebram em vez de sumir
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.semantics { heading() },
             )
