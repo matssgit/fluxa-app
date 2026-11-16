@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 internal class CategoryKindInUse(cause: Throwable) :
-    IllegalStateException("A category referenced by a transaction cannot change direction.", cause)
+    IllegalStateException("A category referenced by a transaction or purchase cannot change direction.", cause)
 
 internal class CategoryRepository(
     private val dao: CategoryDao,

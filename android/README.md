@@ -16,7 +16,7 @@ Projeto Android nativo independente, com um módulo Gradle `app`. O Sprint 0 con
 
 ## Banco e preferências
 
-Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v3 adiciona `financial_transactions` com FKs restritivas para `accounts` e `categories`. As migrations v1 → v2 e v2 → v3 são registradas no builder de produção. Todos os builds exigem um caminho de migration explícito.
+Room abre `fluxa.db` no armazenamento privado, com foreign keys habilitadas. O schema v4 inclui cartões, compras e parcelas. O builder de produção registra toda a cadeia de migrations de v1 a v4. Todos os builds exigem um caminho de migration explícito.
 
 O plugin Room exporta os schemas em `app/schemas`. Os testes instrumentados usam os schemas exportados para validar as migrations, conferir dados preexistentes e reabrir o banco com o builder de produção. Ao introduzir uma versão, gere e versione o JSON antes de empacotar os testes instrumentados.
 
@@ -30,7 +30,7 @@ O app funciona localmente e não declara permissão INTERNET. O primeiro build p
 
 - `Money` é uma value class sobre `Long` em centavos de BRL. Saldos e resultados de cálculo podem ser assinados. Soma e subtração verificam overflow. Conversão de reais e cálculo percentual exigem um `RoundingMode` explícito. Para entrada que precisa ter precisão de centavos, use `UNNECESSARY`. O desconto arredonda o desconto uma vez e o subtrai do total.
 - `BillingDay` aceita dias de 1 a 31. Em mês curto, usa o último dia e mantém o dia pretendido para recalcular o mês seguinte. O relógio existente calcula `LocalDate` no fuso fornecido.
-- `InstallmentSplitter` recebe o primeiro mês de vencimento. A numeração começa em 1, cada parcela tem pelo menos um centavo e cada centavo do resto aumenta uma das últimas parcelas em um centavo. Com isso, a soma fecha e a diferença máxima fica em um centavo. A data de corte do cartão será definida no fluxo de crédito.
+- `InstallmentSplitter` recebe o primeiro mês de vencimento. A numeração começa em 1, cada parcela tem pelo menos um centavo e cada centavo do resto aumenta uma das últimas parcelas em um centavo. Com isso, a soma fecha e a diferença máxima fica em um centavo. O calendário de crédito determina o primeiro mês de vencimento.
 - `OccurrenceCalendar` gera previsões únicas, mensais e anuais desde a âncora. O começo do intervalo é inclusivo e o fim é exclusivo. A identidade inclui origem e data prevista. Fornecer os IDs já efetivados exclui essas previsões mesmo quando a baixa ocorreu em outra data. Consultas que se sobrepõem retornam o mesmo ID para a mesma ocorrência. A unicidade da efetivação fica para a transação persistida.
 
 ## Contratos de domínio reservados para os próximos sprints
@@ -51,11 +51,15 @@ Os ViewModels podem usar `FluxaApplication.accounts` e `FluxaApplication.categor
 - `CategoryDetails` inclui nome, `TransactionDirection.INCOME` ou `EXPENSE` e valores opcionais de ícone e cor. O destino visual desses valores será definido nas telas.
 - Os IDs são UUIDs gerados na criação e preservados em edições, arquivamento e reativação. Os nomes precisam conter texto e podem repetir. Espaços no início e no fim são removidos ao salvar. As listas usam nome e ID para ordenar e excluem arquivados por padrão. A consulta por ID inclui registros arquivados.
 - `archivedAt` nulo identifica um registro ativo. `update` devolve `false` quando o ID não existe. Arquivar ou reativar devolve `false` quando o ID não existe ou já está no estado desejado. A transição condicional e cada edição são atômicas. O arquivamento preserva a linha e seus dados para uso histórico.
-- Os lançamentos referenciam ambos os UUIDs com FKs restritivas. Se houver lançamento vinculado, inclusive cancelado, a mudança de tipo da categoria lança `CategoryKindInUse`. Não há exclusão física nem reativação de conta no contrato atual.
+- Os lançamentos referenciam ambos os UUIDs com FKs restritivas. Se houver lançamento ou compra vinculada, inclusive cancelada, a mudança de tipo da categoria lança `CategoryKindInUse`. Não há exclusão física nem reativação de conta no contrato atual.
 
 ## Lançamentos e saldos
 
 Veja o [handoff da Sprint 3-A](docs/sprint-3a/HANDOFF.md) para o contrato de criação, histórico, cancelamento e saldos reativos.
+
+## Crédito
+
+Veja o [handoff da Sprint 4-A](docs/sprint-4a/HANDOFF.md) para os contratos de cartão, compras, parcelas, datas e limite derivado.
 
 ## Validação
 
