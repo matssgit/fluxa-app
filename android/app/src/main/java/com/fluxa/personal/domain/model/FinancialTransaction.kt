@@ -49,10 +49,18 @@ internal data class TransactionHistoryFilter(
     val fromInclusive: LocalDate? = null,
     val untilExclusive: LocalDate? = null,
     val includeCancelled: Boolean = true,
+    val direction: TransactionDirection? = null,
 ) {
     init {
         require(fromInclusive == null || untilExclusive == null || fromInclusive <= untilExclusive) {
             "The end of the period must not precede the start."
         }
+    }
+}
+
+internal data class TransactionHistoryPage(val limit: Int, val offset: Int = 0) {
+    init {
+        require(limit > 0) { "History page limit must be positive." }
+        require(offset >= 0) { "History page offset cannot be negative." }
     }
 }

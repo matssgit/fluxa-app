@@ -53,8 +53,8 @@ internal object BalanceCalculator {
                 }
             }
         }
-
-    private fun BigInteger.toCalculatedBalance(): CalculatedBalance =
-        if (bitLength() <= Long.SIZE_BITS - 1) CalculatedBalance.Exact(Money(toLong()))
-        else CalculatedBalance.Overflow
 }
+
+internal fun BigInteger.toCalculatedBalance(): CalculatedBalance =
+    if (bitLength() <= Long.SIZE_BITS - 1) CalculatedBalance.Exact(Money(toLong()))
+    else CalculatedBalance.Overflow
