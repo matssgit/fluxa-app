@@ -317,6 +317,7 @@ internal class TransactionFormViewModel(
         TransactionError.NOT_FOUND -> copy(notFound = true, operationError = R.string.error_transaction_not_found)
         TransactionError.CANCELLED -> copy(operationError = R.string.error_transaction_cancelled)
         TransactionError.DUPLICATE_ID -> copy(operationError = R.string.error_save)
+        TransactionError.MANAGED_BY_SUBSCRIPTION -> copy(operationError = R.string.error_save)
         TransactionError.MANAGED_BY_INSTALLMENT -> copy(operationError = R.string.managed_payment_note)
     }
 

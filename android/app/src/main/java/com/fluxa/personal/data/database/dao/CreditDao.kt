@@ -26,6 +26,8 @@ internal data class CreditCardSummaryRow(
     val committedAmountCents: Long,
 )
 
+internal data class InstallmentOriginRow(val installmentId: String, val purchaseId: String, val cardId: String)
+
 @Dao
 internal interface CreditDao {
     @Insert
@@ -69,6 +71,14 @@ internal interface CreditDao {
 
     @Insert
     suspend fun insertInstallments(installments: List<InstallmentEntity>)
+
+    @Query(
+        """
+        SELECT i.id AS installmentId, i.purchaseId, p.cardId FROM credit_installments i
+        JOIN credit_purchases p ON p.id = i.purchaseId WHERE i.id = :id
+        """,
+    )
+    fun observeInstallmentOrigin(id: String): Flow<InstallmentOriginRow?>
 
     @Query("SELECT * FROM credit_installments WHERE id = :id")
     suspend fun findInstallment(id: String): InstallmentEntity?

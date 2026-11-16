@@ -17,10 +17,12 @@ import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.InstallmentPaymentError
 import com.fluxa.personal.domain.model.InstallmentPaymentResult
 import com.fluxa.personal.domain.model.InstallmentPaymentResult.Rejected as PaymentRejected
+import com.fluxa.personal.domain.model.InstallmentOrigin
 import com.fluxa.personal.domain.model.InstallmentStatus
 import com.fluxa.personal.domain.model.Purchase
 import com.fluxa.personal.domain.model.PurchaseDraft
 import com.fluxa.personal.domain.model.PurchaseStatus
+import com.fluxa.personal.domain.model.SubscriptionOccurrenceKey
 import com.fluxa.personal.domain.rules.CreditLimit
 import com.fluxa.personal.domain.rules.CreditPurchaseRules
 import com.fluxa.personal.domain.rules.InstallmentPaymentRules
@@ -62,7 +64,17 @@ internal class CreditRepository(
 
     suspend fun archiveCard(id: UUID): Boolean = dao.archiveCard(id.toString(), clock.instant().toString()) == 1
 
-    suspend fun createPurchase(id: UUID, draft: PurchaseDraft): CreditResult<Purchase> = database.withTransaction {
+    suspend fun createPurchase(id: UUID, draft: PurchaseDraft): CreditResult<Purchase> =
+        createPurchase(id, draft, subscriptionOccurrence = null)
+
+    internal suspend fun createSubscriptionPurchase(id: UUID, draft: PurchaseDraft, key: SubscriptionOccurrenceKey) =
+        createPurchase(id, draft, subscriptionOccurrence = key)
+
+    private suspend fun createPurchase(
+        id: UUID,
+        draft: PurchaseDraft,
+        subscriptionOccurrence: SubscriptionOccurrenceKey?,
+    ): CreditResult<Purchase> = database.withTransaction {
         if (dao.findPurchase(id.toString()) != null) return@withTransaction Rejected(CreditError.DUPLICATE_PURCHASE_ID)
         val schedule = CreditPurchaseRules.schedule(
             draft,
@@ -73,7 +85,10 @@ internal class CreditRepository(
             is Rejected -> schedule
             is Saved -> {
                 val now = clock.instant()
-                val purchase = Purchase(id, draft.normalized(), schedule.value.first().dueDate, now, now)
+                val purchase = Purchase(
+                    id, draft.normalized(), schedule.value.first().dueDate, now, now,
+                    subscriptionOccurrence = subscriptionOccurrence,
+                )
                 dao.insertPurchase(purchase.toEntity())
                 dao.insertInstallments(schedule.value.map { part ->
                     Installment(UUID.randomUUID(), id, part.number, part.amount, part.dueDate, InstallmentStatus.PENDING)
@@ -170,6 +185,11 @@ internal class CreditRepository(
         check(transactions.deleteInstallmentPayment(payment.id.toString(), key) == 1) { "Payment changed during undo." }
         InstallmentPaymentResult.Undone(payment.id)
     }
+
+    fun observeInstallmentOrigin(installmentId: UUID): Flow<InstallmentOrigin?> =
+        dao.observeInstallmentOrigin(installmentId.toString()).map { row ->
+            row?.let { InstallmentOrigin(UUID.fromString(it.installmentId), UUID.fromString(it.purchaseId), UUID.fromString(it.cardId)) }
+        }.distinctUntilChanged()
 
     fun observeInstallmentPayment(installmentId: UUID): Flow<FinancialTransaction?> =
         transactions.observeInstallmentPayment(installmentId.toString())

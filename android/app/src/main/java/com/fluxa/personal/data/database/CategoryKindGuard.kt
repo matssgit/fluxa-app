@@ -4,9 +4,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 internal const val CATEGORY_KIND_IN_USE = "CATEGORY_KIND_IN_USE"
 
-internal fun installCategoryKindGuard(db: SupportSQLiteDatabase, includePurchases: Boolean = false) {
+internal fun installCategoryKindGuard(db: SupportSQLiteDatabase, includePurchases: Boolean = false, includeSubscriptions: Boolean = false) {
     val purchaseCheck = if (includePurchases) {
         "OR EXISTS (SELECT 1 FROM credit_purchases WHERE categoryId = OLD.id)"
+    } else {
+        ""
+    }
+    val subscriptionCheck = if (includeSubscriptions) {
+        """
+        OR EXISTS (SELECT 1 FROM subscriptions WHERE categoryId = OLD.id)
+        OR EXISTS (SELECT 1 FROM subscription_terms WHERE categoryId = OLD.id)
+        """.trimIndent()
     } else {
         ""
     }
@@ -17,6 +25,7 @@ internal fun installCategoryKindGuard(db: SupportSQLiteDatabase, includePurchase
         WHEN OLD.kind <> NEW.kind AND (
             EXISTS (SELECT 1 FROM financial_transactions WHERE categoryId = OLD.id)
             $purchaseCheck
+            $subscriptionCheck
         )
         BEGIN
             SELECT RAISE(ABORT, '$CATEGORY_KIND_IN_USE');

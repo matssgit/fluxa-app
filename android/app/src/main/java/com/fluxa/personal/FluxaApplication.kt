@@ -7,6 +7,7 @@ import com.fluxa.personal.data.repository.AccountRepository
 import com.fluxa.personal.data.repository.CategoryRepository
 import com.fluxa.personal.data.repository.CreditRepository
 import com.fluxa.personal.data.repository.TransactionRepository
+import com.fluxa.personal.data.repository.SubscriptionRepository
 
 internal class FluxaApplication : Application() {
     val database by lazy { FluxaDatabase.create(this) }
@@ -15,4 +16,5 @@ internal class FluxaApplication : Application() {
     val categories by lazy { CategoryRepository(database.categoryDao()) }
     val transactions by lazy { TransactionRepository(database) }
     val credit by lazy { CreditRepository(database) }
+    val subscriptions by lazy { SubscriptionRepository(database, credit) }
 }

@@ -58,6 +58,7 @@ internal fun PurchaseEntity.toDomain() = Purchase(
     createdAt = Instant.parse(createdAt),
     updatedAt = Instant.parse(updatedAt),
     cancelledAt = cancelledAt?.let(Instant::parse),
+    subscriptionOccurrence = subscriptionKey(subscriptionId, occurrenceDate),
 )
 
 internal fun Purchase.toEntity() = PurchaseEntity(
@@ -74,6 +75,8 @@ internal fun Purchase.toEntity() = PurchaseEntity(
     createdAt = createdAt.toString(),
     updatedAt = updatedAt.toString(),
     cancelledAt = cancelledAt?.toString(),
+    subscriptionId = subscriptionOccurrence?.subscriptionId?.toString(),
+    occurrenceDate = subscriptionOccurrence?.occurrenceDate?.toEpochDay(),
 )
 
 internal fun InstallmentEntity.toDomain() = Installment(

@@ -31,8 +31,13 @@ internal data class CreditCardEntity(
             parentColumns = ["id"], childColumns = ["categoryId"],
             onDelete = ForeignKey.RESTRICT,
         ),
+        ForeignKey(
+            entity = SubscriptionEntity::class,
+            parentColumns = ["id"], childColumns = ["subscriptionId"],
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
-    indices = [Index(value = ["cardId", "purchaseDate"]), Index(value = ["categoryId"])],
+    indices = [Index(value = ["cardId", "purchaseDate"]), Index(value = ["categoryId"]), Index(value = ["subscriptionId", "occurrenceDate"], unique = true)],
 )
 internal data class PurchaseEntity(
     @PrimaryKey val id: String,
@@ -48,6 +53,8 @@ internal data class PurchaseEntity(
     val createdAt: String,
     val updatedAt: String,
     val cancelledAt: String?,
+    val subscriptionId: String? = null,
+    val occurrenceDate: Long? = null,
 )
 
 @Entity(

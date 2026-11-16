@@ -26,6 +26,7 @@ internal fun TransactionEntity.toDomain() = FinancialTransaction(
     updatedAt = Instant.parse(updatedAt),
     cancelledAt = cancelledAt?.let(Instant::parse),
     installmentId = installmentId?.let(UUID::fromString),
+    subscriptionOccurrence = subscriptionKey(subscriptionId, occurrenceDate),
 )
 
 internal fun FinancialTransaction.toEntity() = TransactionEntity(
@@ -40,6 +41,8 @@ internal fun FinancialTransaction.toEntity() = TransactionEntity(
     updatedAt = updatedAt.toString(),
     cancelledAt = cancelledAt?.toString(),
     installmentId = installmentId?.toString(),
+    subscriptionId = subscriptionOccurrence?.subscriptionId?.toString(),
+    occurrenceDate = subscriptionOccurrence?.occurrenceDate?.toEpochDay(),
 )
 
 internal fun List<BalanceRow>.toBalanceInputs(): List<AccountBalanceInput> =

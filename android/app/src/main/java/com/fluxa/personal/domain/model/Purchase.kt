@@ -26,6 +26,7 @@ internal data class Purchase(
     val createdAt: Instant,
     val updatedAt: Instant,
     val cancelledAt: Instant? = null,
+    val subscriptionOccurrence: SubscriptionOccurrenceKey? = null,
 ) {
     val status: PurchaseStatus
         get() = if (cancelledAt == null) PurchaseStatus.ACTIVE else PurchaseStatus.CANCELLED
