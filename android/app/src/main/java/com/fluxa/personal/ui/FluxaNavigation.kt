@@ -1,5 +1,6 @@
 package com.fluxa.personal.ui
 
+import java.util.UUID
 import androidx.annotation.StringRes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -71,6 +72,10 @@ import com.fluxa.personal.ui.feature.credit.CardsScreen
 import com.fluxa.personal.ui.feature.credit.CardsViewModel
 import com.fluxa.personal.ui.feature.credit.CreditCompletion
 import com.fluxa.personal.ui.feature.credit.CreditRoutes
+import com.fluxa.personal.ui.feature.credit.InstallmentDetailScreen
+import com.fluxa.personal.ui.feature.credit.InstallmentDetailViewModel
+import com.fluxa.personal.ui.feature.credit.InstallmentPaymentViewModel
+import com.fluxa.personal.ui.feature.credit.PaymentOutcome
 import com.fluxa.personal.ui.feature.credit.PurchaseDetailScreen
 import com.fluxa.personal.ui.feature.credit.PurchaseDetailViewModel
 import com.fluxa.personal.ui.feature.credit.PurchaseFormScreen
@@ -184,6 +189,9 @@ internal fun FluxaNavigation() {
                         onEdit = { controller.navigate(CreditRoutes.edit(it)) },
                         onNewPurchase = { controller.navigate(CreditRoutes.newPurchase(it)) },
                         onOpenPurchase = { card, purchase -> controller.navigate(CreditRoutes.purchase(card, purchase)) },
+                        onOpenInstallment = { card, purchase, installment ->
+                            controller.navigate(CreditRoutes.installment(card, purchase, installment))
+                        },
                     )
                 }
                 composable(
@@ -210,11 +218,40 @@ internal fun FluxaNavigation() {
                         navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType },
                         navArgument(CreditRoutes.ARG_PURCHASE) { type = NavType.StringType },
                     ),
-                ) {
+                ) { backStack ->
+                    val cardArg = backStack.arguments?.getString(CreditRoutes.ARG_CARD)
+                    val purchaseArg = backStack.arguments?.getString(CreditRoutes.ARG_PURCHASE)
                     PurchaseDetailScreen(
                         viewModel = viewModel(factory = PurchaseDetailViewModel.factory(credit, app.categories)),
                         onBack = { controller.popBackStack() },
                         onCancelled = { feedback = R.string.feedback_purchase_cancelled },
+                        onOpenInstallment = { installment ->
+                            if (cardArg != null && purchaseArg != null) {
+                                controller.navigate(CreditRoutes.installment(UUID.fromString(cardArg), UUID.fromString(purchaseArg), installment))
+                            }
+                        },
+                    )
+                }
+                composable(
+                    CreditRoutes.INSTALLMENT_DETAIL,
+                    arguments = listOf(
+                        navArgument(CreditRoutes.ARG_CARD) { type = NavType.StringType },
+                        navArgument(CreditRoutes.ARG_PURCHASE) { type = NavType.StringType },
+                        navArgument(CreditRoutes.ARG_INSTALLMENT) { type = NavType.StringType },
+                    ),
+                ) {
+                    InstallmentDetailScreen(
+                        viewModel = viewModel(factory = InstallmentDetailViewModel.factory(credit, app.accounts)),
+                        paymentViewModel = viewModel(
+                            factory = InstallmentPaymentViewModel.factory(credit, app.accounts, transactions.observeBalances()),
+                        ),
+                        onBack = { controller.popBackStack() },
+                        onPaid = { outcome ->
+                            feedback = if (outcome == PaymentOutcome.AlreadyPaid) R.string.feedback_installment_already_paid
+                            else R.string.feedback_installment_paid
+                        },
+                        onUndone = { feedback = R.string.feedback_installment_undone },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
                     )
                 }
                 composable(Destination.MORE.route) {

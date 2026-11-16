@@ -2,6 +2,7 @@ package com.fluxa.personal.ui.feature.credit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,15 +86,19 @@ import java.util.UUID
 internal object CreditRoutes {
     const val ARG_CARD = "card"
     const val ARG_PURCHASE = "purchase"
+    const val ARG_INSTALLMENT = "installment"
     const val NEW_CARD = "cards/new"
     const val CARD_DETAIL = "cards/{$ARG_CARD}"
     const val EDIT_CARD = "cards/{$ARG_CARD}/edit"
     const val NEW_PURCHASE = "purchases/new?$ARG_CARD={$ARG_CARD}"
     const val PURCHASE_DETAIL = "cards/{$ARG_CARD}/purchases/{$ARG_PURCHASE}"
+    const val INSTALLMENT_DETAIL = "cards/{$ARG_CARD}/purchases/{$ARG_PURCHASE}/installments/{$ARG_INSTALLMENT}"
     fun detail(id: UUID) = "cards/$id"
     fun edit(id: UUID) = "cards/$id/edit"
     fun newPurchase(cardId: UUID?) = if (cardId == null) "purchases/new" else "purchases/new?$ARG_CARD=$cardId"
     fun purchase(cardId: UUID, purchaseId: UUID) = "cards/$cardId/purchases/$purchaseId"
+    fun installment(cardId: UUID, purchaseId: UUID, installmentId: UUID) =
+        "cards/$cardId/purchases/$purchaseId/installments/$installmentId"
 }
 
 // region Cartão visual
@@ -249,6 +254,7 @@ internal fun CardDetailScreen(
     onEdit: (UUID) -> Unit,
     onNewPurchase: (UUID) -> Unit,
     onOpenPurchase: (UUID, UUID) -> Unit,
+    onOpenInstallment: (UUID, UUID, UUID) -> Unit = { _, _, _ -> },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val summary = state.summary
@@ -294,7 +300,10 @@ internal fun CardDetailScreen(
                         FluxaCard(modifier = Modifier.fillMaxWidth().testTag("upcoming-list"), contentPadding = PaddingValues(vertical = 4.dp)) {
                             state.upcoming.take(UPCOMING_SHOWN).forEachIndexed { index, up ->
                                 if (index > 0) Divider()
-                                InstallmentRow(up.installment, up.count, title = up.purchase.details.title)
+                                InstallmentRow(
+                                    up.installment, up.count, title = up.purchase.details.title,
+                                    onClick = { onOpenInstallment(up.purchase.details.cardId, up.purchase.id, up.installment.id) },
+                                )
                             }
                         }
                     }
@@ -359,7 +368,7 @@ internal fun PurchaseRow(item: PurchaseItem, onClick: () -> Unit) {
 
 /** Parcela persistida: número/total, valor, vencimento e estado (texto + ícone, não só cor). */
 @Composable
-internal fun InstallmentRow(installment: Installment, count: Int, title: String? = null) {
+internal fun InstallmentRow(installment: Installment, count: Int, title: String? = null, onClick: (() -> Unit)? = null) {
     val colors = FluxaTheme.colors
     val type = FluxaTheme.typography
     val status = when (installment.status) {
@@ -376,6 +385,7 @@ internal fun InstallmentRow(installment: Installment, count: Int, title: String?
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClickLabel = stringResource(R.string.installment_open), onClick = onClick) else Modifier)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .semantics(mergeDescendants = true) { stateDescription = status }
@@ -399,6 +409,7 @@ internal fun InstallmentRow(installment: Installment, count: Int, title: String?
             color = if (cancelled) colors.textMuted else colors.textPrimary,
             style = type.amount.copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
         )
+        if (onClick != null) Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -673,7 +684,12 @@ internal fun PurchaseFormScreen(
 // region Detalhe da compra
 
 @Composable
-internal fun PurchaseDetailScreen(viewModel: PurchaseDetailViewModel, onBack: () -> Unit, onCancelled: () -> Unit) {
+internal fun PurchaseDetailScreen(
+    viewModel: PurchaseDetailViewModel,
+    onBack: () -> Unit,
+    onCancelled: () -> Unit,
+    onOpenInstallment: (UUID) -> Unit = {},
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmCancel by rememberSaveable { mutableStateOf(false) }
     val colors = FluxaTheme.colors
@@ -732,7 +748,11 @@ internal fun PurchaseDetailScreen(viewModel: PurchaseDetailViewModel, onBack: ()
                     FluxaCard(modifier = Modifier.fillMaxWidth().testTag("installment-list"), contentPadding = PaddingValues(vertical = 4.dp)) {
                         state.installments.forEachIndexed { index, installment ->
                             if (index > 0) Divider()
-                            InstallmentRow(installment, state.installments.size)
+                            // Parcela cancelada fica só leitura; pendente/paga abre o detalhe (pagar ou desfazer).
+                            InstallmentRow(
+                                installment, state.installments.size,
+                                onClick = if (installment.status == InstallmentStatus.CANCELLED) null else ({ onOpenInstallment(installment.id) }),
+                            )
                         }
                     }
                 }

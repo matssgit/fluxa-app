@@ -343,6 +343,7 @@ internal fun LedgerEntryRow(entry: LedgerEntry, onClick: () -> Unit) {
         color = entry.category?.details?.color,
         onClick = onClick,
         modifier = Modifier.testTag("tx-$title"),
+        fromCard = entry.transaction.installmentId != null,
     )
 }
 

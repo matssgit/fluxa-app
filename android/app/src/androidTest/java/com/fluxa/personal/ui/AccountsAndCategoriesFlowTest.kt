@@ -4,6 +4,8 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -170,7 +172,9 @@ class AccountsAndCategoriesFlowTest {
             assertNotNull(archived.archivedAt)
             assertEquals("work", archived.details.icon)
 
-            compose.onNodeWithTag("reactivate-Salário editado").performClick()
+            // Clique semântico: em 320dp com fonte 1,3 o centro do botão pode ficar fora da área visível.
+            reveal("reactivate-Salário editado")
+            compose.onNodeWithTag("reactivate-Salário editado").performSemanticsAction(SemanticsActions.OnClick)
             waitForNoTag("reactivate-Salário editado")
             waitForTag("category-Salário editado")
             assertNull(runBlocking { app.categories.observe(archived.id).first()!!.archivedAt })

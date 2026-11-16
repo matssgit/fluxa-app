@@ -5,10 +5,13 @@ import com.fluxa.personal.domain.model.CreditCard
 import com.fluxa.personal.domain.model.CreditCardDetails
 import com.fluxa.personal.domain.model.CreditCardSummary
 import com.fluxa.personal.domain.model.CreditResult
+import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.Installment
+import com.fluxa.personal.domain.model.InstallmentPaymentResult
 import com.fluxa.personal.domain.model.Purchase
 import com.fluxa.personal.domain.model.PurchaseDraft
 import com.fluxa.personal.domain.model.PurchaseStatus
+import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
@@ -26,6 +29,9 @@ internal interface CreditSource {
     fun observeCard(id: UUID): Flow<CreditCardSummary?>
     fun observePurchases(cardId: UUID, status: PurchaseStatus? = null): Flow<List<Purchase>>
     fun observeInstallments(purchaseId: UUID): Flow<List<Installment>>
+    suspend fun payInstallment(installmentId: UUID, accountId: UUID, paidOn: LocalDate): InstallmentPaymentResult
+    suspend fun undoInstallmentPayment(installmentId: UUID, expectedTransactionId: UUID): InstallmentPaymentResult
+    fun observeInstallmentPayment(installmentId: UUID): Flow<FinancialTransaction?>
 }
 
 internal class RepositoryCreditSource(private val repository: CreditRepository) : CreditSource {
@@ -38,4 +44,9 @@ internal class RepositoryCreditSource(private val repository: CreditRepository) 
     override fun observeCard(id: UUID) = repository.observeCard(id)
     override fun observePurchases(cardId: UUID, status: PurchaseStatus?) = repository.observePurchases(cardId, status)
     override fun observeInstallments(purchaseId: UUID) = repository.observeInstallments(purchaseId)
+    override suspend fun payInstallment(installmentId: UUID, accountId: UUID, paidOn: LocalDate) =
+        repository.payInstallment(installmentId, accountId, paidOn)
+    override suspend fun undoInstallmentPayment(installmentId: UUID, expectedTransactionId: UUID) =
+        repository.undoInstallmentPayment(installmentId, expectedTransactionId)
+    override fun observeInstallmentPayment(installmentId: UUID) = repository.observeInstallmentPayment(installmentId)
 }

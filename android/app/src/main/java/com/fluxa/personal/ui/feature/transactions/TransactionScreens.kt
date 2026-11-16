@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -157,6 +160,7 @@ internal fun TransactionFormScreen(
     LaunchedEffect(state.completion) { state.completion?.let { onDone(it, state.direction) } }
 
     val title = when {
+        state.isManagedByInstallment -> stringResource(R.string.managed_payment_title)
         state.isEditing -> stringResource(R.string.transaction_edit)
         state.direction == TransactionDirection.INCOME -> stringResource(R.string.new_income)
         else -> stringResource(R.string.new_expense)
@@ -186,6 +190,7 @@ internal fun TransactionFormScreen(
         when {
             state.isLoading -> item { LoadingBlock() }
             state.notFound -> item { ErrorBanner(stringResource(R.string.error_transaction_not_found), onDismiss = null) }
+            state.isManagedByInstallment -> managedPaymentItems(state)
             else -> {
                 state.operationError?.let { error -> item { ErrorBanner(stringResource(error), onDismiss = viewModel::dismissError) } }
                 state.cancelledAt?.let { cancelled ->
@@ -395,5 +400,54 @@ internal fun TransactionFormScreen(
             },
             onDismiss = { pickDate = false },
         )
+    }
+}
+
+/**
+ * Lançamento gerado pelo pagamento de parcela: somente leitura (editar/cancelar retornariam
+ * `MANAGED_BY_INSTALLMENT`). O estorno é feito pela parcela, com `undoInstallmentPayment`.
+ */
+private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(state: TransactionFormUiState) {
+    item {
+        com.fluxa.personal.ui.designsystem.components.FluxaCard(modifier = Modifier.fillMaxWidth().testTag("managed-payment")) {
+            val type = FluxaTheme.typography
+            val colors = FluxaTheme.colors
+            Text(stringResource(R.string.managed_field_amount).uppercase(), style = type.overline, color = colors.textMuted)
+            val amount = state.managedAmount
+            if (amount != null) {
+                com.fluxa.personal.ui.designsystem.components.FluxaAmount(
+                    amount = amount,
+                    style = type.headline.merge(type.amount).copy(fontSize = type.headline.fontSize),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            ManagedLine(stringResource(R.string.managed_field_description), state.description)
+            ManagedLine(stringResource(R.string.managed_field_account), state.managedAccount?.details?.name.orEmpty())
+            ManagedLine(stringResource(R.string.managed_field_date), state.occurredOn.format(com.fluxa.personal.ui.common.BrazilDate))
+            ManagedLine(stringResource(R.string.managed_field_category), state.managedCategory?.details?.name.orEmpty())
+            ManagedLine(stringResource(R.string.managed_payment_origin_label), stringResource(R.string.managed_payment_origin))
+        }
+    }
+    item {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(FluxaTheme.colors.surfaceSunken, FluxaTheme.shapes.medium)
+                .padding(16.dp)
+                .testTag("managed-payment-note"),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(FluxaIcons.Card, contentDescription = null, tint = FluxaTheme.colors.textSecondary, modifier = Modifier.size(20.dp))
+            Text(stringResource(R.string.managed_payment_note), style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary)
+        }
+    }
+}
+
+@Composable
+private fun ManagedLine(label: String, value: String) {
+    if (value.isEmpty()) return
+    Column(modifier = Modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) {}) {
+        Text(label, style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary)
+        Text(value, style = FluxaTheme.typography.bodyStrong, color = FluxaTheme.colors.textPrimary)
     }
 }

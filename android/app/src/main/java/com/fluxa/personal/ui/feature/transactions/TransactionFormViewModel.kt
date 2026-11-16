@@ -56,6 +56,13 @@ internal data class TransactionFormUiState(
     val cancelledAt: Instant? = null,
     val createdAt: Instant? = null,
     val updatedAt: Instant? = null,
+    /** Saída gerada pelo pagamento de uma parcela: o contrato devolve `MANAGED_BY_INSTALLMENT` para editar/cancelar. */
+    val installmentId: UUID? = null,
+    /** Conta e categoria do lançamento gerenciado (podem ter sido arquivadas depois). */
+    val managedAccount: FinancialAccount? = null,
+    val managedCategory: Category? = null,
+    /** Valor persistido da baixa (exibido sem passar pelo campo de edição). */
+    val managedAmount: com.fluxa.personal.core.money.Money? = null,
     @StringRes val amountError: Int? = null,
     @StringRes val accountError: Int? = null,
     @StringRes val categoryError: Int? = null,
@@ -68,7 +75,8 @@ internal data class TransactionFormUiState(
     val isEditing: Boolean get() = transactionId != null
     val isCancelled: Boolean get() = cancelledAt != null
     val isBusy: Boolean get() = isLoading || isSaving || isCancelling
-    val isReadOnly: Boolean get() = isCancelled || notFound
+    val isManagedByInstallment: Boolean get() = installmentId != null
+    val isReadOnly: Boolean get() = isCancelled || notFound || isManagedByInstallment
     /** A conta escolhida (edição) pode ter sido arquivada depois do lançamento. */
     val selectedAccountInactive: Boolean get() = accountsLoaded && accountId != null && accounts.none { it.id == accountId }
     val selectedCategoryInactive: Boolean get() = categoriesLoaded && categoryId != null && categories.none { it.id == categoryId }
@@ -156,16 +164,28 @@ internal class TransactionFormViewModel(
                                     cancelledAt = tx.cancelledAt,
                                     createdAt = tx.createdAt,
                                     updatedAt = tx.updatedAt,
+                                    installmentId = tx.installmentId,
+                                    managedAmount = d.amount.takeIf { tx.installmentId != null },
                                     categories = if (sameDirection) it.categories else emptyList(),
                                     categoriesLoaded = sameDirection && it.categoriesLoaded,
                                 )
                             }
                             direction.value = d.direction
+                            if (tx.installmentId != null) loadManagedNames(d.accountId, d.categoryId)
                         }
                     },
                     onFailure = { _uiState.update { it.copy(isLoading = false, operationError = R.string.error_load) } },
                 )
             }
+        }
+    }
+
+    /** Nomes para o modo leitura do lançamento gerenciado; inclui registros arquivados. */
+    private fun loadManagedNames(accountId: UUID, categoryId: UUID) {
+        viewModelScope.launch {
+            val account = runCatchingNonCancellation { accounts.observe(accountId).first() }.getOrNull()
+            val category = runCatchingNonCancellation { categories.observe(categoryId).first() }.getOrNull()
+            _uiState.update { it.copy(managedAccount = account, managedCategory = category) }
         }
     }
 
@@ -296,7 +316,8 @@ internal class TransactionFormViewModel(
         TransactionError.CATEGORY_DIRECTION_MISMATCH -> copy(categoryError = R.string.error_category_direction)
         TransactionError.NOT_FOUND -> copy(notFound = true, operationError = R.string.error_transaction_not_found)
         TransactionError.CANCELLED -> copy(operationError = R.string.error_transaction_cancelled)
-        TransactionError.DUPLICATE_ID, TransactionError.MANAGED_BY_INSTALLMENT -> copy(operationError = R.string.error_save)
+        TransactionError.DUPLICATE_ID -> copy(operationError = R.string.error_save)
+        TransactionError.MANAGED_BY_INSTALLMENT -> copy(operationError = R.string.managed_payment_note)
     }
 
     companion object {

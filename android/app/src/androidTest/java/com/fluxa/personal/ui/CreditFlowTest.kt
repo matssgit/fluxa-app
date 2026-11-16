@@ -206,8 +206,9 @@ class CreditFlowTest {
             compose.onNodeWithTag("action-cancel-purchase").performClick()
             waitForTag("action-confirm-archive")
             compose.onNodeWithTag("action-confirm-archive").performClick()
-            waitForTag("purchase-cancelled-note")
-            compose.onNodeWithTag("action-cancel-purchase").assertDoesNotExist()
+            // Em 320dp com fonte 1,3 a nota (topo da lista) sai da composição: espera o botão sumir e rola até ela.
+            waitForNoTag("action-cancel-purchase")
+            inList("feature-list", "purchase-cancelled-note")
             compose.onNodeWithTag("action-back").performClick()
             waitForTag("screen-card-detail")
             inList("feature-list", "card-Principal")

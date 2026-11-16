@@ -217,27 +217,49 @@ internal fun ConfirmArchiveSheet(
     onDismiss: () -> Unit,
     dismissLabel: String = stringResource(R.string.action_cancel),
     confirmIcon: ImageVector = FluxaIcons.Archive,
+    /**
+     * Botões empilhados em largura total (padrão). Lado a lado, rótulos como "Manter compra"/"Cancelar compra"
+     * ficavam ilegíveis em 320dp com fonte 1,3 (verificado no emulador).
+     */
+    stacked: Boolean = true,
 ) {
     com.fluxa.personal.ui.designsystem.components.FluxaBottomSheet(
         title = title,
         onDismissRequest = onDismiss,
-        footer = {
-            FluxaButton(
-                text = dismissLabel,
-                onClick = onDismiss,
-                variant = FluxaButtonVariant.Secondary,
-                modifier = Modifier.weight(1f),
-            )
+        footer = if (stacked) null else {
+            {
+                FluxaButton(
+                    text = dismissLabel,
+                    onClick = onDismiss,
+                    variant = FluxaButtonVariant.Secondary,
+                    modifier = Modifier.weight(1f),
+                )
+                FluxaButton(
+                    text = confirmLabel,
+                    onClick = onConfirm,
+                    variant = FluxaButtonVariant.Destructive,
+                    leadingIcon = confirmIcon,
+                    modifier = Modifier.weight(1f).testTag("action-confirm-archive"),
+                )
+            }
+        },
+    ) {
+        Text(body, style = FluxaTheme.typography.body, color = FluxaTheme.colors.textSecondary)
+        if (stacked) {
             FluxaButton(
                 text = confirmLabel,
                 onClick = onConfirm,
                 variant = FluxaButtonVariant.Destructive,
                 leadingIcon = confirmIcon,
-                modifier = Modifier.weight(1f).testTag("action-confirm-archive"),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp).testTag("action-confirm-archive"),
             )
-        },
-    ) {
-        Text(body, style = FluxaTheme.typography.body, color = FluxaTheme.colors.textSecondary)
+            FluxaButton(
+                text = dismissLabel,
+                onClick = onDismiss,
+                variant = FluxaButtonVariant.Secondary,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 

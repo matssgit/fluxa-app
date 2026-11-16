@@ -157,9 +157,13 @@ internal fun LedgerRow(
     color: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Saída gerada pelo pagamento de uma parcela (`installmentId != null`): só uma marca discreta, sem duplicar dados. */
+    fromCard: Boolean = false,
 ) {
     val colors = FluxaTheme.colors
-    val directionLabel = stringResource(if (direction == TransactionDirection.INCOME) R.string.direction_income else R.string.direction_expense)
+    val baseLabel = stringResource(if (direction == TransactionDirection.INCOME) R.string.direction_income else R.string.direction_expense)
+    val cardLabel = stringResource(R.string.ledger_from_card)
+    val directionLabel = if (fromCard) "$baseLabel, $cardLabel" else baseLabel
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -180,6 +184,7 @@ internal fun LedgerRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(meta, style = FluxaTheme.typography.caption, color = colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (fromCard) StatePill(cardLabel, FluxaIcons.Card, modifier = Modifier.padding(top = 4.dp).testTag("ledger-from-card"))
             if (cancelled) StatePill(stringResource(R.string.state_cancelled), FluxaIcons.Close, modifier = Modifier.padding(top = 4.dp))
         }
         SignedTransactionAmount(amount, direction, cancelled)

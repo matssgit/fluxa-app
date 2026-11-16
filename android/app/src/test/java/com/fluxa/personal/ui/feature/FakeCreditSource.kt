@@ -1,22 +1,29 @@
 package com.fluxa.personal.ui.feature
 
 import com.fluxa.personal.core.money.Money
+import com.fluxa.personal.data.repository.AccountRepository
 import com.fluxa.personal.data.repository.CategoryRepository
 import com.fluxa.personal.domain.model.CreditCard
 import com.fluxa.personal.domain.model.CreditCardDetails
 import com.fluxa.personal.domain.model.CreditCardSummary
 import com.fluxa.personal.domain.model.CreditError
 import com.fluxa.personal.domain.model.CreditResult
+import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.Installment
+import com.fluxa.personal.domain.model.InstallmentPaymentError
+import com.fluxa.personal.domain.model.InstallmentPaymentResult
 import com.fluxa.personal.domain.model.InstallmentStatus
 import com.fluxa.personal.domain.model.Purchase
 import com.fluxa.personal.domain.model.PurchaseDraft
 import com.fluxa.personal.domain.model.PurchaseStatus
 import com.fluxa.personal.domain.rules.CreditLimit
 import com.fluxa.personal.domain.rules.CreditPurchaseRules
+import com.fluxa.personal.domain.rules.InstallmentPaymentRules
+import com.fluxa.personal.domain.rules.matchesPayment
 import com.fluxa.personal.ui.feature.credit.CreditSource
 import java.io.IOException
 import java.time.Instant
+import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +36,14 @@ import kotlinx.coroutines.flow.update
  * (validação, limite, calendário de fechamento e `InstallmentSplitter`) e `CreditLimit`. A soma do comprometido
  * substitui o `SUM` do SQLite (parcelas pendentes de compras ativas).
  */
-internal class FakeCreditSource(private val categories: CategoryRepository, private val now: Instant) : CreditSource {
+internal class FakeCreditSource(
+    private val categories: CategoryRepository,
+    private val now: Instant,
+    /** Contas e ledger para a baixa de parcelas (Sprint 4-D). A saída gerada vai para [ledger].rows. */
+    private val accounts: AccountRepository? = null,
+    private val ledger: FakeTransactionSource? = null,
+    private val today: LocalDate = LocalDate.of(2026, 11, 16),
+) : CreditSource {
     private data class Store(
         val cards: Map<UUID, CreditCard> = emptyMap(),
         val purchases: Map<UUID, Purchase> = emptyMap(),
@@ -40,6 +54,11 @@ internal class FakeCreditSource(private val categories: CategoryRepository, priv
     val createPurchaseIds = mutableListOf<UUID>()
     var failWrites = false
     var failAfterWrite = false
+    /** Lança exceção nas chamadas de pagamento/estorno (falha inesperada, sem resposta tipada). */
+    var failPayments = false
+    val payCalls = mutableListOf<Triple<UUID, UUID, LocalDate>>()
+    /** Força a próxima baixa a ser rejeitada com este erro (ex.: conta arquivada entre a tela e o comando). */
+    var rejectNextPayment: InstallmentPaymentError? = null
 
     private fun summaryOf(s: Store, card: CreditCard): CreditCardSummary {
         val committed = s.purchases.values
@@ -143,4 +162,61 @@ internal class FakeCreditSource(private val categories: CategoryRepository, priv
 
     override fun observeInstallments(purchaseId: UUID): Flow<List<Installment>> =
         store.map { s -> s.installments[purchaseId].orEmpty().sortedBy { it.number } }
+
+    // region Sprint 4-C: baixa e estorno (mesma sequência do CreditRepository, com as regras do domínio)
+
+    private fun installmentById(id: UUID): Installment? = store.value.installments.values.flatten().firstOrNull { it.id == id }
+
+    private fun setStatus(id: UUID, status: InstallmentStatus) = store.update { s ->
+        s.copy(installments = s.installments.mapValues { (_, list) -> list.map { if (it.id == id) it.copy(status = status) else it } })
+    }
+
+    private fun paymentOf(installmentId: UUID): FinancialTransaction? =
+        ledger?.rows?.value?.values?.firstOrNull { it.installmentId == installmentId }
+
+    override suspend fun payInstallment(installmentId: UUID, accountId: UUID, paidOn: LocalDate): InstallmentPaymentResult {
+        if (failPayments) throw IOException("disk full")
+        payCalls += Triple(installmentId, accountId, paidOn)
+        rejectNextPayment?.let { rejectNextPayment = null; return InstallmentPaymentResult.Rejected(it) }
+        val installment = installmentById(installmentId)
+            ?: return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND)
+        val purchase = store.value.purchases[installment.purchaseId]
+            ?: return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        val account = if (installment.status == InstallmentStatus.PENDING) accounts?.observe(accountId)?.first() else null
+        val result = InstallmentPaymentRules(today, now).prepare(
+            UUID.randomUUID(), installment, purchase, paymentOf(installmentId), accountId, account, paidOn,
+        )
+        if (result is InstallmentPaymentResult.Paid) {
+            setStatus(installmentId, InstallmentStatus.PAID)
+            ledger!!.rows.update { it + (result.transaction.id to result.transaction) }
+        }
+        return result
+    }
+
+    override suspend fun undoInstallmentPayment(installmentId: UUID, expectedTransactionId: UUID): InstallmentPaymentResult {
+        if (failPayments) throw IOException("disk full")
+        val installment = installmentById(installmentId)
+            ?: return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSTALLMENT_NOT_FOUND)
+        if (installment.status == InstallmentStatus.CANCELLED) return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSTALLMENT_CANCELLED)
+        if (installment.status != InstallmentStatus.PAID) return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSTALLMENT_NOT_PAID)
+        val purchase = store.value.purchases[installment.purchaseId]!!
+        if (purchase.status != PurchaseStatus.ACTIVE) return InstallmentPaymentResult.Rejected(InstallmentPaymentError.PURCHASE_CANCELLED)
+        val payment = paymentOf(installmentId)
+        if (payment == null || !payment.matchesPayment(installment, purchase)) {
+            return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INVALID_PAYMENT_LINK)
+        }
+        if (payment.id != expectedTransactionId) return InstallmentPaymentResult.Rejected(InstallmentPaymentError.PAYMENT_CHANGED)
+        val summary = summaryOf(store.value, store.value.cards.getValue(purchase.details.cardId))
+        if (!CreditLimit(summary.totalLimit, summary.committedAmount).canCommit(installment.amount)) {
+            return InstallmentPaymentResult.Rejected(InstallmentPaymentError.INSUFFICIENT_LIMIT_TO_UNDO)
+        }
+        setStatus(installmentId, InstallmentStatus.PENDING)
+        ledger!!.rows.update { it - payment.id }
+        return InstallmentPaymentResult.Undone(payment.id)
+    }
+
+    override fun observeInstallmentPayment(installmentId: UUID): Flow<FinancialTransaction?> =
+        ledger!!.rows.map { rows -> rows.values.firstOrNull { it.installmentId == installmentId && it.cancelledAt == null } }
+
+    // endregion
 }
