@@ -5,7 +5,7 @@ import androidx.room.withTransaction
 import com.fluxa.personal.core.date.FinancialCalendar
 import com.fluxa.personal.core.money.Money
 import com.fluxa.personal.data.database.FluxaDatabase
-import com.fluxa.personal.data.database.dao.GoalWithMovements
+import com.fluxa.personal.data.database.dao.WideCashTotal
 import com.fluxa.personal.data.database.mapper.reserved
 import com.fluxa.personal.data.database.mapper.toBalanceInputs
 import com.fluxa.personal.data.database.mapper.toDomain
@@ -19,12 +19,14 @@ import com.fluxa.personal.domain.model.GoalMovementType
 import com.fluxa.personal.domain.model.GoalResult
 import com.fluxa.personal.domain.model.GoalResult.Rejected
 import com.fluxa.personal.domain.model.GoalResult.Saved
+import com.fluxa.personal.domain.rules.AccountReserveInput
 import com.fluxa.personal.domain.rules.BalanceCalculator
 import com.fluxa.personal.domain.rules.GoalRules
 import com.fluxa.personal.domain.rules.ReserveBalanceCalculator
 import com.fluxa.personal.domain.rules.wide
 import java.math.BigInteger
 import java.time.Clock
+import java.time.LocalDate
 import java.util.UUID
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -107,12 +109,18 @@ internal class GoalRepository(
 
     fun observeReserveBalances() = database.invalidationTrackerFlow(
         "accounts", "financial_transactions", "goals", "goal_movements",
-    ).map {
-        val (accounts, goals) = database.withTransaction {
-            transactions.readBalanceRows() to dao.readGoals()
+    ).map { readReserveBalances() }.distinctUntilChanged()
+
+    internal suspend fun readReserveBalances() = database.withTransaction {
+        val inputs = dao.readAccounts().map { account ->
+            val net = dao.readWideNet(account.id, LocalDate.parse(account.openingDate).toEpochDay()).toCents()
+            AccountReserveInput(
+                UUID.fromString(account.id), BigInteger.valueOf(account.openingBalanceCents) + net,
+                dao.readWideReserve(account.id).toCents(), account.includeInAvailable && account.archivedAt == null,
+            )
         }
-        ReserveBalanceCalculator.calculate(accounts.toBalanceInputs(), goals.reservesByAccount())
-    }.distinctUntilChanged()
+        ReserveBalanceCalculator.calculateWide(inputs)
+    }
 
     fun observeAccountReserves(id: UUID) = observeReserveBalances()
         .map { it.accounts[id] }.distinctUntilChanged()
@@ -135,9 +143,8 @@ internal class GoalRepository(
         return Saved(movement)
     }
 
-    private fun List<GoalWithMovements>.reservesByAccount(): Map<UUID, BigInteger> =
-        groupingBy { UUID.fromString(it.goal.accountId) }
-            .fold(BigInteger.ZERO) { total, row -> total + row.reserved().wide() }
+    private fun WideCashTotal.toCents(): BigInteger =
+        BigInteger.valueOf(high).shiftLeft(32) + BigInteger.valueOf(low)
 
     private fun GoalDetails.normalized() = copy(name = name.trim())
 }

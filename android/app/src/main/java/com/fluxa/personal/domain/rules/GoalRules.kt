@@ -75,14 +75,26 @@ internal object GoalRules {
     }
 }
 
+internal data class AccountReserveInput(
+    val id: UUID,
+    val balance: BigInteger,
+    val reserved: BigInteger,
+    val includedAndActive: Boolean,
+)
+
 internal object ReserveBalanceCalculator {
-    fun calculate(accounts: List<AccountBalanceInput>, reserves: Map<UUID, BigInteger>): ReserveBalanceSnapshot {
+    fun calculate(accounts: List<AccountBalanceInput>, reserves: Map<UUID, BigInteger>): ReserveBalanceSnapshot =
+        calculateWide(accounts.map {
+            AccountReserveInput(it.id, BalanceCalculator.balanceOf(it), reserves[it.id] ?: BigInteger.ZERO, it.includedAndActive)
+        })
+
+    fun calculateWide(accounts: List<AccountReserveInput>): ReserveBalanceSnapshot {
         var totalBalance = BigInteger.ZERO
         var totalReserved = BigInteger.ZERO
         var available = BigInteger.ZERO
         val summaries = accounts.associate { account ->
-            val balance = BalanceCalculator.balanceOf(account)
-            val reserved = reserves[account.id] ?: BigInteger.ZERO
+            val balance = account.balance
+            val reserved = account.reserved
             val accountAvailable = balance - reserved
             totalBalance += balance
             totalReserved += reserved

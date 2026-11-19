@@ -2,6 +2,7 @@ package com.fluxa.personal.data.database
 
 import android.content.Context
 import androidx.room.Database
+import com.fluxa.personal.data.database.dao.SafeToSpendDao
 import com.fluxa.personal.data.database.dao.GoalDao
 import com.fluxa.personal.data.database.entity.GoalEntity
 import com.fluxa.personal.data.database.entity.GoalMovementEntity
@@ -48,6 +49,7 @@ internal abstract class FluxaDatabase : RoomDatabase() {
     abstract fun creditDao(): CreditDao
     abstract fun subscriptionDao(): SubscriptionDao
     abstract fun goalDao(): GoalDao
+    abstract fun safeToSpendDao(): SafeToSpendDao
 
     companion object {
         fun create(context: Context, name: String = "fluxa.db"): FluxaDatabase =

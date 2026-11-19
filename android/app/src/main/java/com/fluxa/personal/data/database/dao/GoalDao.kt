@@ -24,8 +24,28 @@ internal data class GoalWithAccount(
     val account: AccountEntity,
 )
 
+internal data class WideCashTotal(val high: Long, val low: Long)
+
 @Dao
 internal interface GoalDao {
+    @Query("SELECT * FROM accounts ORDER BY id")
+    suspend fun readAccounts(): List<AccountEntity>
+
+    @Query("""
+        SELECT COALESCE(SUM(CASE direction WHEN 'INCOME' THEN amountCents / 4294967296 ELSE -(amountCents / 4294967296) END), 0) AS high,
+               COALESCE(SUM(CASE direction WHEN 'INCOME' THEN amountCents % 4294967296 ELSE -(amountCents % 4294967296) END), 0) AS low
+        FROM financial_transactions
+        WHERE accountId = :id AND cancelledAt IS NULL AND occurredOn >= :openingDate
+    """)
+    suspend fun readWideNet(id: String, openingDate: Long): WideCashTotal
+
+    @Query("""
+        SELECT COALESCE(SUM(CASE m.type WHEN 'ALLOCATE' THEN m.amountCents / 4294967296 ELSE -(m.amountCents / 4294967296) END), 0) AS high,
+               COALESCE(SUM(CASE m.type WHEN 'ALLOCATE' THEN m.amountCents % 4294967296 ELSE -(m.amountCents % 4294967296) END), 0) AS low
+        FROM goal_movements m JOIN goals g ON g.id = m.goalId WHERE g.accountId = :id
+    """)
+    suspend fun readWideReserve(id: String): WideCashTotal
+
     @Insert suspend fun insert(goal: GoalEntity)
     @Update suspend fun update(goal: GoalEntity)
     @Insert suspend fun insertMovement(movement: GoalMovementEntity)
