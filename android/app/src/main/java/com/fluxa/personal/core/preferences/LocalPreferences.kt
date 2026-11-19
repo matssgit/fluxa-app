@@ -1,6 +1,10 @@
 package com.fluxa.personal.core.preferences
 
 import android.content.Context
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.first
+import com.fluxa.personal.backup.BackupSettingsStore
+import com.fluxa.personal.backup.PortableSettingsV1
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -16,7 +20,7 @@ internal data class LocalSettings(
     val hideAmounts: Boolean = false,
 )
 
-internal class LocalPreferences(context: Context) {
+internal class LocalPreferences(context: Context) : BackupSettingsStore {
     private val store = context.applicationContext.fluxaPreferences
 
     val settings: Flow<LocalSettings> = store.data.map { values ->
@@ -25,6 +29,19 @@ internal class LocalPreferences(context: Context) {
                 ?: ThemePreference.SYSTEM,
             hideAmounts = values[HIDE_AMOUNTS] ?: false,
         )
+    }
+
+    override suspend fun read(): PortableSettingsV1 {
+        val current = settings.first()
+        return PortableSettingsV1(current.theme.name, current.hideAmounts)
+    }
+
+    override suspend fun apply(settings: PortableSettingsV1) {
+        val theme = ThemePreference.valueOf(settings.theme)
+        store.edit {
+            it[THEME] = theme.name
+            it[HIDE_AMOUNTS] = settings.hideAmounts
+        }
     }
 
     companion object {
