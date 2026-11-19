@@ -29,21 +29,41 @@ internal object BackupCodec {
     fun encode(data: BackupDataV1, createdAt: Instant, appVersion: String): ByteArray {
         BackupValidator.validateData(data)
         val bytes = dataJson(data).toString().toByteArray(Charsets.UTF_8)
-        if (bytes.size > MAX_DATA_BYTES) throw BackupException(BackupError.TOO_LARGE)
+        if (bytes.size > MAX_DATA_BYTES) {
+            bytes.fill(0)
+            throw BackupException(BackupError.TOO_LARGE)
+        }
         val manifest = BackupManifestV1(
             1, createdAt, appVersion, 7, "BRL", "NONE", sha256(bytes),
             data.tables.mapValues { it.value.size },
         )
-        val output = ByteArrayOutputStream()
-        ZipOutputStream(output).use { zip ->
-            entry(zip, "manifest.json", manifestJson(manifest).toString().toByteArray(Charsets.UTF_8))
-            entry(zip, "data.json", bytes)
+        val output = WipingBuffer()
+        val metadata = manifestJson(manifest).toString().toByteArray(Charsets.UTF_8)
+        try {
+            ZipOutputStream(output).use { zip ->
+                entry(zip, "manifest.json", metadata)
+                entry(zip, "data.json", bytes)
+            }
+            return output.toByteArray()
+        } finally {
+            bytes.fill(0)
+            metadata.fill(0)
+            output.clear()
         }
-        return output.toByteArray()
     }
 
-    fun decode(input: InputStream): BackupDocumentV1 = try {
-        decodeChecked(input)
+    fun decode(input: InputStream): BackupDocumentV1 {
+        val archive = readLimited(input, MAX_DATA_BYTES + MAX_MANIFEST_BYTES)
+        return try {
+            decode(archive)
+        } finally {
+            archive.fill(0)
+        }
+    }
+
+    fun decode(archive: ByteArray): BackupDocumentV1 = try {
+        if (archive.size > MAX_DATA_BYTES + MAX_MANIFEST_BYTES) throw BackupException(BackupError.TOO_LARGE)
+        decodeChecked(archive)
     } catch (error: BackupException) {
         throw error
     } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -54,37 +74,40 @@ internal object BackupCodec {
         throw BackupException(BackupError.INVALID)
     }
 
-    private fun decodeChecked(input: InputStream): BackupDocumentV1 {
-        val archive = readLimited(input, MAX_DATA_BYTES + MAX_MANIFEST_BYTES)
+    private fun decodeChecked(archive: ByteArray): BackupDocumentV1 {
         validateZipContainer(archive)
         val files = linkedMapOf<String, ByteArray>()
-        ZipInputStream(ByteArrayInputStream(archive)).use { zip ->
-            while (true) {
-                val entry = zip.nextEntry ?: break
-                if (entry.name !in setOf("manifest.json", "data.json") || entry.name in files || entry.isDirectory) {
-                    throw BackupException(BackupError.INVALID)
+        try {
+            ZipInputStream(ByteArrayInputStream(archive)).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    if (entry.name !in setOf("manifest.json", "data.json") || entry.name in files || entry.isDirectory) {
+                        throw BackupException(BackupError.INVALID)
+                    }
+                    files[entry.name] = readLimited(zip, if (entry.name == "manifest.json") MAX_MANIFEST_BYTES else MAX_DATA_BYTES)
+                    zip.closeEntry()
                 }
-                files[entry.name] = readLimited(zip, if (entry.name == "manifest.json") MAX_MANIFEST_BYTES else MAX_DATA_BYTES)
-                zip.closeEntry()
             }
+            if (files.keys != setOf("manifest.json", "data.json")) throw BackupException(BackupError.INVALID)
+            val manifest = parseManifest(parseJson(files.getValue("manifest.json")).asObject())
+            val bytes = files.getValue("data.json")
+            if (sha256(bytes) != manifest.dataSha256) throw BackupException(BackupError.INTEGRITY_FAILED)
+            val root = parseJson(bytes).asObject()
+            requireKeys(root, setOf("tables", "settings"))
+            val tablesJson = root.get("tables").asObject()
+            val tables = tablesJson.entrySet().associate { (name, value) ->
+                if (!value.isJsonArray) throw BackupException(BackupError.INVALID)
+                name to value.asJsonArray.map { BackupRowV1(it.asObject()) }
+            }
+            val settings = root.get("settings").asObject()
+            requireKeys(settings, setOf("theme", "hideAmounts"))
+            val data = BackupDataV1(tables, PortableSettingsV1(settings.text("theme"), settings.bool("hideAmounts")))
+            BackupValidator.validateData(data)
+            if (manifest.recordCounts != tables.mapValues { it.value.size }) throw BackupException(BackupError.INTEGRITY_FAILED)
+            return BackupDocumentV1(manifest, data)
+        } finally {
+            files.values.forEach { it.fill(0) }
         }
-        if (files.keys != setOf("manifest.json", "data.json")) throw BackupException(BackupError.INVALID)
-        val manifest = parseManifest(parseJson(files.getValue("manifest.json")).asObject())
-        val bytes = files.getValue("data.json")
-        if (sha256(bytes) != manifest.dataSha256) throw BackupException(BackupError.INTEGRITY_FAILED)
-        val root = parseJson(bytes).asObject()
-        requireKeys(root, setOf("tables", "settings"))
-        val tablesJson = root.get("tables").asObject()
-        val tables = tablesJson.entrySet().associate { (name, value) ->
-            if (!value.isJsonArray) throw BackupException(BackupError.INVALID)
-            name to value.asJsonArray.map { BackupRowV1(it.asObject()) }
-        }
-        val settings = root.get("settings").asObject()
-        requireKeys(settings, setOf("theme", "hideAmounts"))
-        val data = BackupDataV1(tables, PortableSettingsV1(settings.text("theme"), settings.bool("hideAmounts")))
-        BackupValidator.validateData(data)
-        if (manifest.recordCounts != tables.mapValues { it.value.size }) throw BackupException(BackupError.INTEGRITY_FAILED)
-        return BackupDocumentV1(manifest, data)
     }
 
     fun dataJson(data: BackupDataV1): JsonObject = JsonObject().apply {
@@ -176,14 +199,33 @@ internal object BackupCodec {
         zip.closeEntry()
     }
 
+    private class WipingBuffer : ByteArrayOutputStream() {
+        fun clear() {
+            buf.fill(0)
+            reset()
+        }
+    }
+
     private fun readLimited(input: InputStream, limit: Int): ByteArray {
-        val result = ByteArrayOutputStream()
+        val result = WipingBuffer()
         val buffer = ByteArray(8192)
-        while (true) {
-            val count = input.read(buffer)
-            if (count < 0) return result.toByteArray()
-            if (result.size().toLong() + count > limit) throw BackupException(BackupError.TOO_LARGE)
-            result.write(buffer, 0, count)
+        try {
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) return result.toByteArray()
+                if (count == 0) {
+                    val next = input.read()
+                    if (next < 0) return result.toByteArray()
+                    if (result.size() >= limit) throw BackupException(BackupError.TOO_LARGE)
+                    result.write(next)
+                } else {
+                    if (result.size().toLong() + count > limit) throw BackupException(BackupError.TOO_LARGE)
+                    result.write(buffer, 0, count)
+                }
+            }
+        } finally {
+            buffer.fill(0)
+            result.clear()
         }
     }
 

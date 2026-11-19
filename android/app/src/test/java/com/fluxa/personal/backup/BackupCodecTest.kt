@@ -22,7 +22,7 @@ class BackupCodecTest {
         for (cents in listOf(Long.MIN_VALUE, -1, 0, 1, Long.MAX_VALUE)) {
             val data = data(account(cents))
             val decoded = BackupCodec.decode(input(BackupCodec.encode(data, stamp, "0.1.0")))
-            assertEquals(data, decoded.data)
+            assertTrue("Payload must round-trip exactly", data == decoded.data)
             assertEquals(cents, decoded.data.tables.getValue("accounts").single().fields.long("openingBalanceCents"))
             assertEquals(id, decoded.data.tables.getValue("accounts").single().fields.text("id"))
             assertEquals("2024-02-29", decoded.data.tables.getValue("accounts").single().fields.text("openingDate"))
@@ -37,7 +37,7 @@ class BackupCodecTest {
     @Test
     fun emptyCompleteDatabaseIsPortable() {
         val empty = BackupDataV1(BackupFormatV1.tables.associate { it.name to emptyList() }, PortableSettingsV1("SYSTEM", false))
-        assertEquals(empty, BackupCodec.decode(input(BackupCodec.encode(empty, stamp, "test"))).data)
+        assertTrue("Empty payload must round-trip", empty == BackupCodec.decode(input(BackupCodec.encode(empty, stamp, "test"))).data)
     }
 
     @Test

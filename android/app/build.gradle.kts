@@ -43,6 +43,7 @@ room {
 }
 
 android.sourceSets["androidTest"].assets.srcDir("$projectDir/schemas")
+android.sourceSets["androidTest"].assets.srcDir("$projectDir/src/test/resources")
 
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")

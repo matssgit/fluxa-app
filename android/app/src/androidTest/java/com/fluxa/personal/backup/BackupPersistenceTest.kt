@@ -73,28 +73,28 @@ class BackupPersistenceTest {
         val before = BackupPersistence(db).snapshot()
         val expectedSafe = safe().observeSafeToSpend().first()
         val output = ByteArrayOutputStream()
-        val exported = service().export(output)
+        val exported = service().export(password(), output)
         assertTrue(exported.toString(), exported is BackupResult.Success)
         val bytes = output.toByteArray()
         assertTrue(bytes.size > 10_000)
-        val imported = success(service().validate(ByteArrayInputStream(bytes)))
+        val imported = success(service().validate(password(), ByteArrayInputStream(bytes)))
         val sentinel = AccountRepository(db.accountDao(), clock).create(
             AccountDetails("Será substituída", AccountType.WALLET, Money(1), today),
         )
         settings.value = PortableSettingsV1("LIGHT", false)
         val emergency = ByteArrayOutputStream()
-        assertEquals(BackupResult.Success(RestoreReceipt(true)), service().restore(imported, emergency))
+        assertEquals(BackupResult.Success(RestoreReceipt(true)), service().restore(imported, password(), emergency))
         assertEquals(PortableSettingsV1("DARK", true), settings.value)
-        assertEquals(before, BackupPersistence(db).snapshot())
-        val preventive = BackupCodec.decode(ByteArrayInputStream(emergency.toByteArray()))
+        assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
+        val preventive = decodeEncrypted(emergency.toByteArray())
         assertTrue(preventive.data.tables.getValue("accounts").any { it.fields.text("id") == sentinel.toString() })
         assertEquals(PortableSettingsV1("LIGHT", false), preventive.data.settings)
-        assertEquals(expectedSafe, safe().observeSafeToSpend().first())
+        assertTrue("SafeToSpend must stay identical", expectedSafe == safe().observeSafeToSpend().first())
 
         db.close()
         db = FluxaDatabase.create(context, databaseName)
-        assertEquals(before, BackupPersistence(db).snapshot())
-        assertEquals(expectedSafe, safe().observeSafeToSpend().first())
+        assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
+        assertTrue("SafeToSpend must stay identical", expectedSafe == safe().observeSafeToSpend().first())
         val restored = BackupPersistence(db).snapshot()
         assertEquals(before.getValue("financial_transactions").map { it.fields.text("id") },
             restored.getValue("financial_transactions").map { it.fields.text("id") })
@@ -120,10 +120,10 @@ class BackupPersistenceTest {
         }
         settings.value = PortableSettingsV1("SYSTEM", false)
         val emergency = ByteArrayOutputStream()
-        assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, emergency))
-        assertEquals(before, BackupPersistence(db).snapshot())
+        assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, password(), emergency))
+        assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         assertEquals(PortableSettingsV1("SYSTEM", false), settings.value)
-        assertTrue(BackupCodec.decode(ByteArrayInputStream(emergency.toByteArray())).data.tables.getValue("accounts")
+        assertTrue(decodeEncrypted(emergency.toByteArray()).data.tables.getValue("accounts")
             .any { it.fields.text("id") == sentinel.toString() })
     }
 
@@ -137,8 +137,8 @@ class BackupPersistenceTest {
                 override fun write(value: Int) { if (!failOnClose) throw IOException("write") }
                 override fun close() { if (failOnClose) throw IOException("close") }
             }
-            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, failing))
-            assertEquals(before, BackupPersistence(db).snapshot())
+            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, password(), failing))
+            assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         }
     }
 
@@ -160,7 +160,7 @@ class BackupPersistenceTest {
                 }
             }
         }
-        assertEquals(BackupResult.Failure(BackupError.RESTORE_CONFLICT), service().restore(incoming, output))
+        assertEquals(BackupResult.Failure(BackupError.RESTORE_CONFLICT), service().restore(incoming, password(), output))
         assertTrue(AccountRepository(db.accountDao()).observeAll().first().any { it.details.name == "Edição concorrente" })
     }
 
@@ -175,7 +175,7 @@ class BackupPersistenceTest {
             withTimeout(10_000) { AccountRepository(db.accountDao()).observe(sentinel).first { it == null } }
         }
         settings.failApply = true
-        assertEquals(BackupResult.Success(RestoreReceipt(false)), service().restore(incoming, ByteArrayOutputStream()))
+        assertEquals(BackupResult.Success(RestoreReceipt(false)), service().restore(incoming, password(), ByteArrayOutputStream()))
         assertNull(observing.await())
         assertFalse(BackupPersistence(db).snapshot().getValue("accounts").any { it.fields.text("id") == sentinel.toString() })
     }
@@ -183,7 +183,7 @@ class BackupPersistenceTest {
     @Test
     fun invalidArchivesNeverChangeTheCurrentFinancialState() = runBlocking {
         seed(volume = false)
-        val original = ByteArrayOutputStream().also { success(service().export(it)) }.toByteArray()
+        val original = ByteArrayOutputStream().also { success(service().export(password(), it)) }.toByteArray()
         val before = BackupPersistence(db).snapshot()
         val variants = listOf(
             byteArrayOf(), "invalid".toByteArray(),
@@ -206,8 +206,8 @@ class BackupPersistenceTest {
             },
         )
         for (bytes in variants) {
-            assertTrue(service().validate(ByteArrayInputStream(bytes)) is BackupResult.Failure)
-            assertEquals(before, BackupPersistence(db).snapshot())
+            assertTrue(service().validate(password(), ByteArrayInputStream(bytes)) is BackupResult.Failure)
+            assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         }
     }
 
@@ -249,6 +249,50 @@ class BackupPersistenceTest {
         }
         for (mode in listOf("cloud-backup", "device-transfer")) {
             assertTrue(excluded.getValue(mode).containsAll(setOf("database", "file", "sharedpref", "root", "device_database", "device_file")))
+        }
+    }
+
+    @Test
+    fun wrongPasswordAndAuthenticatedCorruptionKeepRoomAndSettingsIntactAndClearPasswords() = runBlocking {
+        seed(volume = false)
+        val output = ByteArrayOutputStream()
+        val exportPassword = password()
+        success(service().export(exportPassword, output))
+        assertTrue(exportPassword.all { it == '\u0000' })
+        val original = output.toByteArray()
+        val before = BackupPersistence(db).snapshot()
+        val previousSettings = settings.value
+        val wrong = "outra frase de teste".toCharArray()
+        assertEquals(BackupResult.Failure(BackupError.INVALID_PASSWORD), service().validate(wrong, ByteArrayInputStream(original)))
+        assertTrue(wrong.all { it == '\u0000' })
+        for (offset in listOf(BackupCrypto.HEADER_BYTES, original.lastIndex, 24, 40)) {
+            val changed = original.copyOf()
+            changed[offset] = (changed[offset].toInt() xor 1).toByte()
+            val secret = password()
+            assertEquals(BackupResult.Failure(BackupError.INVALID_PASSWORD), service().validate(secret, ByteArrayInputStream(changed)))
+            assertTrue(secret.all { it == '\u0000' })
+            assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
+            assertEquals(previousSettings, settings.value)
+        }
+        assertEquals(BackupResult.Failure(BackupError.PASSWORD_REQUIRED), service().export(charArrayOf(), ByteArrayOutputStream()))
+        val prepared = exported()
+        val emergency = ByteArrayOutputStream()
+        assertEquals(BackupResult.Failure(BackupError.PASSWORD_REQUIRED), service().restore(prepared, charArrayOf(), emergency))
+        assertEquals(0, emergency.size())
+        assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
+    }
+
+    @Test
+    fun plaintextDevelopmentBackupsAreRejectedByTheProductionService() = runBlocking {
+        seed(volume = false)
+        val before = BackupPersistence(db).snapshot()
+        val legacy = BackupCodec.encode(BackupDataV1(before, settings.value), clock.instant(), "test")
+        try {
+            assertEquals(BackupResult.Failure(BackupError.CRYPTO_UNSUPPORTED),
+                service().validate(password(), ByteArrayInputStream(legacy)))
+            assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
+        } finally {
+            legacy.fill(0)
         }
     }
 
@@ -324,8 +368,8 @@ class BackupPersistenceTest {
 
     private suspend fun exported(): PreparedFluxaBackup {
         val output = ByteArrayOutputStream()
-        success(service().export(output))
-        return success(service().validate(ByteArrayInputStream(output.toByteArray())))
+        success(service().export(password(), output))
+        return success(service().validate(password(), ByteArrayInputStream(output.toByteArray())))
     }
 
     private fun successTransaction(result: TransactionResult): FinancialTransaction =
@@ -342,12 +386,14 @@ class BackupPersistenceTest {
         change: (com.google.gson.JsonObject, com.google.gson.JsonObject) -> Unit,
     ): ByteArray {
         val files = linkedMapOf<String, ByteArray>()
-        ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
+        val payload = decrypt(bytes)
+        ZipInputStream(ByteArrayInputStream(payload)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
                 files[entry.name] = zip.readBytes()
             }
         }
+        payload.fill(0)
         val manifest = JsonParser.parseString(files.getValue("manifest.json").toString(Charsets.UTF_8)).asJsonObject
         val data = JsonParser.parseString(files.getValue("data.json").toString(Charsets.UTF_8)).asJsonObject
         change(manifest, data)
@@ -362,6 +408,34 @@ class BackupPersistenceTest {
                 zip.closeEntry()
             }
         }
+        return encrypt(output.toByteArray())
+    }
+
+    private fun password() = "frase de teste portátil".toCharArray()
+
+    private fun decrypt(bytes: ByteArray): ByteArray {
+        val secret = password()
+        return try {
+            BackupCrypto.decrypt(ByteArrayInputStream(bytes), secret)
+        } finally {
+            secret.fill('\u0000')
+        }
+    }
+
+    private fun encrypt(payload: ByteArray): ByteArray {
+        val secret = password()
+        val output = ByteArrayOutputStream()
+        try {
+            BackupCrypto.encrypt(payload, secret, output)
+        } finally {
+            secret.fill('\u0000')
+            payload.fill(0)
+        }
         return output.toByteArray()
+    }
+
+    private fun decodeEncrypted(bytes: ByteArray): BackupDocumentV1 {
+        val payload = decrypt(bytes)
+        return try { BackupCodec.decode(payload) } finally { payload.fill(0) }
     }
 }

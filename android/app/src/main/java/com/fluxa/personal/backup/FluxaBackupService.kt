@@ -1,7 +1,6 @@
 package com.fluxa.personal.backup
 
 import com.fluxa.personal.data.database.FluxaDatabase
-import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.time.Clock
@@ -22,32 +21,50 @@ internal class FluxaBackupService(
 ) {
     private val persistence = BackupPersistence(database)
 
-    suspend fun export(output: OutputStream): BackupResult<BackupManifestV1> = operation(BackupError.EXPORT_FAILED) {
-        val data = BackupDataV1(persistence.snapshot(), settings.read())
-        val bytes = BackupCodec.encode(data, clock.instant(), appVersion)
-        val checked = BackupCodec.decode(ByteArrayInputStream(bytes))
-        output.write(bytes)
-        output.flush()
-        checked.manifest
-    }
+    /** Consumes and clears password, including validation failure or cancellation. */
+    suspend fun export(password: CharArray, output: OutputStream): BackupResult<BackupManifestV1> =
+        passwordOperation(password, BackupError.EXPORT_FAILED) {
+            val data = BackupDataV1(persistence.snapshot(), settings.read())
+            val payload = BackupCodec.encode(data, clock.instant(), appVersion)
+            try {
+                val manifest = BackupCodec.decode(payload).manifest
+                BackupCrypto.encrypt(payload, password, output)
+                output.flush()
+                manifest
+            } finally {
+                payload.fill(0)
+            }
+        }
 
-    suspend fun validate(input: InputStream): BackupResult<PreparedFluxaBackup> = operation(BackupError.CORRUPTED) {
-        PreparedFluxaBackup(BackupCodec.decode(input))
-    }
+    /** Authentication finishes before parsing the financial payload or preparing a restore. */
+    suspend fun validate(password: CharArray, input: InputStream): BackupResult<PreparedFluxaBackup> =
+        passwordOperation(password, BackupError.CORRUPTED) {
+            val payload = BackupCrypto.decrypt(input, password)
+            try {
+                PreparedFluxaBackup(BackupCodec.decode(payload))
+            } finally {
+                payload.fill(0)
+            }
+        }
 
-    /** REPLACE. The caller supplies a preventive backup destination before any financial data is replaced. */
+    /** REPLACE. A fresh password protects the preventive backup and is consumed by this call. */
     suspend fun restore(
         prepared: PreparedFluxaBackup,
+        preventivePassword: CharArray,
         emergencyOutput: OutputStream,
-    ): BackupResult<RestoreReceipt> = operation(BackupError.RESTORE_FAILED) {
+    ): BackupResult<RestoreReceipt> = passwordOperation(preventivePassword, BackupError.RESTORE_FAILED) {
         val incoming = prepared.document.data
         BackupValidator.validateData(incoming)
         val previous = BackupDataV1(persistence.snapshot(), settings.read())
-        val emergency = BackupCodec.encode(previous, clock.instant(), appVersion)
-        BackupCodec.decode(ByteArrayInputStream(emergency))
-        emergencyOutput.use {
-            it.write(emergency)
-            it.flush()
+        val payload = BackupCodec.encode(previous, clock.instant(), appVersion)
+        try {
+            BackupCodec.decode(payload)
+            emergencyOutput.use {
+                BackupCrypto.encrypt(payload, preventivePassword, it)
+                it.flush()
+            }
+        } finally {
+            payload.fill(0)
         }
         // A concurrent financial edit after the preventive snapshot rejects the replacement.
         persistence.replace(incoming, previous.tables)
@@ -62,9 +79,14 @@ internal class FluxaBackupService(
         RestoreReceipt(settingsApplied)
     }
 
-    private suspend fun <T> operation(fallback: BackupError, block: suspend () -> T): BackupResult<T> =
+    private suspend fun <T> passwordOperation(
+        password: CharArray,
+        fallback: BackupError,
+        block: suspend () -> T,
+    ): BackupResult<T> = try {
         withContext(Dispatchers.IO) {
             try {
+                BackupCrypto.validatePassword(password)
                 BackupResult.Success(block())
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -78,4 +100,7 @@ internal class FluxaBackupService(
                 BackupResult.Failure(fallback)
             }
         }
+    } finally {
+        password.fill('\u0000')
+    }
 }
