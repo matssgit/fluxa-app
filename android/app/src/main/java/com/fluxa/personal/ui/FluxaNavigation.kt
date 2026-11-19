@@ -81,6 +81,11 @@ import com.fluxa.personal.ui.feature.credit.PurchaseDetailViewModel
 import com.fluxa.personal.ui.feature.credit.PurchaseFormScreen
 import com.fluxa.personal.ui.feature.credit.PurchaseFormViewModel
 import com.fluxa.personal.ui.feature.credit.RepositoryCreditSource
+import com.fluxa.personal.ui.feature.safe.RepositoryCashEventLabels
+import com.fluxa.personal.ui.feature.safe.RepositorySafeToSpendDataSource
+import com.fluxa.personal.ui.feature.safe.SafeRoutes
+import com.fluxa.personal.ui.feature.safe.SafeToSpendDetailScreen
+import com.fluxa.personal.ui.feature.safe.SafeToSpendViewModel
 import com.fluxa.personal.ui.feature.subscriptions.RepositorySubscriptionDataSource
 import com.fluxa.personal.ui.feature.subscriptions.SubscriptionAgendaScreen
 import com.fluxa.personal.ui.feature.subscriptions.SubscriptionAgendaViewModel
@@ -139,6 +144,8 @@ internal fun FluxaNavigation() {
     /** Feedback com valor formatado (ex.: "R$ 500,00 foram reservados…"). */
     var feedbackText by rememberSaveable { mutableStateOf<String?>(null) }
     val goals = remember(app) { RepositoryGoalDataSource(app.goals) }
+    val safeSource = remember(app) { RepositorySafeToSpendDataSource(app.safeToSpend) }
+    val cashLabels = remember(app) { RepositoryCashEventLabels(subscriptions, credit) }
     val goToTab: (String) -> Unit = { route ->
         controller.navigate(route) {
             popUpTo(controller.graph.findStartDestination().id) { saveState = true }
@@ -174,6 +181,16 @@ internal fun FluxaNavigation() {
                         onOpenCash = { goToTab(Destination.CASH.route) },
                         onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
                         onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
+                        safeToSpend = viewModel(factory = SafeToSpendViewModel.factory(safeSource, cashLabels)),
+                        onOpenSafeToSpend = { controller.navigate(SafeRoutes.DETAIL) },
+                    )
+                }
+                composable(SafeRoutes.DETAIL) {
+                    SafeToSpendDetailScreen(
+                        viewModel = viewModel(factory = SafeToSpendViewModel.factory(safeSource, cashLabels)),
+                        onBack = { controller.popBackStack() },
+                        onOpenSubscription = { id, date -> controller.navigate(SubscriptionRoutes.occurrence(id, date)) },
+                        onOpenInstallment = { card, purchase, installment -> controller.navigate(CreditRoutes.installment(card, purchase, installment)) },
                     )
                 }
                 composable(Destination.CASH.route) {

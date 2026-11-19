@@ -71,6 +71,8 @@ import com.fluxa.personal.ui.designsystem.components.FluxaSurfaceTone
 import com.fluxa.personal.ui.designsystem.components.FluxaTopBar
 import com.fluxa.personal.ui.feature.catalog.visual
 import java.time.LocalDate
+import com.fluxa.personal.ui.feature.safe.SafeToSpendCard
+import com.fluxa.personal.ui.feature.safe.SafeToSpendViewModel
 import java.util.UUID
 
 private val ContentMaxWidth = 640.dp
@@ -397,6 +399,8 @@ internal fun DashboardScreen(
     onOpenCash: () -> Unit,
     onCreateAccount: () -> Unit,
     onOpenTransaction: (UUID) -> Unit,
+    safeToSpend: SafeToSpendViewModel? = null,
+    onOpenSafeToSpend: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     TabScreen(
@@ -435,6 +439,8 @@ internal fun DashboardScreen(
                 reserves = state.reserveTotals,
             )
         }
+        // Limite seguro logo abaixo do disponível (hierarquia: disponível → limite seguro → mês → recentes).
+        safeToSpend?.let { vm -> item { SafeToSpendCard(vm, onDetails = onOpenSafeToSpend) } }
         state.summary?.let { summary ->
             item { MonthSummaryCard(summary, state.monthStart) }
         }

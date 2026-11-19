@@ -593,4 +593,42 @@
     <string name="error_goal_target_not_reached">A meta só pode ser concluída quando o valor reservado alcançar o objetivo.</string>
     <string name="error_goal_has_reserved">Libere todo o valor reservado antes de arquivar esta meta.</string>
     <string name="error_goal_action">Não foi possível concluir a ação. Tente novamente.</string>
+
+    <!-- Sprint 7-B: limite seguro -->
+    <string name="safe_title">Limite seguro</string>
+    <string name="safe_subtitle">Quanto você pode gastar sem comprometer suas obrigações conhecidas nos próximos 30 dias.</string>
+    <string name="safe_horizon" tools:ignore="PluralsCandidate">Próximos %1$d dias</string>
+    <string name="safe_horizon_range">De %1$s até %2$s</string>
+    <string name="safe_lowest_on">Menor folga em %1$s</string>
+    <string name="safe_lowest_today">Menor folga: hoje</string>
+    <string name="safe_today">Hoje</string>
+    <string name="safe_details_action">Entender cálculo</string>
+    <string name="safe_body_reduced">Quanto você pode gastar sem comprometer suas obrigações conhecidas nos próximos 30 dias.</string>
+    <string name="safe_body_no_obligations">Nenhuma obrigação conhecida reduz seu limite neste período.</string>
+    <string name="safe_body_zero">Suas obrigações conhecidas já utilizam todo o valor disponível dentro deste período.</string>
+    <string name="safe_body_negative">Seu saldo disponível já está negativo.</string>
+    <string name="safe_committed_prefix">Comprometido</string>
+    <string name="safe_available_now">Disponível agora</string>
+    <string name="safe_available_explain">Dinheiro livre hoje, depois das reservas de metas.</string>
+    <string name="safe_limit_explain">Quanto desse dinheiro pode ser gasto considerando as obrigações futuras conhecidas.</string>
+    <string name="safe_lowest_label">Menor folga</string>
+    <string name="safe_lowest_balance">Saldo projetado</string>
+    <string name="safe_how_title">Como chegamos a esse valor</string>
+    <string name="safe_breakdown_title">Obrigações consideradas</string>
+    <string name="safe_breakdown_hint">Eventos até a data da menor folga, na ordem em que pesam no cálculo.</string>
+    <string name="safe_breakdown_empty">Nenhuma obrigação conhecida reduz seu limite neste período.</string>
+    <string name="safe_source_installment">Parcela · Cartão</string>
+    <string name="safe_source_subscription">Assinatura</string>
+    <string name="safe_source_subscription_card">Assinatura · Cartão</string>
+    <string name="safe_source_income">Receita confirmada</string>
+    <string name="safe_event_installment">%1$s %2$d/%3$d</string>
+    <string name="safe_event_installment_unknown">Parcela de cartão</string>
+    <string name="safe_event_subscription_unknown">Assinatura</string>
+    <string name="safe_event_income_unknown">Receita</string>
+    <string name="safe_overdue_since">Vencida em %1$s, conta hoje</string>
+    <string name="safe_reserves_note">Valores reservados em metas já foram descontados antes deste cálculo.</string>
+    <string name="safe_registered_only">O cálculo considera apenas informações registradas no Fluxa: despesas não cadastradas e receitas não confirmadas não entram.</string>
+    <string name="safe_cards_note">O limite do cartão não é somado como dinheiro disponível; só as parcelas pendentes pesam.</string>
+    <string name="safe_unavailable_overflow">Os valores são grandes demais para calcular o limite seguro com exatidão.</string>
+    <string name="safe_unavailable_conflict">Há registros conflitantes nas obrigações. Revise os lançamentos para ver o limite seguro.</string>
 </resources>
