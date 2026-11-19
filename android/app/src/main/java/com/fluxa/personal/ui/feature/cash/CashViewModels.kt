@@ -15,6 +15,7 @@ import com.fluxa.personal.domain.model.FinancialAccount
 import com.fluxa.personal.domain.model.FinancialTransaction
 import com.fluxa.personal.domain.model.TransactionDirection
 import com.fluxa.personal.domain.model.PeriodSummary
+import com.fluxa.personal.domain.model.ReserveBalanceSnapshot
 import com.fluxa.personal.domain.model.TransactionHistoryFilter
 import com.fluxa.personal.domain.model.TransactionHistoryPage
 import com.fluxa.personal.domain.rules.BalanceSnapshot
@@ -62,7 +63,12 @@ internal data class CashFilters(
     val direction: DirectionFilter = DirectionFilter.ALL,
 )
 
-internal data class AccountBalanceItem(val account: FinancialAccount, val balance: CalculatedBalance?)
+internal data class AccountBalanceItem(
+    val account: FinancialAccount,
+    val balance: CalculatedBalance?,
+    /** Reserva de metas desta conta (`observeReserveBalances`), quando houver contrato de reservas. */
+    val reserve: com.fluxa.personal.domain.model.AccountReserveSummary? = null,
+)
 
 /** Lançamento com os nomes já resolvidos para exibição. Nenhum valor é recalculado. */
 internal data class LedgerEntry(
@@ -76,6 +82,8 @@ internal data class LedgerDay(val date: LocalDate, val entries: List<LedgerEntry
 internal data class CashUiState(
     val isLoading: Boolean = true,
     val available: CalculatedBalance? = null,
+    /** Saldo total, reservado e disponível líquido, exatamente como `observeReserveBalances` entrega. */
+    val reserveTotals: com.fluxa.personal.ui.common.ReserveTotals? = null,
     val accounts: List<AccountBalanceItem> = emptyList(),
     val filters: CashFilters = CashFilters(),
     val historyLoading: Boolean = true,
@@ -91,7 +99,7 @@ internal data class CashUiState(
 
 private data class Catalog(val accounts: List<FinancialAccount>, val categories: List<Category>)
 private data class History(val transactions: List<FinancialTransaction>?, val hasMore: Boolean, val failed: Boolean)
-private data class Balances(val snapshot: BalanceSnapshot?, val failed: Boolean)
+private data class Balances(val snapshot: BalanceSnapshot?, val failed: Boolean, val reserves: ReserveBalanceSnapshot? = null)
 
 /** Parâmetros da consulta do histórico: filtros + quantidade de páginas carregadas a partir do offset zero. */
 private data class HistoryQuery(val filters: CashFilters = CashFilters(), val pages: Int = 1)
@@ -111,6 +119,8 @@ internal class CashViewModel(
     accounts: AccountRepository,
     categories: CategoryRepository,
     calendar: FinancialCalendar = FinancialCalendar(),
+    /** Saldos com reservas de metas (Sprint 6-A). Quando presente, o disponível exibido é o líquido do contrato. */
+    reserves: Flow<ReserveBalanceSnapshot>? = null,
 ) : ViewModel() {
     private val today = calendar.today()
     private val query = MutableStateFlow(HistoryQuery())
@@ -120,9 +130,10 @@ internal class CashViewModel(
         categories.observeAll(includeArchived = true),
     ) { a, c -> Catalog(a, c) }
 
-    private val balances: Flow<Balances> = transactions.observeBalances()
-        .map { Balances(it, failed = false) }
-        .catch { emit(Balances(null, failed = true)) }
+    private val balances: Flow<Balances> = (
+        if (reserves == null) transactions.observeBalances().map { Balances(it, failed = false) }
+        else combine(transactions.observeBalances(), reserves) { b, r -> Balances(b, failed = false, reserves = r) }
+        ).catch { emit(Balances(null, failed = true)) }
 
     private val history: Flow<History> = query.flatMapLatest { q ->
         val limit = PAGE_SIZE * q.pages
@@ -138,8 +149,12 @@ internal class CashViewModel(
             .map { LedgerEntry(it, byAccount[it.details.accountId], byCategory[it.details.categoryId]) }
         CashUiState(
             isLoading = false,
-            available = bal.snapshot?.available,
-            accounts = cat.accounts.filter { it.archivedAt == null }.map { AccountBalanceItem(it, bal.snapshot?.accounts?.get(it.id)) },
+            // Com reservas, o disponível é o do contrato (já líquido). Nunca subtrair a reserva de novo.
+            available = bal.reserves?.availableBalance ?: bal.snapshot?.available,
+            reserveTotals = bal.reserves?.let { com.fluxa.personal.ui.common.ReserveTotals(it.totalBalance, it.totalReserved, it.availableBalance) },
+            accounts = cat.accounts.filter { it.archivedAt == null }.map {
+                AccountBalanceItem(it, bal.snapshot?.accounts?.get(it.id), bal.reserves?.accounts?.get(it.id))
+            },
             filters = q.filters,
             historyLoading = false,
             // Agrupamento por dia é só apresentação; a ordem é a do repositório (occurredOn DESC, id ASC).
@@ -163,8 +178,13 @@ internal class CashViewModel(
     companion object {
         const val PAGE_SIZE = 50
 
-        fun factory(transactions: TransactionSource, accounts: AccountRepository, categories: CategoryRepository): ViewModelProvider.Factory =
-            viewModelFactory { initializer { CashViewModel(transactions, accounts, categories) } }
+        fun factory(
+            transactions: TransactionSource,
+            accounts: AccountRepository,
+            categories: CategoryRepository,
+            reserves: Flow<ReserveBalanceSnapshot>? = null,
+        ): ViewModelProvider.Factory =
+            viewModelFactory { initializer { CashViewModel(transactions, accounts, categories, reserves = reserves) } }
     }
 }
 
@@ -179,6 +199,8 @@ internal fun CashFilters.toHistoryFilter(today: LocalDate): TransactionHistoryFi
 internal data class DashboardUiState(
     val isLoading: Boolean = true,
     val available: CalculatedBalance? = null,
+    /** Saldo total, reservado e disponível líquido, exatamente como `observeReserveBalances` entrega. */
+    val reserveTotals: com.fluxa.personal.ui.common.ReserveTotals? = null,
     val activeAccounts: Int = 0,
     /** Mês corrente exibido: [monthStart, monthEnd). */
     val monthStart: LocalDate? = null,
@@ -187,7 +209,12 @@ internal data class DashboardUiState(
     @StringRes val errorMessage: Int? = null,
 )
 
-private data class DashboardData(val snapshot: BalanceSnapshot?, val summary: PeriodSummary?, val recent: List<FinancialTransaction>?)
+private data class DashboardData(
+    val snapshot: BalanceSnapshot?,
+    val summary: PeriodSummary?,
+    val recent: List<FinancialTransaction>?,
+    val reserves: ReserveBalanceSnapshot? = null,
+)
 
 /**
  * Início com contratos reais: saldo disponível (`observeBalances`), resumo do mês corrente
@@ -199,6 +226,8 @@ internal class DashboardViewModel(
     accounts: AccountRepository,
     categories: CategoryRepository,
     calendar: FinancialCalendar = FinancialCalendar(),
+    /** Saldos com reservas de metas (Sprint 6-A). `availableBalance` já desconta as reservas elegíveis. */
+    reserves: Flow<ReserveBalanceSnapshot>? = null,
 ) : ViewModel() {
     private val monthStart: LocalDate = calendar.today().withDayOfMonth(1)
     private val monthEnd: LocalDate = monthStart.plusMonths(1)
@@ -208,6 +237,10 @@ internal class DashboardViewModel(
         transactions.observePeriodSummary(monthStart, monthEnd).map<PeriodSummary, PeriodSummary?> { it }.catch { emit(null) },
         transactions.observeRecentTransactions(RECENT_LIMIT).map<List<FinancialTransaction>, List<FinancialTransaction>?> { it }.catch { emit(null) },
     ) { snapshot, summary, recent -> DashboardData(snapshot, summary, recent) }
+        .let { base ->
+            if (reserves == null) base
+            else combine(base, reserves.map<ReserveBalanceSnapshot, ReserveBalanceSnapshot?> { it }.catch { emit(null) }) { d, r -> d.copy(reserves = r) }
+        }
 
     val uiState: StateFlow<DashboardUiState> = combine(
         accounts.observeAll(includeArchived = true),
@@ -218,7 +251,9 @@ internal class DashboardViewModel(
         val byCategory = categoryList.associateBy { it.id }
         DashboardUiState(
             isLoading = false,
-            available = d.snapshot?.available,
+            // Exibe exatamente o disponível do contrato de reservas (já líquido); sem segunda dedução.
+            available = d.reserves?.availableBalance ?: d.snapshot?.available,
+            reserveTotals = d.reserves?.let { com.fluxa.personal.ui.common.ReserveTotals(it.totalBalance, it.totalReserved, it.availableBalance) },
             activeAccounts = accountList.count { it.archivedAt == null },
             monthStart = monthStart,
             summary = d.summary,
@@ -232,8 +267,13 @@ internal class DashboardViewModel(
     companion object {
         const val RECENT_LIMIT = 5
 
-        fun factory(transactions: TransactionSource, accounts: AccountRepository, categories: CategoryRepository): ViewModelProvider.Factory =
-            viewModelFactory { initializer { DashboardViewModel(transactions, accounts, categories) } }
+        fun factory(
+            transactions: TransactionSource,
+            accounts: AccountRepository,
+            categories: CategoryRepository,
+            reserves: Flow<ReserveBalanceSnapshot>? = null,
+        ): ViewModelProvider.Factory =
+            viewModelFactory { initializer { DashboardViewModel(transactions, accounts, categories, reserves = reserves) } }
     }
 }
 

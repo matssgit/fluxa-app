@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.layout.heightIn
 import com.fluxa.personal.ui.designsystem.components.FluxaAmount
+import com.fluxa.personal.ui.common.isNonZero
+import com.fluxa.personal.ui.common.isNegative
+import com.fluxa.personal.ui.common.ReserveLine
 import com.fluxa.personal.ui.common.BrazilLocale
 import com.fluxa.personal.domain.model.PeriodSummary
 import com.fluxa.personal.core.money.Money
@@ -113,7 +116,13 @@ internal fun TabScreen(
 
 /** Cartão de saldo disponível (consolidado do repositório). */
 @Composable
-internal fun AvailableBalanceCard(available: CalculatedBalance?, caption: String, modifier: Modifier = Modifier) {
+internal fun AvailableBalanceCard(
+    available: CalculatedBalance?,
+    caption: String,
+    modifier: Modifier = Modifier,
+    /** Totais de `observeReserveBalances`; exibidos como vieram (o disponível já é líquido das reservas). */
+    reserves: com.fluxa.personal.ui.common.ReserveTotals? = null,
+) {
     val colors = FluxaTheme.colors
     FluxaCard(
         modifier = modifier.fillMaxWidth().testTag("available-balance"),
@@ -126,6 +135,23 @@ internal fun AvailableBalanceCard(available: CalculatedBalance?, caption: String
         BalanceAmount(balance = available, style = FluxaTheme.typography.amountHero, color = colors.onSurfaceInverse)
         Spacer(Modifier.height(12.dp))
         Text(caption, style = FluxaTheme.typography.caption, color = colors.onSurfaceInverseMuted)
+        if (reserves != null && reserves.reserved.isNonZero) {
+            Spacer(Modifier.height(16.dp))
+            ReserveLine(
+                stringResource(R.string.reserve_total_balance), reserves.total, modifier = Modifier.testTag("reserve-total"),
+                color = colors.onSurfaceInverse, labelColor = colors.onSurfaceInverseMuted,
+            )
+            ReserveLine(
+                stringResource(R.string.reserve_reserved), reserves.reserved, modifier = Modifier.testTag("reserve-reserved-total"),
+                color = colors.onSurfaceInverse, labelColor = colors.onSurfaceInverseMuted,
+            )
+            Text(stringResource(R.string.reserve_available_explain), style = FluxaTheme.typography.caption, color = colors.onSurfaceInverseMuted, modifier = Modifier.padding(top = 4.dp))
+        }
+        if (available.isNegative) {
+            com.fluxa.personal.ui.common.NegativeAvailableAlert(
+                stringResource(R.string.reserve_negative_alert_total), onInverse = true, modifier = Modifier.padding(top = 12.dp),
+            )
+        }
     }
 }
 
@@ -171,7 +197,7 @@ internal fun CashScreen(
             }
             return@TabScreen
         }
-        item { AvailableBalanceCard(state.available, stringResource(R.string.cash_available_explain)) }
+        item { AvailableBalanceCard(state.available, stringResource(R.string.cash_available_explain), reserves = state.reserveTotals) }
 
         item {
             FluxaSectionHeader(
@@ -302,6 +328,20 @@ private fun AccountBalanceTile(item: AccountBalanceItem, selected: Boolean, onCl
         Text(stringResource(R.string.cash_current_balance), style = FluxaTheme.typography.caption, color = colors.textMuted)
         val negative = (item.balance as? CalculatedBalance.Exact)?.amount?.cents?.let { it < 0 } == true
         BalanceAmount(item.balance, color = if (negative) colors.expense else colors.textPrimary)
+        // Reserva de metas desta conta: reservado e disponível do contrato (sem subtrair aqui).
+        val reserve = item.reserve
+        if (reserve != null && reserve.reservedAmount.isNonZero) {
+            Spacer(Modifier.height(8.dp))
+            ReserveLine(stringResource(R.string.reserve_reserved), reserve.reservedAmount, modifier = Modifier.testTag("account-reserved-${item.account.details.name}"))
+            ReserveLine(
+                stringResource(R.string.reserve_available), reserve.availableAmount, modifier = Modifier.testTag("account-available-${item.account.details.name}"),
+                color = if (reserve.availableAmount.isNegative) colors.expense else colors.textPrimary,
+            )
+            if (reserve.availableAmount.isNegative) {
+                // Versão curta no card estreito; a frase completa aparece no detalhe da meta e no card de disponível.
+                com.fluxa.personal.ui.common.NegativeAvailableAlert(stringResource(R.string.reserve_negative_alert_short), modifier = Modifier.padding(top = 6.dp))
+            }
+        }
         if (!item.account.details.includeInAvailable) {
             StatePill(stringResource(R.string.accounts_not_in_available), null, modifier = Modifier.padding(top = 8.dp))
         }
@@ -392,6 +432,7 @@ internal fun DashboardScreen(
             AvailableBalanceCard(
                 available = state.available,
                 caption = pluralStringResource(R.plurals.dashboard_accounts, state.activeAccounts, state.activeAccounts),
+                reserves = state.reserveTotals,
             )
         }
         state.summary?.let { summary ->

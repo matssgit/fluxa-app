@@ -81,10 +81,15 @@ private val Gutter = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
 private data class MoreDestination(val label: Int, val icon: ImageVector, val route: String? = null)
 
 @Composable
-internal fun MorePlaceholder(onToggleAmounts: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenSubscriptions: () -> Unit = {}) {
+internal fun MorePlaceholder(
+    onToggleAmounts: () -> Unit,
+    onOpenCategories: () -> Unit = {},
+    onOpenSubscriptions: () -> Unit = {},
+    onOpenGoals: () -> Unit = {},
+) {
     val destinations = listOf(
         MoreDestination(R.string.more_subscriptions, FluxaIcons.Repeat, route = "subscriptions"),
-        MoreDestination(R.string.more_goals, FluxaIcons.Target),
+        MoreDestination(R.string.more_goals, FluxaIcons.Target, route = "goals"),
         MoreDestination(R.string.more_categories, FluxaIcons.Tag, route = "categories"),
         MoreDestination(R.string.more_analytics, FluxaIcons.Analytics),
         MoreDestination(R.string.more_settings, FluxaIcons.Sliders),
@@ -113,6 +118,7 @@ internal fun MorePlaceholder(onToggleAmounts: () -> Unit, onOpenCategories: () -
                         onClick = when (destination.route) {
                             "categories" -> onOpenCategories
                             "subscriptions" -> onOpenSubscriptions
+                            "goals" -> onOpenGoals
                             else -> null
                         },
                         modifier = if (destination.route != null) Modifier.testTag("more-${destination.route}") else Modifier,

@@ -95,6 +95,16 @@ import com.fluxa.personal.ui.feature.subscriptions.SubscriptionRoutes
 import com.fluxa.personal.ui.feature.subscriptions.SubscriptionsScreen
 import com.fluxa.personal.ui.feature.subscriptions.SubscriptionsViewModel
 import com.fluxa.personal.ui.placeholder.MorePlaceholder
+import com.fluxa.personal.ui.feature.goals.GoalAllocationViewModel
+import com.fluxa.personal.ui.feature.goals.GoalCompletion
+import com.fluxa.personal.ui.feature.goals.GoalDetailScreen
+import com.fluxa.personal.ui.feature.goals.GoalDetailViewModel
+import com.fluxa.personal.ui.feature.goals.GoalFormScreen
+import com.fluxa.personal.ui.feature.goals.GoalFormViewModel
+import com.fluxa.personal.ui.feature.goals.GoalRoutes
+import com.fluxa.personal.ui.feature.goals.GoalsScreen
+import com.fluxa.personal.ui.feature.goals.GoalsViewModel
+import com.fluxa.personal.ui.feature.goals.RepositoryGoalDataSource
 
 private enum class Destination(
     val route: String,
@@ -126,6 +136,9 @@ internal fun FluxaNavigation() {
     val credit = remember(app) { RepositoryCreditSource(app.credit) }
     val subscriptions = remember(app) { RepositorySubscriptionDataSource(app.subscriptions) }
     var feedback by rememberSaveable { mutableStateOf<Int?>(null) }
+    /** Feedback com valor formatado (ex.: "R$ 500,00 foram reservados…"). */
+    var feedbackText by rememberSaveable { mutableStateOf<String?>(null) }
+    val goals = remember(app) { RepositoryGoalDataSource(app.goals) }
     val goToTab: (String) -> Unit = { route ->
         controller.navigate(route) {
             popUpTo(controller.graph.findStartDestination().id) { saveState = true }
@@ -156,7 +169,7 @@ internal fun FluxaNavigation() {
             ) {
                 composable(Destination.DASHBOARD.route) {
                     DashboardScreen(
-                        viewModel = viewModel(factory = DashboardViewModel.factory(transactions, app.accounts, app.categories)),
+                        viewModel = viewModel(factory = DashboardViewModel.factory(transactions, app.accounts, app.categories, goals.observeReserveBalances())),
                         onToggleAmounts = toggleAmounts,
                         onOpenCash = { goToTab(Destination.CASH.route) },
                         onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
@@ -165,7 +178,7 @@ internal fun FluxaNavigation() {
                 }
                 composable(Destination.CASH.route) {
                     CashScreen(
-                        viewModel = viewModel(factory = CashViewModel.factory(transactions, app.accounts, app.categories)),
+                        viewModel = viewModel(factory = CashViewModel.factory(transactions, app.accounts, app.categories, goals.observeReserveBalances())),
                         onToggleAmounts = toggleAmounts,
                         onManageAccounts = { controller.navigate(AccountRoutes.LIST) },
                         onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
@@ -339,6 +352,40 @@ internal fun FluxaNavigation() {
                         toggleAmounts,
                         onOpenCategories = { controller.navigate(CategoryRoutes.LIST) },
                         onOpenSubscriptions = { controller.navigate(SubscriptionRoutes.LIST) },
+                        onOpenGoals = { controller.navigate(GoalRoutes.LIST) },
+                    )
+                }
+                // Sprint 6-B: metas e reservas
+                composable(GoalRoutes.LIST) {
+                    GoalsScreen(
+                        viewModel = viewModel(factory = GoalsViewModel.factory(goals)),
+                        onBack = { controller.popBackStack() },
+                        onNew = { controller.navigate(GoalRoutes.NEW) },
+                        onOpen = { controller.navigate(GoalRoutes.detail(it)) },
+                    )
+                }
+                val goalForm: @Composable () -> Unit = {
+                    GoalFormScreen(
+                        viewModel = viewModel(factory = GoalFormViewModel.factory(goals, app.accounts)),
+                        onDone = { completion ->
+                            if (completion != null) feedback = R.string.feedback_goal_saved
+                            if (completion is GoalCompletion.Created) {
+                                controller.navigate(GoalRoutes.detail(completion.id)) { popUpTo(GoalRoutes.NEW) { inclusive = true } }
+                            } else controller.popBackStack()
+                        },
+                        onCreateAccount = { controller.navigate(AccountRoutes.NEW) },
+                    )
+                }
+                composable(GoalRoutes.NEW) { goalForm() }
+                composable(GoalRoutes.EDIT, arguments = listOf(navArgument(GoalRoutes.ARG_ID) { type = NavType.StringType })) { goalForm() }
+                composable(GoalRoutes.DETAIL, arguments = listOf(navArgument(GoalRoutes.ARG_ID) { type = NavType.StringType })) {
+                    GoalDetailScreen(
+                        viewModel = viewModel(factory = GoalDetailViewModel.factory(goals)),
+                        allocation = viewModel(factory = GoalAllocationViewModel.factory(goals)),
+                        onBack = { controller.popBackStack() },
+                        onEdit = { controller.navigate(GoalRoutes.edit(it)) },
+                        onFeedback = { feedback = it },
+                        onFeedbackText = { feedbackText = it },
                     )
                 }
 
@@ -407,8 +454,8 @@ internal fun FluxaNavigation() {
             }
 
             FeedbackBanner(
-                message = feedback?.let { stringResource(it) },
-                onDismiss = { feedback = null },
+                message = feedbackText ?: feedback?.let { stringResource(it) },
+                onDismiss = { feedback = null; feedbackText = null },
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
 
