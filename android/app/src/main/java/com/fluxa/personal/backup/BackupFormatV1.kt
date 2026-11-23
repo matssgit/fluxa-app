@@ -11,11 +11,16 @@ internal enum class BackupError {
     EXPORT_FAILED, RESTORE_FAILED, RESTORE_CONFLICT, TOO_LARGE,
     PASSWORD_REQUIRED, PASSWORD_TOO_SHORT, PASSWORD_INVALID_ENCODING, INVALID_PASSWORD,
     CRYPTO_UNSUPPORTED, DECRYPTION_FAILED, ENCRYPTION_FAILED,
+    NOT_FLUXA, CONTAINER_VERSION_UNSUPPORTED,
 }
 
 internal sealed interface BackupResult<out T> {
     data class Success<T>(val value: T) : BackupResult<T>
-    data class Failure(val error: BackupError) : BackupResult<Nothing>
+    data class Failure(
+        val error: BackupError,
+        val preventiveBackupCreated: Boolean = false,
+        val cleanup: BackupCleanup = BackupCleanup.NOT_NEEDED,
+    ) : BackupResult<Nothing>
 }
 
 internal class BackupException(val error: BackupError) : Exception(error.name)
@@ -43,7 +48,7 @@ internal data class BackupDocumentV1(val manifest: BackupManifestV1, val data: B
 internal class PreparedFluxaBackup internal constructor(internal val document: BackupDocumentV1) {
     val manifest: BackupManifestV1 get() = document.manifest
 }
-internal data class RestoreReceipt(val settingsApplied: Boolean)
+internal data class RestoreReceipt(val settingsApplied: Boolean, val preventiveBackupCreated: Boolean = true)
 
 internal enum class BackupFieldType { TEXT, LONG, BOOLEAN, DATE, INSTANT, UUID, ENUM }
 internal data class FieldV1(

@@ -66,9 +66,18 @@ internal object BackupCrypto {
     fun decrypt(input: InputStream, password: CharArray): ByteArray {
         validatePassword(password)
         val header = ByteArray(HEADER_BYTES)
-        readFully(input, header, 0, HEADER_BYTES)
-        if (!header.copyOfRange(0, 8).contentEquals(magic)) throw BackupException(BackupError.CRYPTO_UNSUPPORTED)
-        if (header[8].toInt() != 1 || header[9].toInt() != 1 || header[10].toInt() != 1) {
+        for (index in magic.indices) {
+            val value = input.read()
+            if (value < 0) throw BackupException(if (index == 0) BackupError.NOT_FLUXA else BackupError.CORRUPTED)
+            if (value != magic[index].toInt()) throw BackupException(BackupError.NOT_FLUXA)
+            header[index] = value.toByte()
+        }
+        val version = input.read()
+        if (version < 0) throw BackupException(BackupError.CORRUPTED)
+        if (version != 1) throw BackupException(BackupError.CONTAINER_VERSION_UNSUPPORTED)
+        header[8] = version.toByte()
+        readFully(input, header, 9, HEADER_BYTES - 9)
+        if (header[9].toInt() != 1 || header[10].toInt() != 1) {
             throw BackupException(BackupError.CRYPTO_UNSUPPORTED)
         }
         if (header[11].toInt() != 0 || header[16].toInt() != 16 || header[17].toInt() != 12 ||

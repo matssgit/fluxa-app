@@ -46,16 +46,25 @@ internal class BackupDocuments(
         preventivePassword: CharArray,
         emergencyDestination: Uri,
     ): BackupResult<RestoreReceipt> = try {
-        withContext(Dispatchers.IO) {
-            try {
-                resolver.openOutputStream(emergencyDestination, "wt")?.use { service.restore(prepared, preventivePassword, it) }
-                    ?: BackupResult.Failure(BackupError.RESTORE_FAILED)
-            } catch (_: IOException) {
-                BackupResult.Failure(BackupError.RESTORE_FAILED)
-            } catch (_: SecurityException) {
-                BackupResult.Failure(BackupError.RESTORE_FAILED)
+        service.restore(prepared, preventivePassword, object : BackupDestination {
+            override fun open() = resolver.openOutputStream(emergencyDestination, "wt")
+                ?: throw IOException("Preventive destination could not be opened")
+
+            override fun delete(): Boolean {
+                val deleted = try {
+                    resolver.delete(emergencyDestination, null, null) > 0
+                } catch (_: Exception) {
+                    false
+                }
+                if (deleted) return true
+                return try {
+                    android.provider.DocumentsContract.getDocumentId(emergencyDestination)
+                    android.provider.DocumentsContract.deleteDocument(resolver, emergencyDestination)
+                } catch (_: Exception) {
+                    false
+                }
             }
-        }
+        })
     } finally {
         preventivePassword.fill('\u0000')
     }

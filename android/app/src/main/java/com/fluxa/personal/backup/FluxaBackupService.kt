@@ -47,36 +47,59 @@ internal class FluxaBackupService(
             }
         }
 
-    /** REPLACE. A fresh password protects the preventive backup and is consumed by this call. */
+    /** Stream callers own any document deletion. URI callers use the destination overload below. */
     suspend fun restore(
         prepared: PreparedFluxaBackup,
         preventivePassword: CharArray,
         emergencyOutput: OutputStream,
-    ): BackupResult<RestoreReceipt> = passwordOperation(preventivePassword, BackupError.RESTORE_FAILED) {
-        val incoming = prepared.document.data
-        BackupValidator.validateData(incoming)
-        val previous = BackupDataV1(persistence.snapshot(), settings.read())
-        val payload = BackupCodec.encode(previous, clock.instant(), appVersion)
-        try {
-            BackupCodec.decode(payload)
-            emergencyOutput.use {
-                BackupCrypto.encrypt(payload, preventivePassword, it)
-                it.flush()
+    ): BackupResult<RestoreReceipt> = restore(prepared, preventivePassword, object : BackupDestination {
+        override fun open() = emergencyOutput
+        override fun delete() = false
+    })
+
+    /** The preventive document is finalized before the atomic replacement can start. */
+    suspend fun restore(
+        prepared: PreparedFluxaBackup,
+        preventivePassword: CharArray,
+        destination: BackupDestination,
+    ): BackupResult<RestoreReceipt> {
+        val preventive = PreventiveBackupOutput(destination)
+        return try {
+            withContext(Dispatchers.IO) {
+                val result = passwordOperation(preventivePassword, BackupError.RESTORE_FAILED) {
+                    val incoming = prepared.document.data
+                    BackupValidator.validateData(incoming)
+                    val previous = BackupDataV1(persistence.snapshot(), settings.read())
+                    val payload = BackupCodec.encode(previous, clock.instant(), appVersion)
+                    try {
+                        BackupCodec.decode(payload)
+                        preventive.write { BackupCrypto.encrypt(payload, preventivePassword, it) }
+                    } finally {
+                        payload.fill(0)
+                    }
+                    persistence.replace(incoming, previous.tables)
+                    val settingsApplied = try {
+                        settings.apply(incoming.settings)
+                        true
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        false
+                    }
+                    RestoreReceipt(settingsApplied)
+                }
+                when (result) {
+                    is BackupResult.Success -> result
+                    is BackupResult.Failure -> result.copy(
+                        preventiveBackupCreated = preventive.created,
+                        cleanup = preventive.cleanupIncomplete(),
+                    )
+                }
             }
         } finally {
-            payload.fill(0)
+            preventivePassword.fill('\u0000')
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { preventive.cleanupIncomplete() }
         }
-        // A concurrent financial edit after the preventive snapshot rejects the replacement.
-        persistence.replace(incoming, previous.tables)
-        val settingsApplied = try {
-            settings.apply(incoming.settings)
-            true
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            false
-        }
-        RestoreReceipt(settingsApplied)
     }
 
     private suspend fun <T> passwordOperation(

@@ -120,7 +120,7 @@ class BackupPersistenceTest {
         }
         settings.value = PortableSettingsV1("SYSTEM", false)
         val emergency = ByteArrayOutputStream()
-        assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, password(), emergency))
+        assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, preventiveBackupCreated = true), service().restore(incoming, password(), emergency))
         assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         assertEquals(PortableSettingsV1("SYSTEM", false), settings.value)
         assertTrue(decodeEncrypted(emergency.toByteArray()).data.tables.getValue("accounts")
@@ -137,7 +137,7 @@ class BackupPersistenceTest {
                 override fun write(value: Int) { if (!failOnClose) throw IOException("write") }
                 override fun close() { if (failOnClose) throw IOException("close") }
             }
-            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED), service().restore(incoming, password(), failing))
+            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, cleanup = BackupCleanup.FAILED), service().restore(incoming, password(), failing))
             assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         }
     }
@@ -160,7 +160,7 @@ class BackupPersistenceTest {
                 }
             }
         }
-        assertEquals(BackupResult.Failure(BackupError.RESTORE_CONFLICT), service().restore(incoming, password(), output))
+        assertEquals(BackupResult.Failure(BackupError.RESTORE_CONFLICT, preventiveBackupCreated = true), service().restore(incoming, password(), output))
         assertTrue(AccountRepository(db.accountDao()).observeAll().first().any { it.details.name == "Edição concorrente" })
     }
 
@@ -277,7 +277,7 @@ class BackupPersistenceTest {
         assertEquals(BackupResult.Failure(BackupError.PASSWORD_REQUIRED), service().export(charArrayOf(), ByteArrayOutputStream()))
         val prepared = exported()
         val emergency = ByteArrayOutputStream()
-        assertEquals(BackupResult.Failure(BackupError.PASSWORD_REQUIRED), service().restore(prepared, charArrayOf(), emergency))
+        assertEquals(BackupResult.Failure(BackupError.PASSWORD_REQUIRED, cleanup = BackupCleanup.FAILED), service().restore(prepared, charArrayOf(), emergency))
         assertEquals(0, emergency.size())
         assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
     }
@@ -288,11 +288,152 @@ class BackupPersistenceTest {
         val before = BackupPersistence(db).snapshot()
         val legacy = BackupCodec.encode(BackupDataV1(before, settings.value), clock.instant(), "test")
         try {
-            assertEquals(BackupResult.Failure(BackupError.CRYPTO_UNSUPPORTED),
+            assertEquals(BackupResult.Failure(BackupError.NOT_FLUXA),
                 service().validate(password(), ByteArrayInputStream(legacy)))
             assertTrue("Financial snapshot must stay identical", before == BackupPersistence(db).snapshot())
         } finally {
             legacy.fill(0)
+        }
+    }
+
+    @Test
+    fun incompletePreventiveDocumentsAreDeletedOrReportedAndRoomNeverChanges() = runBlocking {
+        seed(volume = false)
+        val imported = exported()
+        AccountRepository(db.accountDao(), clock).create(AccountDetails("Estado A", AccountType.WALLET, Money(123), today))
+        val before = BackupPersistence(db).snapshot()
+        val beforeSettings = settings.value
+        for (fault in listOf("open", "zero", "header", "ciphertext", "flush", "close")) {
+            val destination = FaultDocument(fault)
+            val result = service().restore(imported, password(), destination)
+            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, cleanup = BackupCleanup.DELETED), result)
+            assertEquals(1, destination.deletes)
+            assertEquals(0, destination.bytes.size())
+            assertEquals(if (fault == "open") 0 else 1, destination.closes)
+            assertTrue("Failed preventive output must preserve Room", before == BackupPersistence(db).snapshot())
+            assertEquals(beforeSettings, settings.value)
+        }
+        for (throwsOnDelete in listOf(false, true)) {
+            val destination = FaultDocument("ciphertext", acceptsDelete = false, throwsOnDelete = throwsOnDelete)
+            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, cleanup = BackupCleanup.FAILED),
+                service().restore(imported, password(), destination))
+            assertEquals(1, destination.deletes)
+            assertTrue("Refused cleanup must preserve Room", before == BackupPersistence(db).snapshot())
+        }
+    }
+
+    @Test
+    fun aCompletedPreventiveIsClosedOnceAndRetainedOnSuccessOrLaterCommitFailure() = runBlocking {
+        seed(volume = false)
+        val expected = BackupPersistence(db).snapshot()
+        val imported = exported()
+        for (failCommit in listOf(false, true)) {
+            val sentinel = AccountRepository(db.accountDao(), clock).create(
+                AccountDetails("Estado A", AccountType.WALLET, Money(123), today),
+            )
+            val before = BackupPersistence(db).snapshot()
+            if (failCommit) withContext(Dispatchers.IO) {
+                db.openHelper.writableDatabase.execSQL(
+                    "CREATE TRIGGER prevent_commit BEFORE INSERT ON financial_transactions BEGIN SELECT RAISE(ABORT, 'test'); END",
+                )
+            }
+            val destination = FaultDocument()
+            val result = service().restore(imported, password(), destination)
+            assertEquals(1, destination.closes)
+            assertEquals(0, destination.deletes)
+            val preventive = decodeEncrypted(destination.bytes.toByteArray())
+            assertTrue("Completed preventive must contain state A",
+                preventive.data.tables.getValue("accounts").any { it.fields.text("id") == sentinel.toString() })
+            if (failCommit) {
+                assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, preventiveBackupCreated = true), result)
+                assertTrue("Commit rollback must retain state A", before == BackupPersistence(db).snapshot())
+            } else {
+                assertEquals(BackupResult.Success(RestoreReceipt(true, preventiveBackupCreated = true)), result)
+                assertTrue("Successful restore must load state B", expected == BackupPersistence(db).snapshot())
+            }
+        }
+    }
+
+    @Test
+    fun safProviderOpenFailureAttemptsDeleteOfTheExactSelectedUri() = runBlocking {
+        seed(volume = false)
+        val imported = exported()
+        val before = BackupPersistence(db).snapshot()
+        for (acceptsDelete in listOf(true, false)) {
+            var deletedUri: android.net.Uri? = null
+            var deleteCalls = 0
+            val provider = object : android.content.ContentProvider() {
+                override fun onCreate() = true
+                override fun getType(uri: android.net.Uri) = FLUXA_BACKUP_MIME
+                override fun query(uri: android.net.Uri, projection: Array<out String>?, selection: String?,
+                    selectionArgs: Array<out String>?, sortOrder: String?): android.database.Cursor? = null
+                override fun insert(uri: android.net.Uri, values: android.content.ContentValues?): android.net.Uri? = null
+                override fun update(uri: android.net.Uri, values: android.content.ContentValues?, selection: String?,
+                    selectionArgs: Array<out String>?) = 0
+                override fun delete(uri: android.net.Uri, selection: String?, selectionArgs: Array<out String>?): Int {
+                    deletedUri = uri
+                    deleteCalls++
+                    return if (acceptsDelete) 1 else 0
+                }
+                override fun openFile(uri: android.net.Uri, mode: String): android.os.ParcelFileDescriptor =
+                    throw java.io.FileNotFoundException("injected-provider-open")
+            }
+            val info = android.content.pm.ProviderInfo().apply {
+                authority = "com.fluxa.test.preventive"
+                exported = false
+            }
+            provider.attachInfo(context, info)
+            val resolver = android.content.ContentResolver.wrap(provider)
+            val uri = android.net.Uri.parse("content://com.fluxa.test.preventive/${UUID.randomUUID()}")
+            val adapter = BackupDocuments(resolver, service())
+            val expectedCleanup = if (acceptsDelete) BackupCleanup.DELETED else BackupCleanup.FAILED
+            assertEquals(BackupResult.Failure(BackupError.RESTORE_FAILED, cleanup = expectedCleanup),
+                adapter.restore(imported, password(), uri))
+            assertEquals(uri, deletedUri)
+            assertEquals(1, deleteCalls)
+            assertTrue("Provider failure must preserve Room", before == BackupPersistence(db).snapshot())
+        }
+    }
+
+    private class FaultDocument(
+        private val fault: String = "",
+        private val acceptsDelete: Boolean = true,
+        private val throwsOnDelete: Boolean = false,
+    ) : BackupDestination {
+        val bytes = ByteArrayOutputStream()
+        var closes = 0
+        var deletes = 0
+        override fun open(): OutputStream {
+            if (fault == "open") throw IOException("injected-open")
+            return object : OutputStream() {
+                override fun write(value: Int) = write(byteArrayOf(value.toByte()), 0, 1)
+                override fun write(source: ByteArray, offset: Int, length: Int) {
+                    val limit = when (fault) {
+                        "zero" -> 0
+                        "header" -> 52
+                        "ciphertext" -> 80
+                        else -> Int.MAX_VALUE
+                    }
+                    if (bytes.size().toLong() + length > limit) {
+                        bytes.write(source, offset, maxOf(0, limit - bytes.size()))
+                        throw IOException("injected-write")
+                    }
+                    bytes.write(source, offset, length)
+                }
+                override fun flush() {
+                    if (fault == "flush") throw IOException("injected-flush")
+                }
+                override fun close() {
+                    closes++
+                    if (fault == "close") throw IOException("injected-close")
+                }
+            }
+        }
+        override fun delete(): Boolean {
+            deletes++
+            if (throwsOnDelete) throw SecurityException("delete refused")
+            if (acceptsDelete) bytes.reset()
+            return acceptsDelete
         }
     }
 

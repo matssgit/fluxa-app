@@ -702,6 +702,9 @@
     <string name="backup_error_file_too_large">Este arquivo é maior do que o limite de um backup do Fluxa.</string>
     <string name="backup_error_open_failed">Não foi possível abrir o backup. Tente novamente.</string>
     <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados atuais não foram alterados.</string>
+    <string name="backup_error_not_fluxa">Este arquivo não é um backup válido do Fluxa.</string>
+    <string name="backup_error_crypto_unsupported">Este backup usa uma configuração de proteção que este aplicativo ainda não consegue abrir.</string>
+    <string name="backup_error_restore_cleanup_failed">Não foi possível restaurar o backup. Seus dados atuais não foram alterados. O arquivo preventivo pode estar incompleto e não pôde ser removido. Verifique o arquivo no local escolhido.</string>
     <string name="backup_error_conflict">Seus dados mudaram durante a restauração e nada foi substituído. Confirme novamente para tentar de novo.</string>
     <string name="backup_error_export_failed">Não foi possível criar o backup. Tente novamente.</string>
     <string name="backup_error_export_too_large">Seus dados excedem o tamanho máximo de um backup do Fluxa.</string>

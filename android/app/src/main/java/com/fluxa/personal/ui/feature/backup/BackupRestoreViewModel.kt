@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.fluxa.personal.R
 import com.fluxa.personal.backup.BackupError
+import com.fluxa.personal.backup.BackupCleanup
 import com.fluxa.personal.backup.BackupResult
 import com.fluxa.personal.backup.FLUXA_BACKUP_EXTENSION
 import com.fluxa.personal.backup.PreparedFluxaBackup
@@ -240,7 +241,10 @@ internal class BackupRestoreViewModel(
                     _state.value = BackupUiState.RestoreConfirm(current.fileName, current.createdAt, R.string.backup_error_conflict)
                 } else {
                     clearSecrets()
-                    _state.value = BackupUiState.RestoreError(R.string.backup_error_restore_failed)
+                    _state.value = BackupUiState.RestoreError(
+                        if (result.cleanup == BackupCleanup.FAILED) R.string.backup_error_restore_cleanup_failed
+                        else R.string.backup_error_restore_failed,
+                    )
                 }
             }
         }
@@ -308,10 +312,11 @@ internal class BackupRestoreViewModel(
             else -> R.string.backup_error_export_failed
         }
 
-        /** O contrato não distingue "não é um arquivo do Fluxa" de "envelope de versão futura" (`CRYPTO_UNSUPPORTED`). */
         @StringRes
         internal fun fileMessage(error: BackupError): Int = when (error) {
-            BackupError.VERSION_UNSUPPORTED -> R.string.backup_error_version
+            BackupError.VERSION_UNSUPPORTED, BackupError.CONTAINER_VERSION_UNSUPPORTED -> R.string.backup_error_version
+            BackupError.NOT_FLUXA -> R.string.backup_error_not_fluxa
+            BackupError.CRYPTO_UNSUPPORTED -> R.string.backup_error_crypto_unsupported
             BackupError.TOO_LARGE -> R.string.backup_error_file_too_large
             BackupError.DECRYPTION_FAILED -> R.string.backup_error_open_failed
             else -> R.string.backup_error_invalid_file

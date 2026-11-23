@@ -249,7 +249,8 @@ class BackupRestoreFlowTest {
         for (file in listOf(notFluxa, truncated)) {
             unlock(file, password, slow = false) // rejeitado no cabeçalho, sem KDF
             waitFor("backup-restore-error")
-            waitForText("Este arquivo não pôde ser validado como um backup válido do Fluxa.")
+            waitForText(if (file == notFluxa) "Este arquivo não é um backup válido do Fluxa."
+                else "Este arquivo não pôde ser validado como um backup válido do Fluxa.")
             tap("action-backup-error-back")
             waitFor("backup-security")
         }

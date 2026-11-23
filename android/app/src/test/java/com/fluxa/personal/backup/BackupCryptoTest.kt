@@ -62,7 +62,7 @@ class BackupCryptoTest {
         for (at in listOf(8, 9, 10)) {
             val changed = encoded.copyOf()
             changed[at] = 99
-            assertFailure(BackupError.CRYPTO_UNSUPPORTED) { decrypt(changed) }
+            assertFailure(if (at == 8) BackupError.CONTAINER_VERSION_UNSUPPORTED else BackupError.CRYPTO_UNSUPPORTED) { decrypt(changed) }
         }
         for (at in listOf(11, 16, 17, 18, 19)) {
             val changed = encoded.copyOf()
@@ -101,10 +101,10 @@ class BackupCryptoTest {
     fun truncatedAndTrailingDataAreRejected() {
         val encoded = encrypt(ByteArray(128))
         for (size in listOf(0, 4, 51, encoded.size - 1)) {
-            assertFailure(BackupError.CORRUPTED) { decrypt(encoded.copyOf(size)) }
+            assertFailure(if (size == 0) BackupError.NOT_FLUXA else BackupError.CORRUPTED) { decrypt(encoded.copyOf(size)) }
         }
         assertFailure(BackupError.CORRUPTED) { decrypt(encoded + 0.toByte()) }
-        assertFailure(BackupError.CRYPTO_UNSUPPORTED) { decrypt(ByteArray(BackupCrypto.HEADER_BYTES)) }
+        assertFailure(BackupError.NOT_FLUXA) { decrypt(ByteArray(BackupCrypto.HEADER_BYTES)) }
     }
 
     @Test
@@ -143,6 +143,15 @@ class BackupCryptoTest {
     @Test
     fun encryptedPayloadCannotExceedTheExistingArchiveBudget() {
         assertFailure(BackupError.TOO_LARGE) { encrypt(ByteArray(BackupCrypto.MAX_PAYLOAD_BYTES + 1)) }
+    }
+
+    @Test
+    fun distinguishesForeignFilesFutureContainersAndTruncatedRecognizedHeaders() {
+        assertFailure(BackupError.NOT_FLUXA) { decrypt("other file".toByteArray()) }
+        assertFailure(BackupError.NOT_FLUXA) { decrypt(byteArrayOf()) }
+        assertFailure(BackupError.CORRUPTED) { decrypt("FLUXA".toByteArray()) }
+        assertFailure(BackupError.CORRUPTED) { decrypt("FLUXAENC".toByteArray()) }
+        assertFailure(BackupError.CONTAINER_VERSION_UNSUPPORTED) { decrypt("FLUXAENC".toByteArray() + 2.toByte()) }
     }
 
     private fun encrypt(payload: ByteArray): ByteArray {

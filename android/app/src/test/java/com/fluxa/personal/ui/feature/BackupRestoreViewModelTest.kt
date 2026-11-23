@@ -327,7 +327,7 @@ class BackupRestoreViewModelTest {
 
     @Test
     fun invalidFileIsADefinitiveErrorWithoutRestore() = runTest(dispatcher) {
-        for (error in listOf(BackupError.CORRUPTED, BackupError.INVALID, BackupError.INTEGRITY_FAILED, BackupError.RELATION_INVALID, BackupError.CRYPTO_UNSUPPORTED)) {
+        for (error in listOf(BackupError.CORRUPTED, BackupError.INVALID, BackupError.INTEGRITY_FAILED, BackupError.RELATION_INVALID)) {
             vm.cancel()
             gateway.validateResult = BackupResult.Failure(error)
             openFileAndPassword()
@@ -340,11 +340,44 @@ class BackupRestoreViewModelTest {
 
     @Test
     fun unsupportedVersionHasItsOwnMessage() = runTest(dispatcher) {
-        gateway.validateResult = BackupResult.Failure(BackupError.VERSION_UNSUPPORTED)
+        for (error in listOf(BackupError.VERSION_UNSUPPORTED, BackupError.CONTAINER_VERSION_UNSUPPORTED)) {
+            vm.cancel()
+            gateway.validateResult = BackupResult.Failure(error)
+            openFileAndPassword()
+            advanceUntilIdle()
+            assertEquals(BackupUiState.RestoreError(R.string.backup_error_version), state)
+            assertTrue(gateway.restored.isEmpty())
+        }
+    }
+
+    @Test
+    fun foreignFileAndUnsupportedCryptoHaveDistinctMessages() = runTest(dispatcher) {
+        for ((error, message) in listOf(
+            BackupError.NOT_FLUXA to R.string.backup_error_not_fluxa,
+            BackupError.CRYPTO_UNSUPPORTED to R.string.backup_error_crypto_unsupported,
+        )) {
+            vm.cancel()
+            gateway.validateResult = BackupResult.Failure(error)
+            openFileAndPassword()
+            advanceUntilIdle()
+            assertEquals(BackupUiState.RestoreError(message), state)
+            assertTrue(gateway.restored.isEmpty())
+        }
+    }
+
+    @Test
+    fun failedPreventiveCleanupCanBeExplainedWithoutChangingTheOriginalRestoreError() = runTest(dispatcher) {
+        gateway.restoreResult = BackupResult.Failure(
+            BackupError.RESTORE_FAILED, cleanup = com.fluxa.personal.backup.BackupCleanup.FAILED,
+        )
         openFileAndPassword()
         advanceUntilIdle()
-        assertEquals(BackupUiState.RestoreError(R.string.backup_error_version), state)
-        assertTrue(gateway.restored.isEmpty())
+        vm.confirmRestore()
+        vm.onPreventiveDestination(preventive)
+        advanceUntilIdle()
+        assertEquals(BackupUiState.RestoreError(R.string.backup_error_restore_cleanup_failed), state)
+        assertFalse(vm.holdsPassword)
+        assertTrue(gateway.discarded.isEmpty())
     }
 
     @Test
