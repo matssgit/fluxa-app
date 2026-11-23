@@ -631,4 +631,78 @@
     <string name="safe_cards_note">O limite do cartão não é somado como dinheiro disponível; só as parcelas pendentes pesam.</string>
     <string name="safe_unavailable_overflow">Os valores são grandes demais para calcular o limite seguro com exatidão.</string>
     <string name="safe_unavailable_conflict">Há registros conflitantes nas obrigações. Revise os lançamentos para ver o limite seguro.</string>
+
+    <!-- Sprint 8-C: backup e restauração -->
+    <string name="more_backup">Backup e restauração</string>
+    <string name="backup_title">Backup e restauração</string>
+    <string name="backup_overline">Seus dados</string>
+    <string name="backup_export_title">Fazer backup</string>
+    <string name="backup_export_body">Salve uma cópia protegida dos seus dados financeiros.</string>
+    <string name="backup_restore_title">Restaurar backup</string>
+    <string name="backup_restore_body">Substitua os dados atuais usando um arquivo de backup do Fluxa.</string>
+    <string name="backup_file_type">Arquivo .fluxa</string>
+    <string name="backup_security_title">Protegido por senha</string>
+    <string name="backup_security_body">Seus backups são protegidos por senha e podem ser restaurados sem internet.</string>
+    <string name="backup_security_note">O Fluxa não armazena a senha do backup.</string>
+    <string name="backup_manual_note">O Fluxa não faz backups automáticos: você decide quando criar um e onde salvá-lo.</string>
+
+    <string name="backup_password_label">Senha</string>
+    <string name="backup_password_confirm_label">Confirmar senha</string>
+    <string name="backup_password_supporting">Mínimo de 8 caracteres. Espaços e acentos são aceitos.</string>
+    <string name="backup_password_show">Mostrar senha</string>
+    <string name="backup_password_hide">Ocultar senha</string>
+    <string name="backup_password_required">Informe uma senha.</string>
+    <string name="backup_password_too_short">Use pelo menos 8 caracteres.</string>
+    <string name="backup_password_encoding">A senha contém caracteres que não podem ser usados.</string>
+    <string name="backup_password_mismatch">As senhas não coincidem.</string>
+    <string name="backup_warning_title">Guarde essa senha com cuidado.</string>
+    <string name="backup_warning_body">O Fluxa não armazena nem consegue recuperar a senha do backup. Sem ela, o arquivo não poderá ser restaurado.</string>
+    <string name="backup_export_intro">Crie uma senha para proteger o arquivo. Ela será pedida para restaurar o backup.</string>
+    <string name="backup_export_action">Escolher onde salvar</string>
+    <string name="backup_export_destination_note">Em seguida, o Android abre o seletor para você escolher a pasta ou o serviço onde o arquivo .fluxa será salvo.</string>
+
+    <string name="backup_working_export">Protegendo seu backup…</string>
+    <string name="backup_working_unlock">Abrindo backup protegido…</string>
+    <string name="backup_working_restore">Restaurando seus dados…</string>
+    <string name="backup_working_export_body">Preparando e salvando o arquivo. Isso pode levar alguns segundos.</string>
+    <string name="backup_working_unlock_body">Verificando o backup. Isso pode levar alguns segundos.</string>
+    <string name="backup_working_restore_body">Criando o backup preventivo e substituindo os dados. Não feche o Fluxa.</string>
+
+    <string name="backup_export_success_title">Backup criado com sucesso.</string>
+    <string name="backup_export_success_file">Arquivo: %1$s</string>
+    <string name="backup_export_success_date">Criado em %1$s</string>
+    <string name="backup_export_success_note">Guarde o arquivo e a senha em lugares seguros. Os dois serão necessários para restaurar.</string>
+    <string name="backup_done">Concluir</string>
+
+    <string name="backup_restore_password_title">Senha do backup</string>
+    <string name="backup_restore_password_intro">Informe a senha usada quando este backup foi criado.</string>
+    <string name="backup_restore_file">Arquivo selecionado: %1$s</string>
+    <string name="backup_restore_file_unknown">Arquivo selecionado</string>
+    <string name="backup_restore_password_note">A senha não é armazenada. Ela é usada só para abrir este arquivo e proteger o backup preventivo.</string>
+    <string name="backup_continue">Continuar</string>
+    <string name="backup_choose_other">Escolher outro arquivo</string>
+
+    <string name="backup_confirm_title">Substituir dados atuais?</string>
+    <string name="backup_confirm_body">A restauração substituirá os dados atuais do Fluxa pelos dados deste backup.</string>
+    <string name="backup_confirm_preventive">Um backup preventivo será criado antes da substituição.</string>
+    <string name="backup_confirm_preventive_detail">Você escolherá onde salvá-lo. Ele usa a mesma senha deste backup.</string>
+    <string name="backup_confirm_created">Backup criado em %1$s</string>
+    <string name="backup_confirm_action">Restaurar backup</string>
+    <string name="backup_confirm_ready">Backup verificado</string>
+
+    <string name="backup_restore_success_title">Backup restaurado</string>
+    <string name="backup_restore_success_body">Seus dados foram restaurados com sucesso.</string>
+    <string name="backup_restore_settings_warning">Seus dados foram restaurados. Algumas preferências do aplicativo não puderam ser aplicadas.</string>
+    <string name="backup_go_home">Ir para o Início</string>
+
+    <string name="backup_error_title">Não foi possível restaurar</string>
+    <string name="backup_error_wrong_password">Não foi possível abrir o backup. Verifique a senha e tente novamente.</string>
+    <string name="backup_error_invalid_file">Este arquivo não pôde ser validado como um backup válido do Fluxa.</string>
+    <string name="backup_error_version">Este backup foi criado por uma versão do Fluxa que este aplicativo ainda não consegue restaurar.</string>
+    <string name="backup_error_file_too_large">Este arquivo é maior do que o limite de um backup do Fluxa.</string>
+    <string name="backup_error_open_failed">Não foi possível abrir o backup. Tente novamente.</string>
+    <string name="backup_error_restore_failed">Não foi possível restaurar o backup. Seus dados atuais não foram alterados.</string>
+    <string name="backup_error_conflict">Seus dados mudaram durante a restauração e nada foi substituído. Confirme novamente para tentar de novo.</string>
+    <string name="backup_error_export_failed">Não foi possível criar o backup. Tente novamente.</string>
+    <string name="backup_error_export_too_large">Seus dados excedem o tamanho máximo de um backup do Fluxa.</string>
 </resources>

@@ -61,6 +61,8 @@ internal fun FeatureScreen(
     modifier: Modifier = Modifier,
     overline: String? = null,
     bottomAction: (@Composable ColumnScope.() -> Unit)? = null,
+    /** Falso enquanto uma operação não pode ser interrompida (ex.: restauração em andamento). */
+    backEnabled: Boolean = true,
     content: LazyListScope.() -> Unit,
 ) {
     Column(
@@ -77,6 +79,7 @@ internal fun FeatureScreen(
                     icon = FluxaIcons.Back,
                     contentDescription = stringResource(R.string.action_back),
                     onClick = onBack,
+                    enabled = backEnabled,
                     modifier = Modifier.testTag("action-back"),
                 )
             },

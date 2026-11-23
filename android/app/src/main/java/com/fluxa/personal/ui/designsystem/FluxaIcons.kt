@@ -149,6 +149,28 @@ internal object FluxaIcons {
             moveTo(4.5f, 7.5f); lineTo(4.5f, 12f); lineTo(9f, 12f)
         }
     }
+    /** Cadeado: arquivo protegido por senha. */
+    val Lock: ImageVector by lazy {
+        outline("Lock") {
+            roundRect(5f, 10.5f, 19f, 20.5f, 2.5f)
+            moveTo(8f, 10.5f); lineTo(8f, 7.5f)
+            curveTo(8f, 5.29f, 9.79f, 3.5f, 12f, 3.5f)
+            curveTo(14.21f, 3.5f, 16f, 5.29f, 16f, 7.5f); lineTo(16f, 10.5f)
+            moveTo(12f, 14.5f); lineTo(12f, 16.5f)
+        }
+    }
+
+    /** Salvar uma cópia (bandeja com seta para baixo). */
+    val Download: ImageVector by lazy {
+        outline("Download") {
+            moveTo(12f, 4f); lineTo(12f, 14.5f)
+            moveTo(7.5f, 10f); lineTo(12f, 14.5f); lineTo(16.5f, 10f)
+            moveTo(4.5f, 15.5f); lineTo(4.5f, 18f)
+            curveTo(4.5f, 18.83f, 5.17f, 19.5f, 6f, 19.5f); lineTo(18f, 19.5f)
+            curveTo(18.83f, 19.5f, 19.5f, 18.83f, 19.5f, 18f); lineTo(19.5f, 15.5f)
+        }
+    }
+
     val Calendar: ImageVector by lazy {
         outline("Calendar") {
             roundRect(3.5f, 5f, 20.5f, 20f, 2.5f)

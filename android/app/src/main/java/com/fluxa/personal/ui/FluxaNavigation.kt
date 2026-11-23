@@ -84,6 +84,10 @@ import com.fluxa.personal.ui.feature.credit.RepositoryCreditSource
 import com.fluxa.personal.ui.feature.safe.RepositoryCashEventLabels
 import com.fluxa.personal.ui.feature.safe.RepositorySafeToSpendDataSource
 import com.fluxa.personal.ui.feature.safe.SafeRoutes
+import com.fluxa.personal.ui.feature.backup.BackupRestoreViewModel
+import com.fluxa.personal.ui.feature.backup.BackupRoutes
+import com.fluxa.personal.ui.feature.backup.BackupScreen
+import com.fluxa.personal.ui.feature.backup.RepositoryBackupGateway
 import com.fluxa.personal.ui.feature.safe.SafeToSpendDetailScreen
 import com.fluxa.personal.ui.feature.safe.SafeToSpendViewModel
 import com.fluxa.personal.ui.feature.subscriptions.RepositorySubscriptionDataSource
@@ -124,7 +128,7 @@ private enum class Destination(
 }
 
 @Composable
-internal fun FluxaNavigation() {
+internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
     val controller = rememberNavController()
     val entry by controller.currentBackStackEntryAsState()
     var showNewEntry by rememberSaveable { mutableStateOf(false) }
@@ -146,6 +150,7 @@ internal fun FluxaNavigation() {
     val goals = remember(app) { RepositoryGoalDataSource(app.goals) }
     val safeSource = remember(app) { RepositorySafeToSpendDataSource(app.safeToSpend) }
     val cashLabels = remember(app) { RepositoryCashEventLabels(subscriptions, credit) }
+    val backupGateway = remember(app) { RepositoryBackupGateway(app.backupDocuments, app.contentResolver) }
     val goToTab: (String) -> Unit = { route ->
         controller.navigate(route) {
             popUpTo(controller.graph.findStartDestination().id) { saveState = true }
@@ -370,6 +375,16 @@ internal fun FluxaNavigation() {
                         onOpenCategories = { controller.navigate(CategoryRoutes.LIST) },
                         onOpenSubscriptions = { controller.navigate(SubscriptionRoutes.LIST) },
                         onOpenGoals = { controller.navigate(GoalRoutes.LIST) },
+                        onOpenBackup = { controller.navigate(BackupRoutes.HOME) },
+                    )
+                }
+                // Sprint 8-C: backup e restauração (Mais → Backup e restauração)
+                composable(BackupRoutes.HOME) {
+                    BackupScreen(
+                        viewModel = viewModel(factory = BackupRestoreViewModel.factory(backupGateway)),
+                        onBack = { controller.popBackStack() },
+                        // Depois de restaurar, o shell inteiro é recriado: nenhuma tela segura estado anterior.
+                        onGoHome = onRestartShell,
                     )
                 }
                 // Sprint 6-B: metas e reservas
