@@ -56,6 +56,10 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+    // Biometric 1.1.0 otherwise selects Fragment 1.2.5, incompatible with Activity Result request codes.
+    implementation("androidx.fragment:fragment:1.6.2")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")

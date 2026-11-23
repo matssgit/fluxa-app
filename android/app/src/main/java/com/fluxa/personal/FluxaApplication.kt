@@ -1,6 +1,14 @@
 package com.fluxa.personal
 
 import android.app.Application
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.fluxa.personal.security.AndroidAuthenticationCapabilities
+import com.fluxa.personal.security.AndroidElapsedRealtimeClock
+import com.fluxa.personal.security.LocalSecurityManager
+import com.fluxa.personal.security.SecurityProcessLifecycle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import com.fluxa.personal.backup.FluxaBackupService
 import com.fluxa.personal.backup.BackupDocuments
 import com.fluxa.personal.core.preferences.LocalPreferences
@@ -14,6 +22,23 @@ import com.fluxa.personal.data.repository.TransactionRepository
 import com.fluxa.personal.data.repository.SubscriptionRepository
 
 internal class FluxaApplication : Application() {
+    internal val securityScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Main.immediate,
+    )
+    val security by lazy {
+        LocalSecurityManager(
+            preferences, AndroidAuthenticationCapabilities(this),
+            AndroidElapsedRealtimeClock, securityScope,
+        )
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        ProcessLifecycleOwner.get().lifecycle.addObserver(
+            SecurityProcessLifecycle(security),
+        )
+    }
+
     val database by lazy { FluxaDatabase.create(this) }
     val preferences by lazy { LocalPreferences(this) }
     val backups by lazy { FluxaBackupService(database, preferences, BuildConfig.VERSION_NAME) }

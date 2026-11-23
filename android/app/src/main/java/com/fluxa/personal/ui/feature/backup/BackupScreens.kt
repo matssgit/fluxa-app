@@ -57,6 +57,12 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.fluxa.personal.FluxaApplication
+import com.fluxa.personal.security.TrustedExternalActivity
 import com.fluxa.personal.R
 import kotlinx.coroutines.delay
 import com.fluxa.personal.backup.FLUXA_BACKUP_MIME
@@ -99,25 +105,46 @@ internal object SystemBackupPicker : BackupPicker {
 
     @Composable
     override fun rememberCreate(onResult: (DocumentRef?) -> Unit): (String) -> Unit {
+        val external = rememberTrustedBackupActivity()
         val callback by rememberUpdatedState(onResult)
         val launcher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(FLUXA_BACKUP_MIME)) { uri ->
+            external.finish()
             callback(uri?.let { DocumentRef(it.toString()) })
         }
-        return remember(launcher) {
-            { name -> try { launcher.launch(name) } catch (_: ActivityNotFoundException) { callback(null) } }
+        return remember(launcher, external) {
+            { name ->
+                try { if (!external.launch { launcher.launch(name) }) callback(null) }
+                catch (_: ActivityNotFoundException) { callback(null) }
+            }
         }
     }
 
     @Composable
     override fun rememberOpen(onResult: (DocumentRef?) -> Unit): () -> Unit {
+        val external = rememberTrustedBackupActivity()
         val callback by rememberUpdatedState(onResult)
         val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            external.finish()
             callback(uri?.let { DocumentRef(it.toString()) })
         }
-        return remember(launcher) {
-            { try { launcher.launch(openTypes) } catch (_: ActivityNotFoundException) { callback(null) } }
+        return remember(launcher, external) {
+            {
+                try { if (!external.launch { launcher.launch(openTypes) }) callback(null) }
+                catch (_: ActivityNotFoundException) { callback(null) }
+            }
         }
     }
+}
+
+@Composable
+private fun rememberTrustedBackupActivity(): TrustedExternalActivity {
+    val app = LocalContext.current.applicationContext as FluxaApplication
+    return viewModel(
+        key = "backup-trusted-external-activity",
+        factory = viewModelFactory {
+            initializer { TrustedExternalActivity(app.security) }
+        },
+    )
 }
 
 /**

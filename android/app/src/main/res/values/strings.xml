@@ -708,4 +708,13 @@
     <string name="backup_error_conflict">Seus dados mudaram durante a restauração e nada foi substituído. Confirme novamente para tentar de novo.</string>
     <string name="backup_error_export_failed">Não foi possível criar o backup. Tente novamente.</string>
     <string name="backup_error_export_too_large">Seus dados excedem o tamanho máximo de um backup do Fluxa.</string>
+    <string name="security_auth_title">Desbloquear Fluxa</string>
+    <string name="security_auth_subtitle">Use a biometria ou o bloqueio de tela do Android.</string>
+    <string name="security_initializing">Verificando proteção local…</string>
+    <string name="security_locked">Fluxa bloqueado</string>
+    <string name="security_unlock">Desbloquear</string>
+    <string name="security_not_configured">Configure um bloqueio de tela no Android para usar esta proteção.</string>
+    <string name="security_unavailable">A autenticação do Android está indisponível. Tente novamente.</string>
+    <string name="security_settings_failed">Não foi possível ler a proteção local. Tente novamente.</string>
+    <string name="security_retry">Tentar novamente</string>
 </resources>
