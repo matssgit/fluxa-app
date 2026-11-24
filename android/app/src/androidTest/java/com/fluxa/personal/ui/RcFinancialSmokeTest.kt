@@ -256,6 +256,7 @@ class RcFinancialSmokeTest {
             toTab("more")
             click("more-analytics")
             waitForTag("screen-analytics")
+            waitForTag("analytics-summary")
             inList("feature-list", "analytics-summary")
             waitForText("analytics-income", brl(150_000))
             waitForText("analytics-expense", brl(65_000))
