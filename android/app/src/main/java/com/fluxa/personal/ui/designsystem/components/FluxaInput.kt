@@ -95,7 +95,8 @@ internal fun FluxaInput(
                         .background(colors.surfaceSunken, shape)
                         .fluxaInnerShade(shape)
                         .border(borderWidth, borderColor, shape)
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                        // Com ícone clicável (48dp) à direita o campo continua com 56dp, igual aos demais.
+                        .padding(horizontal = 16.dp, vertical = if (trailing != null) 4.dp else 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {

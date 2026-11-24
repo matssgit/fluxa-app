@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -56,6 +57,7 @@ import com.fluxa.personal.ui.designsystem.components.FluxaChip
 import com.fluxa.personal.ui.designsystem.components.FluxaInput
 import com.fluxa.personal.ui.feature.catalog.categoryIconFor
 import com.fluxa.personal.ui.feature.catalog.visual
+import com.fluxa.personal.ui.feature.subscriptions.short
 import java.util.UUID
 
 internal object TransactionRoutes {
@@ -133,7 +135,7 @@ private fun EntryOption(
                 contentAlignment = Alignment.Center,
             ) {
                 if (icon != null) Icon(icon, contentDescription = null, tint = colors.expense, modifier = Modifier.size(22.dp))
-                else Text(sign, style = FluxaTheme.typography.title, color = if (income) colors.income else colors.expense)
+                else Text(sign, style = FluxaTheme.typography.title, color = if (income) colors.income else colors.expense, modifier = Modifier.clearAndSetSemantics {})
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
@@ -433,7 +435,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.managedPaymentItems(
             Spacer(Modifier.height(8.dp))
             ManagedLine(stringResource(R.string.managed_field_description), state.description)
             ManagedLine(stringResource(R.string.managed_field_account), state.managedAccount?.details?.name.orEmpty())
-            ManagedLine(stringResource(R.string.managed_field_date), state.occurredOn.format(com.fluxa.personal.ui.common.BrazilDate))
+            ManagedLine(stringResource(R.string.managed_field_date), state.occurredOn.short())
             ManagedLine(stringResource(R.string.managed_field_category), state.managedCategory?.details?.name.orEmpty())
             ManagedLine(
                 stringResource(R.string.managed_payment_origin_label),

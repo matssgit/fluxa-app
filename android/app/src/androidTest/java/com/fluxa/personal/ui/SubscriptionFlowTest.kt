@@ -139,7 +139,7 @@ class SubscriptionFlowTest {
         val before = balance()
         ActivityScenario.launch(MainActivity::class.java).use {
             openSubscriptions()
-            tap("feature-list", "action-new-subscription")
+            compose.onNodeWithTag("action-new-subscription").performClick()
             waitForTag("screen-subscription-form")
             typeInto("field-subscription-name", "Música")
             typeInto("field-subscription-amount", "21,90")

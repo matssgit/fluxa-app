@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,9 +92,12 @@ internal fun FluxaNavigationBar(
     modifier: Modifier = Modifier,
 ) {
     val half = items.size / 2
+    val fade = FluxaTheme.colors.background
     Box(
         modifier = modifier
             .fillMaxWidth()
+            // Esmaece o conteúdo que passa por baixo da barra flutuante; não intercepta toques.
+            .background(Brush.verticalGradient(0f to fade.copy(alpha = 0f), 0.4f to fade, 1f to fade))
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp)),
         contentAlignment = Alignment.BottomCenter,

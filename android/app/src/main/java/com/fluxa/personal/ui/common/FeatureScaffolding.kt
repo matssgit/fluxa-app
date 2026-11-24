@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -155,9 +156,9 @@ internal fun EmptyStateCard(title: String, body: String, icon: ImageVector, modi
     }
 }
 
-/** Pílula de estado com ícone + texto. */
+/** Pílula de estado com ícone + texto. [spoken] substitui o texto no TalkBack ("Situação: Paga"), sem anunciar duas vezes. */
 @Composable
-internal fun StatePill(text: String, icon: ImageVector?, modifier: Modifier = Modifier) {
+internal fun StatePill(text: String, icon: ImageVector?, modifier: Modifier = Modifier, spoken: String? = null) {
     val colors = FluxaTheme.colors
     Row(
         modifier = modifier
@@ -168,7 +169,10 @@ internal fun StatePill(text: String, icon: ImageVector?, modifier: Modifier = Mo
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (icon != null) Icon(icon, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(14.dp))
-        Text(text, style = FluxaTheme.typography.caption, color = colors.textSecondary)
+        Text(
+            text, style = FluxaTheme.typography.caption, color = colors.textSecondary,
+            modifier = if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier,
+        )
     }
 }
 
@@ -191,7 +195,7 @@ internal fun SwitchRow(
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(end = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, style = FluxaTheme.typography.label, color = colors.textPrimary)
             if (supporting != null) Text(supporting, style = FluxaTheme.typography.caption, color = colors.textMuted)
         }
@@ -210,7 +214,7 @@ internal fun SwitchRow(
     }
 }
 
-/** Confirmação de ação destrutiva usando o padrão único de sheet. */
+/** Confirmação usando o padrão único de sheet; [destructive] falso para ações reversíveis (pausar, retomar, concluir). */
 @Composable
 internal fun ConfirmArchiveSheet(
     title: String,
@@ -220,12 +224,14 @@ internal fun ConfirmArchiveSheet(
     onDismiss: () -> Unit,
     dismissLabel: String = stringResource(R.string.action_cancel),
     confirmIcon: ImageVector = FluxaIcons.Archive,
+    destructive: Boolean = true,
     /**
      * Botões empilhados em largura total (padrão). Lado a lado, rótulos como "Manter compra"/"Cancelar compra"
      * ficavam ilegíveis em 320dp com fonte 1,3 (verificado no emulador).
      */
     stacked: Boolean = true,
 ) {
+    val confirmVariant = if (destructive) FluxaButtonVariant.Destructive else FluxaButtonVariant.Primary
     com.fluxa.personal.ui.designsystem.components.FluxaBottomSheet(
         title = title,
         onDismissRequest = onDismiss,
@@ -240,7 +246,7 @@ internal fun ConfirmArchiveSheet(
                 FluxaButton(
                     text = confirmLabel,
                     onClick = onConfirm,
-                    variant = FluxaButtonVariant.Destructive,
+                    variant = confirmVariant,
                     leadingIcon = confirmIcon,
                     modifier = Modifier.weight(1f).testTag("action-confirm-archive"),
                 )
@@ -252,7 +258,8 @@ internal fun ConfirmArchiveSheet(
             FluxaButton(
                 text = confirmLabel,
                 onClick = onConfirm,
-                variant = FluxaButtonVariant.Destructive,
+                variant = confirmVariant,
+                size = com.fluxa.personal.ui.designsystem.components.FluxaButtonSize.Large,
                 leadingIcon = confirmIcon,
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp).testTag("action-confirm-archive"),
             )

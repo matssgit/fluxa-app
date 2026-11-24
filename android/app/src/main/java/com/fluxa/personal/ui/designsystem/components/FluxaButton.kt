@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -135,7 +136,8 @@ internal fun FluxaButton(
                 text = text,
                 color = style.content,
                 style = if (size == FluxaButtonSize.Large) FluxaTheme.typography.bodyStrong else FluxaTheme.typography.label,
-                maxLines = 1,
+                maxLines = 2, // com fonte ampliada o rótulo quebra em vez de ser cortado
+                textAlign = TextAlign.Center,
                 overflow = TextOverflow.Ellipsis,
             )
         }

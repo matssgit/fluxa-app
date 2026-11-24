@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -47,6 +48,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -55,7 +57,6 @@ import com.fluxa.personal.R
 import com.fluxa.personal.domain.model.CreditCardSummary
 import com.fluxa.personal.domain.model.Installment
 import com.fluxa.personal.domain.model.InstallmentStatus
-import com.fluxa.personal.ui.common.BrazilDate
 import com.fluxa.personal.ui.common.ConfirmArchiveSheet
 import com.fluxa.personal.ui.common.DateField
 import com.fluxa.personal.ui.common.EmptyStateCard
@@ -66,6 +67,7 @@ import com.fluxa.personal.ui.common.FieldLabel
 import com.fluxa.personal.ui.common.FluxaDatePicker
 import com.fluxa.personal.ui.common.LoadingBlock
 import com.fluxa.personal.ui.common.StatePill
+import com.fluxa.personal.ui.common.isNarrowForText
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
 import com.fluxa.personal.ui.designsystem.components.FluxaAmount
@@ -81,6 +83,8 @@ import com.fluxa.personal.ui.feature.cash.TabScreen
 import com.fluxa.personal.ui.feature.catalog.CategoryColors
 import com.fluxa.personal.ui.feature.catalog.categoryColorFor
 import com.fluxa.personal.ui.feature.catalog.categoryIconFor
+import com.fluxa.personal.ui.feature.subscriptions.short
+import com.fluxa.personal.ui.feature.subscriptions.spoken
 import java.util.UUID
 
 internal object CreditRoutes {
@@ -275,21 +279,33 @@ internal fun CardDetailScreen(
                 item { Text(stringResource(R.string.card_limit_explain), style = FluxaTheme.typography.caption, color = FluxaTheme.colors.textMuted) }
                 if (archived) item { StatePill(stringResource(R.string.card_archived_note), FluxaIcons.Archive) }
                 item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!archived) {
-                            FluxaButton(
-                                text = stringResource(R.string.new_purchase),
-                                onClick = { onNewPurchase(cardId) },
-                                leadingIcon = FluxaIcons.Plus,
-                                modifier = Modifier.weight(1f).testTag("action-card-new-purchase"),
-                            )
-                        }
+                    val newPurchase: @Composable (Modifier) -> Unit = { m ->
+                        FluxaButton(
+                            text = stringResource(R.string.new_purchase),
+                            onClick = { onNewPurchase(cardId) },
+                            leadingIcon = FluxaIcons.Plus,
+                            modifier = m.testTag("action-card-new-purchase"),
+                        )
+                    }
+                    val edit: @Composable (Modifier) -> Unit = { m ->
                         FluxaButton(
                             text = stringResource(R.string.card_edit),
                             onClick = { onEdit(cardId) },
                             variant = FluxaButtonVariant.Secondary,
-                            modifier = Modifier.weight(1f).testTag("action-edit-card"),
+                            modifier = m.testTag("action-edit-card"),
                         )
+                    }
+                    // Lado a lado só quando os dois rótulos cabem inteiros.
+                    if (isNarrowForText(340)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!archived) newPurchase(Modifier.fillMaxWidth())
+                            edit(Modifier.fillMaxWidth())
+                        }
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (!archived) newPurchase(Modifier.weight(1f))
+                            edit(Modifier.weight(1f))
+                        }
                     }
                 }
                 item { FluxaSectionHeader(title = stringResource(R.string.card_detail_upcoming)) }
@@ -334,14 +350,22 @@ internal fun PurchaseRow(item: PurchaseItem, onClick: () -> Unit) {
     val type = FluxaTheme.typography
     val details = item.purchase.details
     val cancelled = item.purchase.cancelledAt != null
-    val meta = listOfNotNull(details.merchant, item.category?.details?.name, details.purchaseDate.format(BrazilDate)).joinToString(" · ")
+    val meta = listOfNotNull(details.merchant, item.category?.details?.name, details.purchaseDate.short()).joinToString(" · ")
     val statusText = stringResource(if (cancelled) R.string.purchase_status_cancelled else R.string.purchase_status_active)
+    val narrow = isNarrowForText()
+    val total: @Composable () -> Unit = {
+        FluxaAmount(
+            amount = details.total,
+            color = if (cancelled) colors.textMuted else colors.textPrimary,
+            style = type.amount.copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
+        )
+    }
     FluxaCard(
         modifier = Modifier.fillMaxWidth().testTag("purchase-${details.title}"),
         onClick = onClick,
         contentPadding = PaddingValues(16.dp),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.semantics { stateDescription = statusText }) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.semantics { if (!cancelled) stateDescription = statusText }) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -356,17 +380,19 @@ internal fun PurchaseRow(item: PurchaseItem, onClick: () -> Unit) {
                 Text(meta, style = type.caption, color = colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(pluralStringResource(R.plurals.purchase_installments_count, details.installmentCount, details.installmentCount), style = type.caption, color = colors.textMuted)
                 if (cancelled) StatePill(stringResource(R.string.purchase_status_cancelled), FluxaIcons.Close, modifier = Modifier.padding(top = 4.dp))
+                if (narrow) total()
             }
-            FluxaAmount(
-                amount = details.total,
-                color = if (cancelled) colors.textMuted else colors.textPrimary,
-                style = type.amount.copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
-            )
+            if (!narrow) total()
         }
     }
 }
 
-/** Parcela persistida: número/total, valor, vencimento e estado (texto + ícone, não só cor). */
+/**
+ * Parcela persistida: número/total, valor, vencimento e estado (texto + ícone, não só cor).
+ * Título e valor dividem a primeira linha; vencimento e estado usam a largura toda (numa coluna estreita o estado
+ * quebrava letra a letra em 320dp com fonte 1,3).
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun InstallmentRow(installment: Installment, count: Int, title: String? = null, onClick: (() -> Unit)? = null) {
     val colors = FluxaTheme.colors
@@ -382,33 +408,47 @@ internal fun InstallmentRow(installment: Installment, count: Int, title: String?
         InstallmentStatus.CANCELLED -> FluxaIcons.Close
     }
     val cancelled = installment.status == InstallmentStatus.CANCELLED
+    val narrow = isNarrowForText()
+    val dueText = stringResource(R.string.installment_due, installment.dueDate.short())
+    val dueSpoken = stringResource(R.string.installment_due, installment.dueDate.spoken())
+    val value: @Composable () -> Unit = {
+        FluxaAmount(
+            amount = installment.amount,
+            color = if (cancelled) colors.textMuted else colors.textPrimary,
+            style = type.amount.copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
+        )
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClickLabel = stringResource(R.string.installment_open), onClick = onClick) else Modifier)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 10.dp)
-            .semantics(mergeDescendants = true) { stateDescription = status }
+            .semantics(mergeDescendants = true) {}
             .testTag("installment-${title ?: ""}-${installment.number}"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            stringResource(R.string.installment_number, installment.number, count),
-            style = type.label,
-            color = colors.onBrandTonal,
-            modifier = Modifier.background(colors.brandTonal, FluxaTheme.shapes.pill).padding(horizontal = 10.dp, vertical = 4.dp),
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            if (title != null) Text(title, style = type.bodyStrong, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(stringResource(R.string.installment_due, installment.dueDate.format(BrazilDate)), style = type.caption, color = colors.textSecondary)
-            StatePill(status, icon, modifier = Modifier.padding(top = 4.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    stringResource(R.string.installment_number, installment.number, count),
+                    style = type.label,
+                    color = colors.onBrandTonal,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier.background(colors.brandTonal, FluxaTheme.shapes.pill).widthIn(min = 64.dp).padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+                if (title != null) Text(title, style = type.bodyStrong, color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                else Spacer(Modifier.weight(1f))
+                if (!narrow) value()
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(dueText, style = type.caption, color = colors.textSecondary, modifier = Modifier.align(Alignment.CenterVertically).semantics { contentDescription = dueSpoken })
+                StatePill(status, icon)
+            }
+            if (narrow) value()
         }
-        FluxaAmount(
-            amount = installment.amount,
-            color = if (cancelled) colors.textMuted else colors.textPrimary,
-            style = type.amount.copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
-        )
         if (onClick != null) Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
     }
 }
@@ -721,6 +761,7 @@ internal fun PurchaseDetailScreen(
                     }
                 }
                 item {
+                    val purchasedOn = stringResource(R.string.purchase_meta_date, d.purchaseDate.spoken())
                     FluxaCard(modifier = Modifier.fillMaxWidth().testTag("purchase-summary")) {
                         Text(stringResource(R.string.purchase_field_total).uppercase(), style = type.overline, color = colors.textMuted)
                         FluxaAmount(
@@ -731,17 +772,21 @@ internal fun PurchaseDetailScreen(
                             ),
                             color = if (state.isCancelled) colors.textMuted else colors.textPrimary,
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Text(pluralStringResource(R.plurals.purchase_installments_count, d.installmentCount, d.installmentCount), style = type.label, color = colors.textSecondary)
-                        Text(listOfNotNull(d.merchant, state.category?.details?.name).joinToString(" · "), style = type.body, color = colors.textSecondary)
-                        Text(stringResource(R.string.purchase_meta_date, d.purchaseDate.format(BrazilDate)), style = type.caption, color = colors.textMuted)
-                        state.card?.let { Text(it.card.details.name, style = type.caption, color = colors.textMuted) }
-                        d.notes?.let { Text(it, style = type.body, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp)) }
                         StatePill(
                             stringResource(if (state.isCancelled) R.string.purchase_status_cancelled else R.string.purchase_status_active),
                             if (state.isCancelled) FluxaIcons.Close else FluxaIcons.Check,
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
                         )
+                        Text(pluralStringResource(R.plurals.purchase_installments_count, d.installmentCount, d.installmentCount), style = type.bodyStrong, color = colors.textPrimary)
+                        listOfNotNull(d.merchant, state.category?.details?.name).takeIf { it.isNotEmpty() }?.let {
+                            Text(it.joinToString(" · "), style = type.label, color = colors.textSecondary)
+                        }
+                        Text(
+                            stringResource(R.string.purchase_meta_date, d.purchaseDate.short()), style = type.label, color = colors.textSecondary,
+                            modifier = Modifier.semantics { contentDescription = purchasedOn },
+                        )
+                        state.card?.let { Text(it.card.details.name, style = type.label, color = colors.textSecondary) }
+                        d.notes?.let { Text(it, style = type.body, color = colors.textSecondary, modifier = Modifier.padding(top = 8.dp)) }
                     }
                 }
                 // Compra gerada pela cobrança de uma assinatura: indica a origem e leva até ela.

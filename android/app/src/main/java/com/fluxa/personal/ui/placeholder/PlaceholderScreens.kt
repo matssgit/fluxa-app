@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.fluxa.personal.R
 import com.fluxa.personal.ui.designsystem.FluxaIcons
@@ -139,13 +138,14 @@ internal fun MorePlaceholder(
 private fun MoreRow(label: String, icon: ImageVector, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val colors = FluxaTheme.colors
     val soon = stringResource(R.string.coming_soon)
+    val narrow = com.fluxa.personal.ui.common.isNarrowForText()
     Row(
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .semantics(mergeDescendants = true) { if (onClick == null) stateDescription = soon },
+            .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
@@ -157,18 +157,25 @@ private fun MoreRow(label: String, icon: ImageVector, onClick: (() -> Unit)?, mo
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
+            // Com fonte ampliada o selo vai para baixo do rótulo (ao lado, "Configurações" quebrava no meio).
+            if (onClick == null && narrow) SoonTag(soon, Modifier.padding(top = 4.dp))
         }
         if (onClick != null) {
             Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
-        } else {
-            Text(
-                soon,
-                style = FluxaTheme.typography.caption,
-                color = colors.textMuted,
-                modifier = Modifier
-                    .background(colors.surfaceSunken, FluxaTheme.shapes.pill)
-                    .padding(horizontal = 10.dp, vertical = 4.dp),
-            )
+        } else if (!narrow) {
+            SoonTag(soon)
         }
     }
+}
+
+@Composable
+private fun SoonTag(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = FluxaTheme.typography.caption,
+        color = FluxaTheme.colors.textMuted,
+        modifier = modifier
+            .background(FluxaTheme.colors.surfaceSunken, FluxaTheme.shapes.pill)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+    )
 }

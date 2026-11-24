@@ -42,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -63,6 +64,7 @@ import com.fluxa.personal.domain.rules.CalculatedBalance
 import com.fluxa.personal.ui.common.BalanceAmount
 import com.fluxa.personal.ui.common.NegativeAvailableAlert
 import com.fluxa.personal.ui.common.ReserveLine
+import com.fluxa.personal.ui.common.isNarrowForText
 import com.fluxa.personal.ui.common.isNegative
 import com.fluxa.personal.ui.common.ConfirmArchiveSheet
 import com.fluxa.personal.ui.common.DateField
@@ -132,7 +134,7 @@ internal fun GoalStatusPill(status: GoalStatus, modifier: Modifier = Modifier) {
         GoalStatus.ARCHIVED -> stringResource(R.string.goal_status_archived) to FluxaIcons.Archive
     }
     val described = stringResource(R.string.goal_status_described, label)
-    StatePill(label, icon, modifier = modifier.semantics { stateDescription = described })
+    StatePill(label, icon, modifier = modifier, spoken = described)
 }
 
 // endregion
@@ -147,13 +149,13 @@ internal fun GoalsScreen(viewModel: GoalsViewModel, onBack: () -> Unit, onNew: (
         overline = stringResource(R.string.goals_overline),
         onBack = onBack,
         modifier = Modifier.testTag("screen-goals"),
-    ) {
-        item {
+        bottomAction = {
             FluxaButton(
                 text = stringResource(R.string.goals_new), onClick = onNew, leadingIcon = FluxaIcons.Plus,
-                modifier = Modifier.fillMaxWidth().testTag("action-new-goal"),
+                size = FluxaButtonSize.Large, modifier = Modifier.fillMaxWidth().testTag("action-new-goal"),
             )
-        }
+        },
+    ) {
         when {
             state.isLoading -> item { LoadingBlock() }
             state.errorMessage != null -> item { ErrorBanner(stringResource(state.errorMessage!!), onDismiss = null) }
@@ -211,7 +213,8 @@ internal fun GoalCard(summary: GoalSummary, onClick: () -> Unit) {
         RemainingLine(summary)
         Text(stringResource(R.string.goal_account, summary.account.details.name), style = type.caption, color = colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
         g.details.targetDate?.let {
-            Text(stringResource(R.string.goal_target_date, it.short()), style = type.caption, color = colors.textSecondary, modifier = Modifier.semantics { stateDescription = it.spoken() })
+            val targetSpoken = stringResource(R.string.goal_target_date, it.spoken())
+            Text(stringResource(R.string.goal_target_date, it.short()), style = type.caption, color = colors.textSecondary, modifier = Modifier.semantics { contentDescription = targetSpoken })
         }
         if (g.status != GoalStatus.ACTIVE) GoalStatusPill(g.status, modifier = Modifier.padding(top = 8.dp))
     }
@@ -370,7 +373,8 @@ internal fun GoalDetailScreen(
     val colors = FluxaTheme.colors
     val type = FluxaTheme.typography
     val hidden = LocalAmountsHidden.current
-    val hiddenAmount = stringResource(R.string.feedback_goal_amount_hidden)
+    val allocatedHidden = stringResource(R.string.feedback_goal_allocated_hidden)
+    val releasedHidden = stringResource(R.string.feedback_goal_released_hidden)
     val allocatedTemplate = stringResource(R.string.feedback_goal_allocated, "%s")
     val releasedTemplate = stringResource(R.string.feedback_goal_released, "%s")
 
@@ -386,9 +390,13 @@ internal fun GoalDetailScreen(
         if (move.completedCount > lastMove) {
             lastMove = move.completedCount
             showSheet = false
-            // "R$ X foram reservados…" com o valor gravado pelo contrato; respeita a ocultação de valores.
-            val amount = move.lastAmount?.let { if (hidden) hiddenAmount else FluxaMoneyFormat.format(it) } ?: hiddenAmount
-            onFeedbackText((if (move.lastMode == MovementMode.Release) releasedTemplate else allocatedTemplate).format(amount))
+            // "R$ X foram reservados…" com o valor gravado pelo contrato; com valores ocultos, uma frase sem valor.
+            val release = move.lastMode == MovementMode.Release
+            val amount = move.lastAmount?.takeIf { !hidden }?.let { FluxaMoneyFormat.format(it) }
+            onFeedbackText(
+                if (amount == null) (if (release) releasedHidden else allocatedHidden)
+                else (if (release) releasedTemplate else allocatedTemplate).format(amount),
+            )
         }
     }
 
@@ -426,7 +434,7 @@ internal fun GoalDetailScreen(
                 if (state.canRelease) item {
                     FluxaButton(
                         text = stringResource(R.string.goal_action_release), onClick = { allocation.start(MovementMode.Release); showSheet = true },
-                        variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Restore, modifier = Modifier.fillMaxWidth().testTag("action-release"),
+                        variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Minus, modifier = Modifier.fillMaxWidth().testTag("action-release"),
                     )
                 }
                 item { FluxaSectionHeader(title = stringResource(R.string.goal_history)) }
@@ -457,6 +465,7 @@ internal fun GoalDetailScreen(
                         FluxaButton(
                             text = stringResource(R.string.goal_action_complete), onClick = { confirm = GoalAction.Complete },
                             variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Check, loading = busy && state.lastAction == GoalAction.Complete,
+                            enabled = s.remainingAmount.cents <= 0,
                             modifier = Modifier.fillMaxWidth().testTag("action-complete-goal"),
                         )
                     }
@@ -482,6 +491,7 @@ internal fun GoalDetailScreen(
             body = stringResource(if (action == GoalAction.Complete) R.string.goal_complete_body else R.string.goal_archive_body),
             confirmLabel = stringResource(if (action == GoalAction.Complete) R.string.goal_action_complete else R.string.goal_action_archive),
             dismissLabel = stringResource(R.string.goal_keep),
+            destructive = action == GoalAction.Archive,
             confirmIcon = if (action == GoalAction.Complete) FluxaIcons.Check else FluxaIcons.Archive,
             onConfirm = { confirm = null; if (action == GoalAction.Complete) viewModel.complete() else viewModel.archive() },
             onDismiss = { confirm = null },
@@ -546,23 +556,28 @@ private fun MovementRow(type: GoalMovementType, amount: Money, date: String, spo
     val label = stringResource(if (allocate) R.string.goal_movement_allocate else R.string.goal_movement_release)
     Row(
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp, vertical = 10.dp)
-            .semantics(mergeDescendants = true) { contentDescription = "$label, $spokenDate" }
+            .semantics(mergeDescendants = true) {}
             .testTag("goal-movement-$label-$date"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(36.dp).background(if (allocate) colors.brandTonal else colors.surfaceSunken, FluxaTheme.shapes.pill), contentAlignment = Alignment.Center) {
-            Icon(if (allocate) FluxaIcons.Plus else FluxaIcons.Restore, null, tint = if (allocate) colors.onBrandTonal else colors.textSecondary, modifier = Modifier.size(18.dp))
-        }
-        Column(Modifier.weight(1f)) {
-            Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
-            Text(date, style = FluxaTheme.typography.caption, color = colors.textSecondary)
+            Icon(if (allocate) FluxaIcons.Plus else FluxaIcons.Minus, null, tint = if (allocate) colors.onBrandTonal else colors.textSecondary, modifier = Modifier.size(18.dp))
         }
         // Sinal = movimento da reserva (não receita/despesa).
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(if (allocate) "+ " else "− ", style = FluxaTheme.typography.amount, color = colors.textPrimary)
-            FluxaAmount(amount = amount, style = FluxaTheme.typography.amount, color = colors.textPrimary)
+        val value: @Composable () -> Unit = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(if (allocate) "+" else "−", style = FluxaTheme.typography.amount, color = colors.textPrimary, modifier = Modifier.clearAndSetSemantics {})
+                FluxaAmount(amount = amount, style = FluxaTheme.typography.amount, color = colors.textPrimary)
+            }
         }
+        val narrow = isNarrowForText()
+        Column(Modifier.weight(1f)) {
+            Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
+            Text(date, style = FluxaTheme.typography.caption, color = colors.textSecondary, modifier = Modifier.semantics { contentDescription = spokenDate })
+            if (narrow) value()
+        }
+        if (!narrow) value()
     }
 }
 

@@ -1,8 +1,12 @@
 package com.fluxa.personal.ui.feature.cash
 
 import androidx.compose.foundation.background
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
+import com.fluxa.personal.ui.common.isNarrowForText
 import com.fluxa.personal.ui.designsystem.components.FluxaAmount
 import com.fluxa.personal.ui.common.isNonZero
 import com.fluxa.personal.ui.common.isNegative
@@ -61,6 +65,7 @@ import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
 import com.fluxa.personal.ui.designsystem.LocalAmountsHidden
 import com.fluxa.personal.ui.designsystem.components.FluxaButton
+import com.fluxa.personal.ui.designsystem.components.FluxaButtonSize
 import com.fluxa.personal.ui.designsystem.components.FluxaButtonVariant
 import com.fluxa.personal.ui.designsystem.components.FluxaCard
 import com.fluxa.personal.ui.designsystem.components.FluxaChip
@@ -150,13 +155,16 @@ internal fun AvailableBalanceCard(
             Text(stringResource(R.string.reserve_available_explain), style = FluxaTheme.typography.caption, color = colors.onSurfaceInverseMuted, modifier = Modifier.padding(top = 4.dp))
         }
         if (available.isNegative) {
+            // Só cita reservas quando elas existem; sem reservas o disponível negativo vem do próprio saldo.
+            val hasReserves = reserves != null && reserves.reserved.isNonZero
             com.fluxa.personal.ui.common.NegativeAvailableAlert(
-                stringResource(R.string.reserve_negative_alert_total), onInverse = true, modifier = Modifier.padding(top = 12.dp),
+                stringResource(if (hasReserves) R.string.reserve_negative_alert_total else R.string.available_negative_alert), onInverse = true, modifier = Modifier.padding(top = 12.dp),
             )
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CashScreen(
     viewModel: CashViewModel,
@@ -167,7 +175,7 @@ internal fun CashScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val today = FinancialCalendar().today()
-    TabScreen(route = "cash", title = stringResource(R.string.cash), onToggleAmounts = onToggleAmounts) {
+    TabScreen(route = "cash", title = stringResource(R.string.cash), overline = stringResource(R.string.cash_overline), onToggleAmounts = onToggleAmounts) {
         if (state.isLoading) {
             item { LoadingBlock() }
             return@TabScreen
@@ -182,18 +190,19 @@ internal fun CashScreen(
                 )
             }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FluxaButton(
                         text = stringResource(R.string.transaction_create_account),
                         onClick = onCreateAccount,
+                        size = FluxaButtonSize.Large,
                         leadingIcon = FluxaIcons.Plus,
-                        modifier = Modifier.testTag("action-create-account"),
+                        modifier = Modifier.fillMaxWidth().testTag("action-create-account"),
                     )
                     FluxaButton(
-                        text = stringResource(R.string.cash_manage_accounts),
+                        text = stringResource(R.string.cash_manage_accounts_full),
                         onClick = onManageAccounts,
                         variant = FluxaButtonVariant.Secondary,
-                        modifier = Modifier.testTag("action-manage-accounts"),
+                        modifier = Modifier.fillMaxWidth().testTag("action-manage-accounts"),
                     )
                 }
             }
@@ -211,7 +220,9 @@ internal fun CashScreen(
         }
         item {
             Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).selectableGroup(),
+                // Sangra até a borda (o recorte no meio da margem parecia erro) e iguala a altura dos cartões do carrossel.
+                modifier = Modifier.bleedHorizontal(16.dp).fillMaxWidth().horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp).height(IntrinsicSize.Max).selectableGroup(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 state.accounts.forEach { item ->
@@ -228,19 +239,20 @@ internal fun CashScreen(
 
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.Bottom) {
+                // A contagem vai para baixo do título quando não cabe ao lado (fonte ampliada).
+                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
                         stringResource(R.string.cash_history_title),
                         style = FluxaTheme.typography.title,
                         color = FluxaTheme.colors.textPrimary,
-                        modifier = Modifier.weight(1f).semantics { heading() },
+                        modifier = Modifier.semantics { heading() },
                     )
                     Text(
                         if (state.hasMore) pluralStringResource(R.plurals.cash_entries_more, state.entryCount, state.entryCount)
                         else pluralStringResource(R.plurals.cash_entries, state.entryCount, state.entryCount),
                         style = FluxaTheme.typography.caption,
                         color = FluxaTheme.colors.textSecondary,
-                        modifier = Modifier.testTag("history-count"),
+                        modifier = Modifier.align(Alignment.Bottom).testTag("history-count"),
                     )
                 }
                 FilterRow {
@@ -304,7 +316,8 @@ internal fun CashScreen(
 @Composable
 private fun FilterRow(content: @Composable () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).selectableGroup(),
+        modifier = Modifier.bleedHorizontal(16.dp).fillMaxWidth().horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) { content() }
 }
@@ -316,6 +329,7 @@ private fun AccountBalanceTile(item: AccountBalanceItem, selected: Boolean, onCl
     FluxaCard(
         modifier = Modifier
             .widthIn(min = 168.dp, max = 220.dp)
+            .fillMaxHeight()
             .then(if (selected) Modifier.border(2.dp, colors.brand, FluxaTheme.shapes.large) else Modifier)
             .testTag("balance-${item.account.details.name}"),
         onClick = onClick,
@@ -334,9 +348,10 @@ private fun AccountBalanceTile(item: AccountBalanceItem, selected: Boolean, onCl
         val reserve = item.reserve
         if (reserve != null && reserve.reservedAmount.isNonZero) {
             Spacer(Modifier.height(8.dp))
-            ReserveLine(stringResource(R.string.reserve_reserved), reserve.reservedAmount, modifier = Modifier.testTag("account-reserved-${item.account.details.name}"))
+            val stacked = isNarrowForText()
+            ReserveLine(stringResource(R.string.reserve_reserved), reserve.reservedAmount, stacked = stacked, modifier = Modifier.testTag("account-reserved-${item.account.details.name}"))
             ReserveLine(
-                stringResource(R.string.reserve_available), reserve.availableAmount, modifier = Modifier.testTag("account-available-${item.account.details.name}"),
+                stringResource(R.string.reserve_available), reserve.availableAmount, stacked = stacked, modifier = Modifier.testTag("account-available-${item.account.details.name}"),
                 color = if (reserve.availableAmount.isNegative) colors.expense else colors.textPrimary,
             )
             if (reserve.availableAmount.isNegative) {
@@ -426,8 +441,9 @@ internal fun DashboardScreen(
                 FluxaButton(
                     text = stringResource(R.string.transaction_create_account),
                     onClick = onCreateAccount,
+                    size = FluxaButtonSize.Large,
                     leadingIcon = FluxaIcons.Plus,
-                    modifier = Modifier.testTag("action-create-account"),
+                    modifier = Modifier.fillMaxWidth().testTag("action-create-account"),
                 )
             }
             return@TabScreen
@@ -519,7 +535,7 @@ private fun SummaryRow(label: String, value: CalculatedBalance, kind: SummaryKin
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
-            .semantics(mergeDescendants = true) { if (stateText != null && !hidden) stateDescription = stateText }
+            .semantics(mergeDescendants = true) {}
             .testTag(tag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

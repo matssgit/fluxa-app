@@ -2,6 +2,7 @@ package com.fluxa.personal.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -55,7 +56,22 @@ internal fun NegativeAvailableAlert(text: String, modifier: Modifier = Modifier,
 
 /** Linha rótulo/valor monetário (saldo real, reservado, disponível), sempre com valores do contrato. */
 @Composable
-internal fun ReserveLine(label: String, balance: CalculatedBalance?, modifier: Modifier = Modifier, color: Color = FluxaTheme.colors.textPrimary, labelColor: Color = FluxaTheme.colors.textSecondary) {
+internal fun ReserveLine(
+    label: String,
+    balance: CalculatedBalance?,
+    modifier: Modifier = Modifier,
+    color: Color = FluxaTheme.colors.textPrimary,
+    labelColor: Color = FluxaTheme.colors.textSecondary,
+    /** Rótulo acima do valor, para cartões estreitos. */
+    stacked: Boolean = false,
+) {
+    if (stacked) {
+        Column(modifier = modifier.padding(vertical = 2.dp).semantics(mergeDescendants = true) {}) {
+            Text(label, style = FluxaTheme.typography.caption, color = labelColor)
+            BalanceAmount(balance, style = FluxaTheme.typography.bodyStrong, color = color)
+        }
+        return
+    }
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = 32.dp).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,

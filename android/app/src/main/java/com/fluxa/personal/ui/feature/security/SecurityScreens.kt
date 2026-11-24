@@ -180,7 +180,7 @@ private fun CapabilityNotice(text: String, showSettings: Boolean, onOpenSettings
 private fun TimeoutCard(state: SecuritySettingsUiState, onSelect: (AutoLockTimeout) -> Unit) {
     val colors = FluxaTheme.colors
     val inactive = stringResource(R.string.security_timeout_inactive)
-    SectionCard(icon = FluxaIcons.Restore, title = stringResource(R.string.security_timeout_section), tag = "security-timeout-card") {
+    SectionCard(icon = FluxaIcons.Clock, title = stringResource(R.string.security_timeout_section), tag = "security-timeout-card") {
         Text(
             stringResource(if (state.appLockEnabled) R.string.security_timeout_supporting else R.string.security_timeout_disabled_note),
             style = FluxaTheme.typography.caption,

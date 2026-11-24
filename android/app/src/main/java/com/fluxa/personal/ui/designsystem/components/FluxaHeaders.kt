@@ -85,7 +85,8 @@ internal fun FluxaSectionHeader(
     val type = FluxaTheme.typography
     Row(
         modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Bottom,
+        // Sem overline, título e ação ficam centrados um com o outro; com overline, a ação acompanha o título.
+        verticalAlignment = if (overline == null) Alignment.CenterVertically else Alignment.Bottom,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             if (overline != null) {

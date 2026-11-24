@@ -14,8 +14,8 @@ import androidx.compose.ui.graphics.Shape
  * Proibido em cards de dados financeiros.
  *
  * Implementação deliberadamente sem blur de fundo: Compose não oferece backdrop blur nativo, e
- * `RenderEffect` (API 31+) desfocaria o próprio conteúdo. O efeito vem de superfície translúcida (alpha ≥ 0.86,
- * legível sobre qualquer conteúdo), brilho especular no topo, borda de luz e sombra Depth3. Custo de
+ * `RenderEffect` (API 31+) desfocaria o próprio conteúdo. O efeito vem de superfície levemente translúcida (alpha ≥ 0.95:
+ * com menos que isso o texto que rola por baixo competia com os rótulos da navegação), brilho especular no topo, borda de luz e sombra Depth3. Custo de
  * renderização constante, sem animação de blur, adequado a aparelhos intermediários.
  */
 internal fun Modifier.fluxaGlass(shape: Shape, depth: FluxaDepth = FluxaDepth.Depth3): Modifier = composed {

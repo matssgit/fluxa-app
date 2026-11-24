@@ -17,12 +17,12 @@
     <string name="filter_all">Tudo</string>
     <string name="filter_income">Entradas</string>
     <string name="filter_expense">Saídas</string>
-    <string name="placeholder_more_overline">Outros destinos</string>
+    <string name="placeholder_more_overline">Organização</string>
 
     <string name="more_subscriptions">Assinaturas</string>
     <string name="more_goals">Metas</string>
     <string name="more_categories">Categorias</string>
-    <string name="more_analytics">Analytics</string>
+    <string name="more_analytics">Análises</string>
     <string name="more_settings">Configurações</string>
 
     <!-- Sprint 2-B: comuns -->
@@ -64,9 +64,9 @@
     <string name="accounts_field_date">Data de referência</string>
     <string name="accounts_field_date_support">Dia em que o saldo inicial era válido.</string>
     <string name="accounts_field_include">Incluir no saldo disponível</string>
-    <string name="accounts_field_include_support">Desative para reservas que não devem entrar no disponível.</string>
+    <string name="accounts_field_include_support">Desative para contas que não devem entrar no disponível.</string>
     <string name="accounts_archive_title">Arquivar conta?</string>
-    <string name="accounts_archive_body">A conta sai da lista principal, mas o registro é preservado. O app ainda não permite reativar contas.</string>
+    <string name="accounts_archive_body">A conta sai da lista principal, mas o registro é preservado. Contas arquivadas não podem ser reativadas.</string>
     <string name="accounts_archived_note">Conta arquivada. A edição continua disponível; a reativação ainda não existe.</string>
     <string name="account_type_checking">Conta corrente</string>
     <string name="account_type_wallet">Carteira</string>
@@ -173,10 +173,12 @@
     <string name="error_category_kind_in_use">Esta categoria já tem lançamentos; o tipo não pode mudar. Nome, ícone e cor continuam editáveis.</string>
     <string name="balance_overflow">Valor acima do limite exibível</string>
     <string name="balance_unavailable">Indisponível</string>
+    <string name="cash_overline">Contas e movimentações</string>
     <string name="cash_available_label">Saldo disponível</string>
     <string name="cash_available_explain">Soma das contas ativas incluídas no disponível. Lançamentos cancelados não contam.</string>
     <string name="cash_accounts_title">Contas</string>
     <string name="cash_manage_accounts">Gerenciar</string>
+    <string name="cash_manage_accounts_full">Gerenciar contas</string>
     <string name="cash_current_balance">Saldo atual</string>
     <string name="cash_history_title">Movimentações</string>
     <string name="cash_history_empty">Nenhuma movimentação neste filtro.</string>
@@ -410,7 +412,7 @@
     <string name="subscription_no_accounts">Nenhuma conta ativa.</string>
     <string name="subscription_no_cards">Nenhum cartão ativo.</string>
     <string name="subscription_schedule_locked">Frequência e datas não podem ser alteradas depois do cadastro.</string>
-    <string name="subscription_edit_future_note">Mudanças de valor e de fonte valem a partir de amanhã. Cobranças de hoje, vencidas e o histórico mantêm os termos anteriores.</string>
+    <string name="subscription_edit_future_note">Mudanças de valor e de forma de pagamento valem a partir de amanhã. Cobranças de hoje, vencidas e o histórico mantêm os termos anteriores.</string>
     <string name="subscription_detail_open">Em aberto</string>
     <string name="subscription_detail_history">Histórico</string>
     <string name="subscription_detail_history_empty">Nenhuma cobrança resolvida ainda.</string>
@@ -441,8 +443,8 @@
     <string name="occurrence_title">Cobrança</string>
     <string name="occurrence_field_date">Data da cobrança</string>
     <string name="occurrence_field_amount">Valor</string>
-    <string name="occurrence_field_source">Fonte</string>
-    <string name="occurrence_terms_note">Valor e fonte desta cobrança são os vigentes na data dela.</string>
+    <string name="occurrence_field_source">Forma de pagamento</string>
+    <string name="occurrence_terms_note">O valor e a forma de pagamento são os vigentes na data da cobrança.</string>
     <string name="occurrence_action_pay">Pagar</string>
     <string name="occurrence_action_charge">Lançar no cartão</string>
     <string name="occurrence_action_skip">Pular cobrança</string>
@@ -455,7 +457,7 @@
     <string name="occurrence_charge_title">Lançar no cartão</string>
     <string name="occurrence_charge_hint">O cartão registra uma compra à vista com este valor. A saída só entra no Caixa quando a parcela for paga.</string>
     <string name="occurrence_skip_title">Pular esta cobrança?</string>
-    <string name="occurrence_skip_body">Esta ocorrência será ignorada e não aparecerá mais como pendente. O histórico será preservado.</string>
+    <string name="occurrence_skip_body">Esta cobrança será ignorada e não aparecerá mais como pendente. O histórico será preservado.</string>
     <string name="occurrence_keep">Manter pendente</string>
     <string name="occurrence_future_note">Disponível para pagamento a partir de %1$s. Você já pode pular esta cobrança.</string>
     <string name="occurrence_paused_note">Assinatura pausada: cobranças em aberto só podem ser puladas.</string>
@@ -529,18 +531,18 @@
     <string name="goal_field_name_hint">Ex.: Viagem</string>
     <string name="goal_field_target">Valor objetivo</string>
     <string name="goal_field_account">Conta da reserva</string>
-    <string name="goal_field_target_date">Data alvo (opcional)</string>
+    <string name="goal_field_target_date">Data-alvo (opcional)</string>
     <string name="goal_target_date_set">Definir data alvo</string>
     <string name="goal_target_date_clear">Remover data alvo</string>
     <string name="goal_account_explainer">O valor reservado continua nessa conta, mas deixa de contar como dinheiro disponível para gastar.</string>
     <string name="goal_no_accounts">Nenhuma conta ativa. Cadastre uma conta para criar metas.</string>
     <string name="goal_label_target">Objetivo</string>
     <string name="goal_label_reserved">Reservado</string>
-    <string name="goal_label_remaining">Restante</string>
+    <string name="goal_label_remaining">Faltam</string>
     <string name="goal_label_account">Conta</string>
-    <string name="goal_label_target_date">Data alvo</string>
+    <string name="goal_label_target_date">Data-alvo</string>
     <string name="goal_account_section">Na conta</string>
-    <string name="goal_account_real">Saldo real</string>
+    <string name="goal_account_real">Saldo atual</string>
     <string name="goal_account_reserved">Reservado na conta</string>
     <string name="goal_account_available">Disponível</string>
     <string name="goal_history">Histórico da reserva</string>
@@ -553,7 +555,7 @@
     <string name="goal_action_complete">Concluir meta</string>
     <string name="goal_action_archive">Arquivar meta</string>
     <string name="goal_allocate_amount">Valor para reservar</string>
-    <string name="goal_release_amount">Valor a liberar</string>
+    <string name="goal_release_amount">Valor para liberar</string>
     <string name="goal_allocate_note">O dinheiro continua na conta. Ele só deixa de contar como disponível para gastar.</string>
     <string name="goal_release_note">O valor voltará a ficar disponível para uso na conta.</string>
     <string name="goal_allocate_confirm">Reservar</string>
@@ -567,17 +569,19 @@
     <string name="goal_archived_note">Meta arquivada. O histórico continua disponível para consulta.</string>
     <string name="goal_complete_hint">Disponível quando o valor reservado alcançar o objetivo.</string>
     <string name="feedback_goal_saved">Meta salva.</string>
-    <string name="feedback_goal_allocated">%1$s foram reservados para esta meta. O saldo real da conta não mudou.</string>
+    <string name="feedback_goal_allocated">%1$s foram reservados para esta meta. O saldo da conta não mudou.</string>
     <string name="feedback_goal_released">%1$s foram liberados. O valor voltou a ficar disponível na conta.</string>
-    <string name="feedback_goal_amount_hidden">O valor</string>
+    <string name="feedback_goal_allocated_hidden">Reserva registrada nesta meta. O saldo da conta não mudou.</string>
+    <string name="feedback_goal_released_hidden">Valor liberado. Ele voltou a ficar disponível na conta.</string>
     <string name="feedback_goal_completed">Meta concluída. O valor continua reservado.</string>
     <string name="feedback_goal_archived">Meta arquivada.</string>
     <string name="reserve_total_balance">Saldo total</string>
     <string name="reserve_reserved">Reservado</string>
     <string name="reserve_available">Disponível</string>
-    <string name="reserve_available_explain">O disponível já desconta o valor reservado em metas.</string>
+    <string name="reserve_available_explain">O disponível desconta as reservas de metas e considera só as contas incluídas nele.</string>
     <string name="reserve_negative_alert">O valor reservado está acima do saldo atual desta conta.</string>
     <string name="reserve_negative_alert_short">Reserva acima do saldo</string>
+    <string name="available_negative_alert">O saldo disponível está negativo.</string>
     <string name="reserve_negative_alert_total">O valor reservado está acima do saldo disponível das contas.</string>
     <string name="error_goal_not_found">Esta meta não foi encontrada.</string>
     <string name="error_goal_archived">Esta meta está arquivada.</string>
@@ -615,7 +619,7 @@
     <string name="safe_lowest_balance">Saldo projetado</string>
     <string name="safe_how_title">Como chegamos a esse valor</string>
     <string name="safe_breakdown_title">Obrigações consideradas</string>
-    <string name="safe_breakdown_hint">Eventos até a data da menor folga, na ordem em que pesam no cálculo.</string>
+    <string name="safe_breakdown_hint">Compromissos até o dia de menor folga, na ordem em que entram no cálculo.</string>
     <string name="safe_breakdown_empty">Nenhuma obrigação conhecida reduz seu limite neste período.</string>
     <string name="safe_source_installment">Parcela · Cartão</string>
     <string name="safe_source_subscription">Assinatura</string>
@@ -733,7 +737,7 @@
     <string name="security_lock_section">Bloquear o Fluxa</string>
     <string name="security_lock_toggle">Exigir autenticação para abrir o app</string>
     <string name="security_lock_supporting">Use a biometria ou o bloqueio de tela do seu aparelho.</string>
-    <string name="security_open_android_settings">Abrir configurações do Android</string>
+    <string name="security_open_android_settings">Abrir configurações</string>
     <string name="security_timeout_section">Bloqueio automático</string>
     <string name="security_timeout_supporting">Tempo fora do Fluxa até pedir a autenticação de novo.</string>
     <string name="security_timeout_disabled_note">Disponível quando a autenticação para abrir o app estiver ativa.</string>

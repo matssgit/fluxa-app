@@ -24,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -54,9 +56,10 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 internal val BrazilLocale: Locale = Locale("pt", "BR")
+/** Só para campos de data editáveis; datas de leitura usam o formato curto com o mês por extenso ("17 dez. 2026"). */
 internal val BrazilDate: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy", BrazilLocale)
 private val DayHeader: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d 'de' MMMM", BrazilLocale)
-private val DateTime: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm", BrazilLocale)
+private val DateTime: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM yyyy 'às' HH:mm", BrazilLocale)
 
 internal fun Instant.formatLocal(): String = atZone(ZoneId.systemDefault()).format(DateTime)
 
@@ -140,6 +143,7 @@ internal fun TransactionBadge(icon: String?, color: String?, direction: Transact
                 if (direction == TransactionDirection.INCOME) "+" else "−",
                 style = FluxaTheme.typography.caption,
                 color = colors.surface,
+                modifier = Modifier.clearAndSetSemantics {}, // a direção já é anunciada pela linha
             )
         }
     }
@@ -166,18 +170,13 @@ internal fun LedgerRow(
     val baseLabel = stringResource(if (direction == TransactionDirection.INCOME) R.string.direction_income else R.string.direction_expense)
     val cardLabel = stringResource(R.string.ledger_from_card)
     val subscriptionLabel = stringResource(R.string.origin_subscription)
-    val directionLabel = when {
-        fromCard -> "$baseLabel, $cardLabel"
-        fromSubscription -> "$baseLabel, $subscriptionLabel"
-        else -> baseLabel
-    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .semantics(mergeDescendants = true) { stateDescription = directionLabel },
+            .semantics(mergeDescendants = true) { stateDescription = baseLabel },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -210,6 +209,14 @@ internal fun Modifier.bleedHorizontal(amount: Dp): Modifier = layout { measurabl
     )
     layout(placeable.width - extra, placeable.height) { placeable.place(-amount.roundToPx(), 0) }
 }
+
+/**
+ * Pouca largura útil para o texto (largura dividida pela escala da fonte): linhas "rótulo + valor" passam a empilhar,
+ * em vez de quebrar palavras ao meio em 320dp ou com fonte 1,3.
+ */
+@Composable
+internal fun isNarrowForText(threshold: Int = 300): Boolean =
+    with(LocalConfiguration.current) { screenWidthDp / fontScale <= threshold }
 
 /** Erro de um grupo de seleção (conta, categoria): ícone + texto. */
 @Composable
@@ -244,13 +251,15 @@ internal fun DateField(
                 .background(colors.surfaceSunken, shape)
                 .border(if (errorText != null) 2.dp else 1.dp, if (errorText != null) colors.expense else colors.borderStrong, shape)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .semantics { contentDescription = description }
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(FluxaIcons.Calendar, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
-            Text(formatted, style = FluxaTheme.typography.body, color = colors.textPrimary, modifier = Modifier.weight(1f))
+            Text(
+                formatted, style = FluxaTheme.typography.body, color = colors.textPrimary,
+                modifier = Modifier.weight(1f).semantics { contentDescription = description },
+            )
         }
         when {
             errorText != null -> FieldError(errorText)

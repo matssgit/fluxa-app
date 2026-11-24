@@ -30,16 +30,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fluxa.personal.R
 import com.fluxa.personal.domain.model.InstallmentStatus
 import com.fluxa.personal.ui.common.BalanceAmount
-import com.fluxa.personal.ui.common.BrazilDate
 import com.fluxa.personal.ui.common.ConfirmArchiveSheet
 import com.fluxa.personal.ui.common.DateField
 import com.fluxa.personal.ui.common.ErrorBanner
@@ -58,6 +57,8 @@ import com.fluxa.personal.ui.designsystem.components.FluxaButtonSize
 import com.fluxa.personal.ui.designsystem.components.FluxaButtonVariant
 import com.fluxa.personal.ui.designsystem.components.FluxaCard
 import com.fluxa.personal.ui.feature.catalog.visual
+import com.fluxa.personal.ui.feature.subscriptions.short
+import com.fluxa.personal.ui.feature.subscriptions.spoken
 
 /**
  * Detalhe de uma parcela: pendente oferece "Pagar parcela" (sheet com conta, data e resumo de confirmação);
@@ -119,7 +120,8 @@ internal fun InstallmentDetailScreen(
                         InstallmentStatusPill(status, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
                         DetailLine(
                             label = stringResource(R.string.installment_field_due),
-                            value = installment.dueDate.format(BrazilDate),
+                            value = installment.dueDate.short(),
+                            spoken = installment.dueDate.spoken(),
                             modifier = Modifier.testTag("installment-due"),
                         )
                         state.card?.let { DetailLine(stringResource(R.string.installment_field_card), it.card.details.name) }
@@ -181,7 +183,7 @@ internal fun InstallmentDetailScreen(
             number = installment.number,
             count = state.installmentCount,
             amount = installment.amount,
-            due = installment.dueDate.format(BrazilDate),
+            due = installment.dueDate.short(),
             viewModel = paymentViewModel,
             onDismiss = { if (!payment.isSubmitting) showPay = false },
             onCreateAccount = { showPay = false; onCreateAccount() },
@@ -209,19 +211,22 @@ private fun InstallmentStatusPill(status: InstallmentStatus, modifier: Modifier 
         InstallmentStatus.CANCELLED -> stringResource(R.string.installment_status_cancelled) to FluxaIcons.Close
     }
     val described = stringResource(R.string.installment_status_described, label)
-    StatePill(label, icon, modifier = modifier.semantics { stateDescription = described }.testTag("installment-status"))
+    StatePill(label, icon, modifier = modifier.testTag("installment-status"), spoken = described)
 }
 
-/** Par rótulo/valor lido como uma frase pelo TalkBack ("Vencimento: 17/12/2026"). */
+/** Par rótulo/valor lido como uma frase pelo TalkBack ("Vencimento: 17 de dezembro de 2026"). */
 @Composable
-private fun DetailLine(label: String, value: String, modifier: Modifier = Modifier) {
+private fun DetailLine(label: String, value: String, modifier: Modifier = Modifier, spoken: String? = null) {
     Row(
         modifier = modifier.fillMaxWidth().heightIn(min = 32.dp).semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(label, style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary, modifier = Modifier.weight(1f))
-        Text(value, style = FluxaTheme.typography.bodyStrong, color = FluxaTheme.colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(
+            value, style = FluxaTheme.typography.bodyStrong, color = FluxaTheme.colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis,
+            modifier = if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier,
+        )
     }
 }
 
@@ -236,7 +241,8 @@ private fun PaymentInfoCard(state: InstallmentDetailUiState) {
         } else {
             DetailLine(
                 stringResource(R.string.installment_field_paid_on),
-                payment.details.occurredOn.format(BrazilDate),
+                payment.details.occurredOn.short(),
+                spoken = payment.details.occurredOn.spoken(),
                 modifier = Modifier.testTag("payment-date"),
             )
             DetailLine(
@@ -281,6 +287,7 @@ private fun PaymentSheet(
                 FluxaButton(
                     text = stringResource(R.string.action_continue),
                     onClick = viewModel::review,
+                    size = FluxaButtonSize.Large,
                     modifier = Modifier.weight(1f).testTag("action-review-payment"),
                 )
             }
@@ -377,7 +384,7 @@ private fun ConfirmSummary(state: InstallmentPaymentUiState) {
         }
         Column(modifier = Modifier.padding(top = 8.dp).semantics(mergeDescendants = true) {}) {
             Text(stringResource(R.string.installment_pay_date_label), style = type.label, color = colors.textSecondary)
-            Text(state.paidOn.format(BrazilDate), style = type.bodyStrong, color = colors.textPrimary)
+            Text(state.paidOn.short(), style = type.bodyStrong, color = colors.textPrimary)
         }
     }
 }

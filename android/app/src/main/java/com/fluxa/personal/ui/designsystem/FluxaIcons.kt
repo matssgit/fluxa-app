@@ -282,6 +282,36 @@ internal object FluxaIcons {
         }
     }
 
+    /** Pausar (assinatura pausada). */
+    val Pause: ImageVector by lazy {
+        outline("Pause", stroke = 2.25f) {
+            moveTo(9f, 6f); lineTo(9f, 18f)
+            moveTo(15f, 6f); lineTo(15f, 18f)
+        }
+    }
+
+    /** Retomar. */
+    val Play: ImageVector by lazy { outline("Play") { moveTo(8f, 5.5f); lineTo(18f, 12f); lineTo(8f, 18.5f); close() } }
+
+    /** Pular uma cobrança. */
+    val Skip: ImageVector by lazy {
+        outline("Skip") {
+            moveTo(6f, 6f); lineTo(14.5f, 12f); lineTo(6f, 18f); close()
+            moveTo(18f, 6f); lineTo(18f, 18f)
+        }
+    }
+
+    /** Tempo (bloqueio automático). */
+    val Clock: ImageVector by lazy {
+        outline("Clock") {
+            circle(12f, 12f, 8.5f)
+            moveTo(12f, 7.5f); lineTo(12f, 12f); lineTo(15f, 14f)
+        }
+    }
+
+    /** Liberar (reduzir a reserva). */
+    val Minus: ImageVector by lazy { outline("Minus", stroke = 2.25f) { moveTo(5f, 12f); lineTo(19f, 12f) } }
+
     // endregion
 
     // region builders

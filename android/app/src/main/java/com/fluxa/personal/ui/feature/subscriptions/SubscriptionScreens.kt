@@ -35,10 +35,10 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -63,6 +63,7 @@ import com.fluxa.personal.ui.common.FieldLabel
 import com.fluxa.personal.ui.common.FluxaDatePicker
 import com.fluxa.personal.ui.common.LoadingBlock
 import com.fluxa.personal.ui.common.StatePill
+import com.fluxa.personal.ui.common.isNarrowForText
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
 import com.fluxa.personal.ui.designsystem.components.FluxaAmount
@@ -106,11 +107,11 @@ internal fun sourceText(source: SourceLabel?): String {
 internal fun SubscriptionStatusPill(status: SubscriptionStatus, modifier: Modifier = Modifier) {
     val (label, icon) = when (status) {
         SubscriptionStatus.ACTIVE -> stringResource(R.string.subscription_status_active) to FluxaIcons.Check
-        SubscriptionStatus.PAUSED -> stringResource(R.string.subscription_status_paused) to FluxaIcons.Calendar
+        SubscriptionStatus.PAUSED -> stringResource(R.string.subscription_status_paused) to FluxaIcons.Pause
         SubscriptionStatus.CANCELLED -> stringResource(R.string.subscription_status_cancelled) to FluxaIcons.Close
     }
     val described = stringResource(R.string.subscription_status_described, label)
-    StatePill(label, icon, modifier = modifier.semantics { stateDescription = described })
+    StatePill(label, icon, modifier = modifier, spoken = described)
 }
 
 internal data class OccurrenceStatusVisual(val label: Int, val icon: ImageVector)
@@ -120,7 +121,7 @@ internal fun SubscriptionOccurrenceStatus.visual() = when (this) {
     SubscriptionOccurrenceStatus.OVERDUE -> OccurrenceStatusVisual(R.string.occurrence_status_overdue, FluxaIcons.Alert)
     SubscriptionOccurrenceStatus.PAID -> OccurrenceStatusVisual(R.string.occurrence_status_paid, FluxaIcons.Check)
     SubscriptionOccurrenceStatus.CHARGED -> OccurrenceStatusVisual(R.string.occurrence_status_charged, FluxaIcons.Card)
-    SubscriptionOccurrenceStatus.SKIPPED -> OccurrenceStatusVisual(R.string.occurrence_status_skipped, FluxaIcons.ChevronRight)
+    SubscriptionOccurrenceStatus.SKIPPED -> OccurrenceStatusVisual(R.string.occurrence_status_skipped, FluxaIcons.Skip)
 }
 
 @Composable
@@ -128,15 +129,19 @@ internal fun OccurrenceStatusPill(status: SubscriptionOccurrenceStatus, modifier
     val v = status.visual()
     val label = stringResource(v.label)
     val described = stringResource(R.string.subscription_status_described, label)
-    StatePill(label, v.icon, modifier = modifier.semantics { stateDescription = described })
+    StatePill(label, v.icon, modifier = modifier, spoken = described)
 }
 
-/** Linha de ocorrência: assinatura, valor, data, fonte e estado (texto + ícone). */
+/**
+ * Linha de ocorrência: assinatura, valor, data, forma de pagamento e estado (texto + ícone).
+ * [showName] falso no detalhe da própria assinatura: a data vira o título, sem repetir o nome em cada linha.
+ */
 @Composable
-internal fun OccurrenceRow(occurrence: SubscriptionOccurrence, source: SourceLabel, onClick: () -> Unit, showDate: Boolean = true) {
+internal fun OccurrenceRow(occurrence: SubscriptionOccurrence, source: SourceLabel, onClick: () -> Unit, showDate: Boolean = true, showName: Boolean = true) {
     val colors = FluxaTheme.colors
     val type = FluxaTheme.typography
     val d = occurrence.details
+    val narrow = isNarrowForText()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -149,12 +154,16 @@ internal fun OccurrenceRow(occurrence: SubscriptionOccurrence, source: SourceLab
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(d.name, style = type.bodyStrong, color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (showDate) Text(occurrence.key.occurrenceDate.short(), style = type.caption, color = colors.textSecondary)
+            val date = occurrence.key.occurrenceDate
+            val dateSpoken = Modifier.semantics { contentDescription = date.spoken() }
+            if (showName) Text(d.name, style = type.bodyStrong, color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            else Text(date.short(), style = type.bodyStrong, color = colors.textPrimary, modifier = dateSpoken)
+            if (narrow) FluxaAmount(amount = d.amount, style = type.amount)
+            if (showName && showDate) Text(date.short(), style = type.caption, color = colors.textSecondary, modifier = dateSpoken)
             Text(sourceText(source), style = type.caption, color = colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             OccurrenceStatusPill(occurrence.status, modifier = Modifier.padding(top = 4.dp))
         }
-        FluxaAmount(amount = d.amount, style = type.amount)
+        if (!narrow) FluxaAmount(amount = d.amount, style = type.amount)
         Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
     }
 }
@@ -168,12 +177,13 @@ internal fun RowDivider() {
 @Composable
 internal fun InfoLine(label: String, value: String, modifier: Modifier = Modifier, spoken: String? = null) {
     Column(
-        modifier = modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) {
-            if (spoken != null) stateDescription = spoken
-        },
+        modifier = modifier.fillMaxWidth().padding(top = 8.dp).semantics(mergeDescendants = true) {},
     ) {
         Text(label, style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary)
-        Text(value, style = FluxaTheme.typography.bodyStrong, color = FluxaTheme.colors.textPrimary)
+        Text(
+            value, style = FluxaTheme.typography.bodyStrong, color = FluxaTheme.colors.textPrimary,
+            modifier = if (spoken != null) Modifier.semantics { contentDescription = spoken } else Modifier,
+        )
     }
 }
 
@@ -195,19 +205,19 @@ internal fun SubscriptionsScreen(
         overline = stringResource(R.string.subscriptions_overline),
         onBack = onBack,
         modifier = Modifier.testTag("screen-subscriptions"),
+        // Criar fica fixo embaixo, como em Contas e Categorias.
+        bottomAction = {
+            FluxaButton(
+                text = stringResource(R.string.subscriptions_new), onClick = onNew, leadingIcon = FluxaIcons.Plus,
+                size = FluxaButtonSize.Large, modifier = Modifier.fillMaxWidth().testTag("action-new-subscription"),
+            )
+        },
     ) {
-        // Empilhados: lado a lado, "Nova assinatura" cortava em 360dp.
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FluxaButton(
-                    text = stringResource(R.string.subscriptions_new), onClick = onNew, leadingIcon = FluxaIcons.Plus,
-                    modifier = Modifier.fillMaxWidth().testTag("action-new-subscription"),
-                )
-                FluxaButton(
-                    text = stringResource(R.string.subscriptions_agenda), onClick = onAgenda, variant = FluxaButtonVariant.Secondary,
-                    leadingIcon = FluxaIcons.Calendar, modifier = Modifier.fillMaxWidth().testTag("action-agenda"),
-                )
-            }
+            FluxaButton(
+                text = stringResource(R.string.subscriptions_agenda), onClick = onAgenda, variant = FluxaButtonVariant.Secondary,
+                leadingIcon = FluxaIcons.Calendar, modifier = Modifier.fillMaxWidth().testTag("action-agenda"),
+            )
         }
         when {
             state.isLoading -> item { LoadingBlock() }
@@ -288,11 +298,11 @@ internal fun NextLine(subscription: Subscription, next: SubscriptionOccurrence?)
         else -> null
     }
     Column(modifier = Modifier.semantics(mergeDescendants = true) {}.testTag("next-${subscription.details.name}")) {
-        Text(label, style = type.overline, color = colors.textMuted)
+        Text(label, style = type.caption, color = colors.textMuted)
         if (value != null) Text(value, style = type.label, color = colors.textSecondary)
         else Text(
             next!!.key.occurrenceDate.short(), style = type.bodyStrong, color = colors.textPrimary,
-            modifier = Modifier.semantics { stateDescription = next.key.occurrenceDate.spoken() },
+            modifier = Modifier.semantics { contentDescription = next.key.occurrenceDate.spoken() },
         )
     }
 }
@@ -536,7 +546,7 @@ internal fun SubscriptionDetailScreen(
                         FluxaCard(modifier = Modifier.fillMaxWidth().testTag("subscription-open"), contentPadding = PaddingValues(vertical = 4.dp)) {
                             state.open.forEachIndexed { i, o ->
                                 if (i > 0) RowDivider()
-                                OccurrenceRow(o, state.names.label(o.details.source), onClick = { onOpenOccurrence(s.id, o.key.occurrenceDate) })
+                                OccurrenceRow(o, state.names.label(o.details.source), onClick = { onOpenOccurrence(s.id, o.key.occurrenceDate) }, showName = false)
                             }
                         }
                     }
@@ -558,7 +568,7 @@ internal fun SubscriptionDetailScreen(
                     FluxaCard(modifier = Modifier.fillMaxWidth().testTag("subscription-history"), contentPadding = PaddingValues(vertical = 4.dp)) {
                         state.history.take(HISTORY_SHOWN).forEachIndexed { i, o ->
                             if (i > 0) RowDivider()
-                            OccurrenceRow(o, state.names.label(o.details.source), onClick = { onOpenOccurrence(s.id, o.key.occurrenceDate) })
+                            OccurrenceRow(o, state.names.label(o.details.source), onClick = { onOpenOccurrence(s.id, o.key.occurrenceDate) }, showName = false)
                         }
                     }
                 }
@@ -578,14 +588,14 @@ internal fun SubscriptionDetailScreen(
                 if (state.canPause) item {
                     FluxaButton(
                         text = stringResource(R.string.subscription_action_pause), onClick = { confirm = StatusAction.Pause },
-                        variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Calendar, loading = busy && state.lastAction == StatusAction.Pause,
+                        variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Pause, loading = busy && state.lastAction == StatusAction.Pause,
                         modifier = Modifier.fillMaxWidth().testTag("action-pause"),
                     )
                 }
                 if (state.canResume) item {
                     FluxaButton(
                         text = stringResource(R.string.subscription_action_resume), onClick = { confirm = StatusAction.Resume },
-                        leadingIcon = FluxaIcons.Restore, loading = busy && state.lastAction == StatusAction.Resume,
+                        leadingIcon = FluxaIcons.Play, loading = busy && state.lastAction == StatusAction.Resume,
                         modifier = Modifier.fillMaxWidth().testTag("action-resume"),
                     )
                 }
@@ -601,13 +611,14 @@ internal fun SubscriptionDetailScreen(
     }
     confirm?.let { action ->
         val (title, body, label, icon) = when (action) {
-            StatusAction.Pause -> Quad(R.string.subscription_pause_title, R.string.subscription_pause_body, R.string.subscription_action_pause, FluxaIcons.Calendar)
-            StatusAction.Resume -> Quad(R.string.subscription_resume_title, R.string.subscription_resume_body, R.string.subscription_action_resume, FluxaIcons.Restore)
+            StatusAction.Pause -> Quad(R.string.subscription_pause_title, R.string.subscription_pause_body, R.string.subscription_action_pause, FluxaIcons.Pause)
+            StatusAction.Resume -> Quad(R.string.subscription_resume_title, R.string.subscription_resume_body, R.string.subscription_action_resume, FluxaIcons.Play)
             StatusAction.Cancel -> Quad(R.string.subscription_cancel_title, R.string.subscription_cancel_body, R.string.subscription_action_cancel, FluxaIcons.Close)
         }
         ConfirmArchiveSheet(
             title = stringResource(title), body = stringResource(body), confirmLabel = stringResource(label),
             dismissLabel = stringResource(R.string.subscription_keep), confirmIcon = icon,
+            destructive = action == StatusAction.Cancel,
             onConfirm = {
                 confirm = null
                 when (action) {
@@ -658,7 +669,7 @@ private fun LazyListScope.agendaSection(title: Int, tag: String, days: List<Agen
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 day.date.short(), style = FluxaTheme.typography.label, color = FluxaTheme.colors.textSecondary,
-                modifier = Modifier.padding(start = 4.dp).semantics { heading(); stateDescription = day.date.spoken() },
+                modifier = Modifier.padding(start = 4.dp).semantics { heading(); contentDescription = day.date.spoken() },
             )
             FluxaCard(modifier = Modifier.fillMaxWidth().testTag("$tag-${day.date}"), contentPadding = PaddingValues(vertical = 4.dp)) {
                 day.items.forEachIndexed { i, o ->

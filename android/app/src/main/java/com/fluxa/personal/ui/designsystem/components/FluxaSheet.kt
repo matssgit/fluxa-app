@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,8 +22,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -33,8 +34,9 @@ import com.fluxa.personal.ui.designsystem.FluxaTheme
 /**
  * Padrão único de sheet (substitui os 9 overlays diferentes da web).
  * Topo arredondado, alça discreta, título + fechar, conteúdo e rodapé de ações opcional.
- * O contêiner é opaco (surfaceRaised) com o brilho e a borda de luz do glass: a 86% de opacidade o conteúdo
- * por trás vazava sob o texto do sheet (verificado no emulador), então a translucidez fica só na navegação e chips.
+ * O contêiner é opaco (surfaceRaised, creme): translúcido, o conteúdo por trás vazava sob o texto (verificado no emulador),
+ * e o brilho vertical criava uma faixa visível abaixo da alça no tema escuro.
+ * Sheet e scrim ocupam a janela inteira (sem faixa clara nas barras do sistema); a barra de navegação é descontada no conteúdo.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +49,13 @@ internal fun FluxaBottomSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = FluxaTheme.colors
+    // Altura útil (sem as barras do sistema) + barra de navegação, que o próprio conteúdo desconta: nunca passa sob o status.
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp +
+        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        modifier = modifier.heightIn(max = maxHeight),
+        windowInsets = WindowInsets(0),
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         shape = FluxaTheme.shapes.sheet,
         containerColor = colors.surfaceRaised,
@@ -89,11 +95,9 @@ internal fun FluxaSheetLayout(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = FluxaTheme.colors
-    val sheen = if (colors.isDark) 0.05f else 0.5f
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(Brush.verticalGradient(0f to Color.White.copy(alpha = sheen), 0.3f to Color.Transparent))
             .windowInsetsPadding(WindowInsets.navigationBars)
             .padding(start = 20.dp, end = 12.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

@@ -46,7 +46,6 @@ import com.fluxa.personal.R
 import com.fluxa.personal.domain.model.AccountType
 import com.fluxa.personal.domain.model.FinancialAccount
 import com.fluxa.personal.ui.common.BalanceAmount
-import com.fluxa.personal.ui.common.BrazilDate
 import com.fluxa.personal.ui.common.ConfirmArchiveSheet
 import com.fluxa.personal.ui.common.DateField
 import com.fluxa.personal.ui.common.FluxaDatePicker
@@ -69,6 +68,7 @@ import com.fluxa.personal.ui.designsystem.components.FluxaChip
 import com.fluxa.personal.ui.designsystem.components.FluxaInput
 import com.fluxa.personal.ui.designsystem.components.FluxaSectionHeader
 import com.fluxa.personal.ui.feature.catalog.visual
+import com.fluxa.personal.ui.feature.subscriptions.short
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -187,7 +187,7 @@ internal fun AccountRow(account: FinancialAccount, balance: CalculatedBalance?, 
                     Text(stringResource(R.string.accounts_opening_balance), style = type.caption, color = colors.textMuted)
                     FluxaAmount(amount = details.openingBalance, style = type.caption, color = colors.textMuted)
                     Text(
-                        stringResource(R.string.accounts_opening_balance_date, details.openingDate.format(BrazilDate)),
+                        stringResource(R.string.accounts_opening_balance_date, details.openingDate.short()),
                         style = type.caption,
                         color = colors.textMuted,
                     )
@@ -271,6 +271,7 @@ internal fun AccountFormScreen(viewModel: AccountFormViewModel, onDone: () -> Un
                         FlowRow(
                             modifier = Modifier.selectableGroup(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             AccountType.entries.forEach { type ->
                                 val visual = type.visual()

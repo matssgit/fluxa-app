@@ -141,7 +141,7 @@ internal fun SubscriptionOccurrenceScreen(
                     if (state.canSkip) item {
                         FluxaButton(
                             text = stringResource(R.string.occurrence_action_skip), onClick = { confirmSkip = true },
-                            variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.ChevronRight,
+                            variant = FluxaButtonVariant.Secondary, leadingIcon = FluxaIcons.Skip,
                             loading = state.isSubmitting && !showSettle,
                             modifier = Modifier.fillMaxWidth().testTag("action-skip-occurrence"),
                         )
@@ -240,7 +240,7 @@ internal fun SubscriptionOccurrenceScreen(
             title = stringResource(if (target.isCard) R.string.occurrence_undo_charge_title else R.string.occurrence_undo_payment_title),
             body = stringResource(if (target.isCard) R.string.occurrence_undo_charge_body else R.string.occurrence_undo_payment_body),
             confirmLabel = stringResource(undoLabel(target.isCard)),
-            confirmIcon = FluxaIcons.Alert,
+            confirmIcon = FluxaIcons.Restore,
             onConfirm = viewModel::confirmUndo,
             onDismiss = {
                 restoreUndoFocus = true
@@ -254,7 +254,7 @@ internal fun SubscriptionOccurrenceScreen(
             body = stringResource(R.string.occurrence_skip_body),
             confirmLabel = stringResource(R.string.occurrence_action_skip),
             dismissLabel = stringResource(R.string.occurrence_keep),
-            confirmIcon = FluxaIcons.ChevronRight,
+            confirmIcon = FluxaIcons.Skip,
             onConfirm = { confirmSkip = false; viewModel.skip() },
             onDismiss = { confirmSkip = false },
         )

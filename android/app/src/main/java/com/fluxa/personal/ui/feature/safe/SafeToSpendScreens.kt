@@ -24,10 +24,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,13 +92,17 @@ internal fun SafeToSpendCard(viewModel: SafeToSpendViewModel, onDetails: () -> U
     FluxaCard(modifier = modifier.fillMaxWidth().testTag("safe-to-spend-card"), contentPadding = PaddingValues(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(Modifier.size(28.dp).background(colors.brandTonal, FluxaTheme.shapes.pill), contentAlignment = Alignment.Center) {
-                Icon(FluxaIcons.Check, null, tint = colors.onBrandTonal, modifier = Modifier.size(16.dp))
+                Icon(FluxaIcons.Wallet, null, tint = colors.onBrandTonal, modifier = Modifier.size(16.dp))
             }
             Text(stringResource(R.string.safe_title).uppercase(), style = type.overline, color = colors.textMuted, modifier = Modifier.semantics { heading() })
         }
         Spacer(Modifier.height(8.dp))
         when (val s = state) {
-            SafeToSpendUiState.Loading -> LoadingBlock()
+            // Compacto: o bloco de carregamento de tela cheia fazia o Início "pular" quando o valor chegava.
+            SafeToSpendUiState.Loading -> Text(
+                stringResource(R.string.loading), style = type.body, color = colors.textMuted,
+                modifier = Modifier.heightIn(min = 96.dp).semantics { liveRegion = LiveRegionMode.Polite },
+            )
             is SafeToSpendUiState.Unavailable -> Text(stringResource(s.message), style = type.body, color = colors.textSecondary)
             is SafeToSpendUiState.Content -> {
                 FluxaAmount(
@@ -117,10 +122,10 @@ internal fun SafeToSpendCard(viewModel: SafeToSpendViewModel, onDetails: () -> U
                 val lowestSpokenText = lowestSpoken(s)
                 Row(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.semantics(mergeDescendants = true) { stateDescription = lowestSpokenText }.testTag("safe-lowest"),
+                    modifier = Modifier.semantics(mergeDescendants = true) {}.testTag("safe-lowest"),
                 ) {
                     Icon(FluxaIcons.Calendar, null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
-                    Text(lowestText(s), style = type.caption, color = colors.textSecondary)
+                    Text(lowestText(s), style = type.caption, color = colors.textSecondary, modifier = Modifier.semantics { contentDescription = lowestSpokenText })
                 }
             }
         }
@@ -211,7 +216,7 @@ internal fun SafeToSpendDetailScreen(
                             Text(
                                 if (s.lowestSlackIsToday) stringResource(R.string.safe_today) else s.lowestSlackDate.short(),
                                 style = type.bodyStrong, color = colors.textPrimary,
-                                modifier = Modifier.semantics { stateDescription = if (s.lowestSlackIsToday) "" else s.lowestSlackDate.spoken() },
+                                modifier = if (s.lowestSlackIsToday) Modifier else Modifier.semantics { contentDescription = s.lowestSlackDate.spoken() },
                             )
                         }
                         ReserveLine(
@@ -300,12 +305,12 @@ private fun SafeEventRow(
     ) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(dateText, style = type.caption, color = colors.textSecondary, modifier = Modifier.semantics { stateDescription = if (e.date == today) "" else e.date.spoken() })
+                Text(dateText, style = type.caption, color = colors.textSecondary, modifier = if (e.date == today) Modifier else Modifier.semantics { contentDescription = e.date.spoken() })
                 Text(title, style = type.bodyStrong, color = colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(sourceLabel, style = type.caption, color = colors.textSecondary)
             }
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 18.dp)) {
-                Text(if (item.isIncome) "+ " else "− ", style = type.amount, color = if (item.isIncome) colors.income else colors.textPrimary)
+                Text(if (item.isIncome) "+" else "−", style = type.amount, color = if (item.isIncome) colors.income else colors.textPrimary, modifier = Modifier.clearAndSetSemantics {})
                 FluxaAmount(amount = e.amount, style = type.amount, color = if (item.isIncome) colors.income else colors.textPrimary)
             }
         }

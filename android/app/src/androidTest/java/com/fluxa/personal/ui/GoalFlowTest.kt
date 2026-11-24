@@ -128,7 +128,7 @@ class GoalFlowTest {
     fun reservingAndReleasingMoveOnlyReservedAndAvailable() {
         ActivityScenario.launch(MainActivity::class.java).use {
             openGoals()
-            tap("feature-list", "action-new-goal")
+            compose.onNodeWithTag("action-new-goal").performClick()
             waitForTag("screen-goal-form")
             typeInto("field-goal-name", "Viagem")
             typeInto("field-goal-target", "5.000,00")

@@ -64,6 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.fluxa.personal.FluxaApplication
 import com.fluxa.personal.security.TrustedExternalActivity
 import com.fluxa.personal.R
+import com.fluxa.personal.ui.designsystem.components.FluxaButtonSize
 import kotlinx.coroutines.delay
 import com.fluxa.personal.backup.FLUXA_BACKUP_MIME
 import com.fluxa.personal.ui.common.ErrorBanner
@@ -290,6 +291,7 @@ private fun bottomActionFor(
                 onClick = onSubmitExport,
                 enabled = state is S.ExportPassword,
                 leadingIcon = FluxaIcons.Download,
+                size = FluxaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth().testTag("action-backup-export-submit"),
             )
         }
@@ -299,6 +301,7 @@ private fun bottomActionFor(
             FluxaButton(
                 text = stringResource(R.string.backup_continue),
                 onClick = onSubmitRestore,
+                size = FluxaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth().testTag("action-backup-restore-submit"),
             )
         }
@@ -308,6 +311,7 @@ private fun bottomActionFor(
             FluxaButton(
                 text = stringResource(R.string.backup_done),
                 onClick = onFinish,
+                size = FluxaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth().testTag("action-backup-done"),
             )
         }
@@ -318,6 +322,7 @@ private fun bottomActionFor(
                 text = stringResource(R.string.backup_go_home),
                 onClick = onGoHome,
                 leadingIcon = FluxaIcons.Home,
+                size = FluxaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth().testTag("action-backup-go-home"),
             )
         }
@@ -327,6 +332,7 @@ private fun bottomActionFor(
             FluxaButton(
                 text = stringResource(R.string.backup_choose_other),
                 onClick = onChooseOther,
+                size = FluxaButtonSize.Large,
                 modifier = Modifier.fillMaxWidth().testTag("action-backup-choose-other"),
             )
             FluxaButton(
