@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,10 +29,12 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.fluxa.personal.R
+import com.fluxa.personal.core.preferences.ThemePreference
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
 import com.fluxa.personal.ui.designsystem.LocalAmountsHidden
 import com.fluxa.personal.ui.designsystem.components.FluxaCard
+import com.fluxa.personal.ui.designsystem.components.FluxaChip
 import com.fluxa.personal.ui.designsystem.components.FluxaIconButton
 import com.fluxa.personal.ui.designsystem.components.FluxaNavigationBarDefaults
 import com.fluxa.personal.ui.designsystem.components.FluxaTopBar
@@ -87,6 +92,8 @@ internal fun MorePlaceholder(
     onOpenBackup: () -> Unit = {},
     onOpenSecurity: () -> Unit = {},
     onOpenAnalytics: () -> Unit = {},
+    theme: ThemePreference = ThemePreference.SYSTEM,
+    onThemeChange: (ThemePreference) -> Unit = {},
 ) {
     val destinations = listOf(
         MoreDestination(R.string.more_subscriptions, FluxaIcons.Repeat, route = "subscriptions"),
@@ -129,6 +136,28 @@ internal fun MorePlaceholder(
                         modifier = Modifier.testTag("more-${destination.route}"),
                     )
                 }
+            }
+        }
+        item { AppearanceCard(theme, onThemeChange) }
+    }
+}
+
+/** Troca de tema: a preferência já existia e era salva, mas não havia como mudá-la no app. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AppearanceCard(theme: ThemePreference, onThemeChange: (ThemePreference) -> Unit) {
+    FluxaCard(modifier = Gutter.testTag("more-appearance")) {
+        Text(stringResource(R.string.more_appearance), style = FluxaTheme.typography.titleSmall, color = FluxaTheme.colors.textPrimary)
+        FlowRow(modifier = Modifier.padding(top = 8.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                ThemePreference.SYSTEM to R.string.theme_system,
+                ThemePreference.LIGHT to R.string.theme_light,
+                ThemePreference.DARK to R.string.theme_dark,
+            ).forEach { (option, label) ->
+                FluxaChip(
+                    label = stringResource(label), selected = theme == option, onSelectedChange = { onThemeChange(option) },
+                    role = Role.RadioButton, modifier = Modifier.testTag("theme-${option.name}"),
+                )
             }
         }
     }

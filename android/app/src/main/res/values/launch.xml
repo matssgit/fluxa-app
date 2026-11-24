@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Existing Android brand colors. Startup is always dark, including a DARK app on a LIGHT system. -->
-    <color name="fluxa_startup_background">#0B1E1A</color>
-    <color name="fluxa_icon_background">#173F36</color>
+    <color name="fluxa_startup_background">#0E171B</color>
+    <color name="fluxa_icon_background">#14414D</color>
     <style name="Theme.Fluxa" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/fluxa_startup_background</item>
-        <item name="android:colorAccent">#173F36</item>
+        <item name="android:colorAccent">#14414D</item>
         <item name="android:statusBarColor">@color/fluxa_startup_background</item>
         <item name="android:navigationBarColor">@color/fluxa_startup_background</item>
         <item name="android:windowLightStatusBar">false</item>

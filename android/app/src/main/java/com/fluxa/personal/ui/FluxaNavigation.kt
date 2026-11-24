@@ -1,5 +1,6 @@
 package com.fluxa.personal.ui
 
+import com.fluxa.personal.core.preferences.ThemePreference
 import com.fluxa.personal.ui.feature.analytics.AnalyticsRoutes
 import com.fluxa.personal.ui.feature.analytics.AnalyticsScreen
 import com.fluxa.personal.ui.feature.analytics.AnalyticsViewModel
@@ -140,7 +141,7 @@ private enum class Destination(
 }
 
 @Composable
-internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
+internal fun FluxaNavigation(theme: ThemePreference = ThemePreference.SYSTEM, onRestartShell: () -> Unit = {}) {
     val controller = rememberNavController()
     val entry by controller.currentBackStackEntryAsState()
     var showNewEntry by rememberSaveable { mutableStateOf(false) }
@@ -407,6 +408,11 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
                         onOpenBackup = { controller.navigate(BackupRoutes.HOME) },
                         onOpenSecurity = { controller.navigate(SecurityRoutes.SETTINGS) },
                         onOpenAnalytics = { controller.navigate(AnalyticsRoutes.HOME) },
+                        theme = theme,
+                        onThemeChange = { preferencesScope.launch {
+                            try { app.preferences.setTheme(it) }
+                            catch (_: IOException) { Toast.makeText(app, R.string.security_error_save, Toast.LENGTH_SHORT).show() }
+                        } },
                     )
                 }
                 // Sprint 9-B: Mais → Segurança (bloqueio do app, bloqueio automático, proteção de tela)

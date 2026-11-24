@@ -56,6 +56,11 @@ internal class LocalPreferences(context: Context) : BackupSettingsStore, Securit
         store.edit { values -> values[HIDE_AMOUNTS] = !(values[HIDE_AMOUNTS] ?: false) }
     }
 
+    /** Só o tema: não disputa com a ocultação de valores. */
+    suspend fun setTheme(theme: ThemePreference) {
+        store.edit { it[THEME] = theme.name }
+    }
+
     // Portable v1 deliberately excludes device-local security preferences.
     override suspend fun read(): PortableSettingsV1 {
         val current = settings.first()

@@ -21,6 +21,10 @@
     <string name="more_subscriptions">Assinaturas</string>
     <string name="more_goals">Metas</string>
     <string name="more_categories">Categorias</string>
+    <string name="more_appearance">Aparência</string>
+    <string name="theme_system">Automático</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
     <string name="more_analytics">Análises</string>
 
     <!-- Sprint 2-B: comuns -->

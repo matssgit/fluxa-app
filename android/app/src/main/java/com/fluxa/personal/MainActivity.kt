@@ -151,7 +151,7 @@ class MainActivity : FragmentActivity() {
             ThemePreference.SYSTEM ->
                 resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
         }
-        return if (dark) 0xFF0B1E1A.toInt() else 0xFFF3F0E7.toInt()
+        return if (dark) 0xFF0E171B.toInt() else 0xFFF6F2EA.toInt()
     }
 
     private fun applyScreenProtection(enabled: Boolean) {

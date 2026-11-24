@@ -31,7 +31,7 @@ internal fun FluxaApp(fluxa: FluxaApplication, initialSettings: LocalSettings) {
     var shellGeneration by rememberSaveable { mutableIntStateOf(0) }
     FluxaTheme(themePreference = settings.theme, amountsHidden = settings.hideAmounts) {
         key(shellGeneration) {
-            FluxaNavigation(onRestartShell = { shellGeneration++ })
+            FluxaNavigation(theme = settings.theme, onRestartShell = { shellGeneration++ })
         }
     }
 }
