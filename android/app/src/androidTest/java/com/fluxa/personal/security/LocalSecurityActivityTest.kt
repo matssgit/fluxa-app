@@ -39,6 +39,8 @@ class LocalSecurityActivityTest {
     private var scenario: ActivityScenario<MainActivity>? = null
 
     @Before fun seed() {
+        // 9-B: a barreira pede a autenticação sozinha; estes casos conduzem o callback do manager diretamente.
+        com.fluxa.personal.ui.SecurityGateTestHook.autoPrompt = false
         runBlocking {
             app.preferences.writeSecuritySettings(SecuritySettings())
             app.preferences.apply(PortableSettingsV1("LIGHT", false))
@@ -52,6 +54,7 @@ class LocalSecurityActivityTest {
     }
 
     @After fun reset() {
+        com.fluxa.personal.ui.SecurityGateTestHook.autoPrompt = true
         if (app.security.state.value.authentication != null) shell("input keyevent 4")
         scenario?.close()
         runBlocking { app.preferences.writeSecuritySettings(SecuritySettings()) }

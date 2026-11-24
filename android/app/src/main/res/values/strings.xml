@@ -709,12 +709,46 @@
     <string name="backup_error_export_failed">Não foi possível criar o backup. Tente novamente.</string>
     <string name="backup_error_export_too_large">Seus dados excedem o tamanho máximo de um backup do Fluxa.</string>
     <string name="security_auth_title">Desbloquear Fluxa</string>
-    <string name="security_auth_subtitle">Use a biometria ou o bloqueio de tela do Android.</string>
-    <string name="security_initializing">Verificando proteção local…</string>
-    <string name="security_locked">Fluxa bloqueado</string>
+    <string name="security_auth_subtitle">Confirme sua identidade para acessar seus dados financeiros.</string>
     <string name="security_unlock">Desbloquear</string>
-    <string name="security_not_configured">Configure um bloqueio de tela no Android para usar esta proteção.</string>
-    <string name="security_unavailable">A autenticação do Android está indisponível. Tente novamente.</string>
     <string name="security_settings_failed">Não foi possível ler a proteção local. Tente novamente.</string>
     <string name="security_retry">Tentar novamente</string>
+
+    <!-- Sprint 9-B: tela de bloqueio e configurações de segurança -->
+    <string name="security_auth_settings_title">Confirmar segurança</string>
+    <string name="security_auth_settings_subtitle">Confirme sua identidade para alterar a proteção do Fluxa.</string>
+    <string name="security_wordmark" translatable="false">Fluxa</string>
+    <string name="security_lock_title">Seus dados estão protegidos.</string>
+    <string name="security_lock_help">Use sua biometria ou o bloqueio de tela do aparelho.</string>
+    <string name="security_lock_cancelled">Toque em Desbloquear quando quiser continuar.</string>
+    <string name="security_capability_not_configured">Configure uma biometria ou bloqueio de tela no Android para proteger o Fluxa.</string>
+    <string name="security_capability_unavailable">Este aparelho não oferece uma forma compatível de autenticação.</string>
+    <string name="security_error_auth">Não foi possível confirmar sua identidade. Tente novamente.</string>
+    <string name="security_error_generic">Não foi possível concluir agora. Tente novamente.</string>
+    <string name="security_error_save">Não foi possível salvar a configuração. Tente novamente.</string>
+    <string name="more_security">Segurança</string>
+    <string name="security_title">Segurança</string>
+    <string name="security_overline">Proteção do app</string>
+    <string name="security_intro">O Fluxa usa a autenticação do seu aparelho para proteger o acesso ao aplicativo.</string>
+    <string name="security_lock_section">Bloquear o Fluxa</string>
+    <string name="security_lock_toggle">Exigir autenticação para abrir o app</string>
+    <string name="security_lock_supporting">Use a biometria ou o bloqueio de tela do seu aparelho.</string>
+    <string name="security_open_android_settings">Abrir configurações do Android</string>
+    <string name="security_timeout_section">Bloqueio automático</string>
+    <string name="security_timeout_supporting">Tempo fora do Fluxa até pedir a autenticação de novo.</string>
+    <string name="security_timeout_disabled_note">Disponível quando a autenticação para abrir o app estiver ativa.</string>
+    <string name="security_timeout_inactive">Inativo</string>
+    <string name="security_timeout_immediately">Imediatamente</string>
+    <string name="security_timeout_1">Após 1 minuto</string>
+    <string name="security_timeout_5">Após 5 minutos</string>
+    <string name="security_timeout_15">Após 15 minutos</string>
+    <string name="security_timeout_saved">Bloqueio automático atualizado.</string>
+    <string name="security_screen_section">Proteger conteúdo da tela</string>
+    <string name="security_screen_toggle">Bloquear capturas de tela</string>
+    <string name="security_screen_supporting">Quando ativado, o Android impede capturas de tela do Fluxa e pode ocultar o conteúdo na tela de aplicativos recentes.</string>
+    <string name="security_screen_on">Proteção de tela ativada.</string>
+    <string name="security_screen_off">Proteção de tela desativada.</string>
+    <string name="security_lock_on">Proteção ativada.</string>
+    <string name="security_lock_off">Proteção desativada.</string>
+    <string name="security_independent_note">Bloqueio do app, proteção de tela e ocultar valores são controles independentes.</string>
 </resources>

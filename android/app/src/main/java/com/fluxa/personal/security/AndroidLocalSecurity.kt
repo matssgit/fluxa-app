@@ -45,6 +45,7 @@ internal class AndroidAppAuthenticator(
     private val manager: LocalSecurityManager,
     private val scope: CoroutineScope,
 ) {
+    private val activityRef = activity
     private var active = manager.state.value.authentication
     private val prompt = BiometricPrompt(activity, ContextCompat.getMainExecutor(activity),
         object : BiometricPrompt.AuthenticationCallback() {
@@ -66,16 +67,20 @@ internal class AndroidAppAuthenticator(
                 }
             }
         })
-    private val info = BiometricPrompt.PromptInfo.Builder()
-        .setTitle(activity.getString(R.string.security_auth_title))
-        .setSubtitle(activity.getString(R.string.security_auth_subtitle))
-        .setAllowedAuthenticators(ALLOWED_AUTHENTICATORS)
-        .build()
+    /** Só os textos variam por propósito; autenticadores e callbacks são os mesmos para desbloquear e configurar. */
+    private fun info(purpose: AuthenticationPurpose): BiometricPrompt.PromptInfo {
+        val unlock = purpose == AuthenticationPurpose.UNLOCK
+        return BiometricPrompt.PromptInfo.Builder()
+            .setTitle(activityRef.getString(if (unlock) R.string.security_auth_title else R.string.security_auth_settings_title))
+            .setSubtitle(activityRef.getString(if (unlock) R.string.security_auth_subtitle else R.string.security_auth_settings_subtitle))
+            .setAllowedAuthenticators(ALLOWED_AUTHENTICATORS)
+            .build()
+    }
 
     fun authenticate(request: AuthenticationRequest) {
         if (manager.state.value.authentication != request) return
         active = request
-        try { prompt.authenticate(info) } catch (_: Exception) {
+        try { prompt.authenticate(info(request.purpose)) } catch (_: Exception) {
             active = null
             manager.onAuthenticationError(request.id)
         }

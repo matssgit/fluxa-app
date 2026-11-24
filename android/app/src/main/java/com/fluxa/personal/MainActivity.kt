@@ -4,7 +4,17 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import androidx.activity.enableEdgeToEdge
+import android.content.res.Configuration
+import android.view.WindowManager
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.lifecycle.lifecycleScope
+import com.fluxa.personal.core.preferences.ThemePreference
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.FragmentActivity
@@ -33,7 +43,7 @@ class MainActivity : FragmentActivity() {
         }
         composeContent = content
         curtain = View(this).apply {
-            setBackgroundColor(getColor(android.R.color.background_light))
+            setBackgroundColor(curtainColor())
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             isClickable = true
         }
@@ -46,17 +56,54 @@ class MainActivity : FragmentActivity() {
             true
         }
         setContentView(root)
+        // FLAG_SECURE global, decidido só pela preferência protectScreenContent (nunca por tela).
+        applyScreenProtection(fluxa.security.state.value.settings?.protectScreenContent == true)
+        lifecycleScope.launch {
+            fluxa.security.state.map { it.settings?.protectScreenContent == true }.distinctUntilChanged()
+                .collect(::applyScreenProtection)
+        }
+        lifecycleScope.launch {
+            fluxa.preferences.settings.map { it.theme }.distinctUntilChanged().collect {
+                lastTheme = it
+                curtain.setBackgroundColor(curtainColor())
+            }
+        }
         content.setContent {
+            // Tema explícito também na barreira: lido do DataStore (não financeiro); até a primeira leitura, o do sistema.
+            val themes = remember { fluxa.preferences.settings.map { it.theme } }
+            val theme by themes.collectAsState(lastTheme)
             CompositionLocalProvider(
                 LocalAuthenticationLauncher provides AuthenticationLauncher(::requestAuthentication),
             ) {
                 LocalSecurityGate(
                     manager = fluxa.security,
+                    themePreference = theme,
                     onAuthenticate = { requestAuthentication(AuthenticationPurpose.UNLOCK) },
                     onRendered = ::securityRendered,
                 ) { FluxaApp(fluxa) }
             }
         }
+    }
+
+    private var lastTheme = ThemePreference.SYSTEM
+
+    /** Fundo da cortina nativa igual ao da barreira (creme ou petróleo), sem clarão branco no tema escuro. */
+    private fun curtainColor(): Int {
+        val dark = when (lastTheme) {
+            ThemePreference.LIGHT -> false
+            ThemePreference.DARK -> true
+            ThemePreference.SYSTEM -> (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        }
+        return if (dark) 0xFF0B1E1A.toInt() else 0xFFF3F0E7.toInt()
+    }
+
+    private fun applyScreenProtection(enabled: Boolean) {
+        // Window.setFlags sempre reenvia os atributos da janela (relayout, reavaliação do teclado) mesmo sem mudança:
+        // só toca na janela quando o estado desejado difere do atual.
+        val secure = window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
+        if (secure == enabled) return
+        if (enabled) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     private fun requestAuthentication(purpose: AuthenticationPurpose): Boolean {

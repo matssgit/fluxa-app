@@ -86,6 +86,10 @@ import com.fluxa.personal.ui.feature.safe.RepositorySafeToSpendDataSource
 import com.fluxa.personal.ui.feature.safe.SafeRoutes
 import com.fluxa.personal.ui.feature.backup.BackupRestoreViewModel
 import com.fluxa.personal.ui.feature.backup.BackupRoutes
+import com.fluxa.personal.ui.feature.security.ManagerSecurityControls
+import com.fluxa.personal.ui.feature.security.SecurityRoutes
+import com.fluxa.personal.ui.feature.security.SecurityScreen
+import com.fluxa.personal.ui.feature.security.SecuritySettingsViewModel
 import com.fluxa.personal.ui.feature.backup.BackupScreen
 import com.fluxa.personal.ui.feature.backup.RepositoryBackupGateway
 import com.fluxa.personal.ui.feature.safe.SafeToSpendDetailScreen
@@ -376,6 +380,14 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
                         onOpenSubscriptions = { controller.navigate(SubscriptionRoutes.LIST) },
                         onOpenGoals = { controller.navigate(GoalRoutes.LIST) },
                         onOpenBackup = { controller.navigate(BackupRoutes.HOME) },
+                        onOpenSecurity = { controller.navigate(SecurityRoutes.SETTINGS) },
+                    )
+                }
+                // Sprint 9-B: Mais → Segurança (bloqueio do app, bloqueio automático, proteção de tela)
+                composable(SecurityRoutes.SETTINGS) {
+                    SecurityScreen(
+                        viewModel = viewModel(factory = SecuritySettingsViewModel.factory(ManagerSecurityControls(app.security))),
+                        onBack = { controller.popBackStack() },
                     )
                 }
                 // Sprint 8-C: backup e restauração (Mais → Backup e restauração)

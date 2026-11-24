@@ -87,12 +87,14 @@ internal fun MorePlaceholder(
     onOpenSubscriptions: () -> Unit = {},
     onOpenGoals: () -> Unit = {},
     onOpenBackup: () -> Unit = {},
+    onOpenSecurity: () -> Unit = {},
 ) {
     val destinations = listOf(
         MoreDestination(R.string.more_subscriptions, FluxaIcons.Repeat, route = "subscriptions"),
         MoreDestination(R.string.more_goals, FluxaIcons.Target, route = "goals"),
         MoreDestination(R.string.more_categories, FluxaIcons.Tag, route = "categories"),
-        MoreDestination(R.string.more_backup, FluxaIcons.Lock, route = "backup"),
+        MoreDestination(R.string.more_backup, FluxaIcons.Download, route = "backup"),
+        MoreDestination(R.string.more_security, FluxaIcons.Lock, route = "security"),
         MoreDestination(R.string.more_analytics, FluxaIcons.Analytics),
         MoreDestination(R.string.more_settings, FluxaIcons.Sliders),
     )
@@ -122,6 +124,7 @@ internal fun MorePlaceholder(
                             "subscriptions" -> onOpenSubscriptions
                             "goals" -> onOpenGoals
                             "backup" -> onOpenBackup
+                            "security" -> onOpenSecurity
                             else -> null
                         },
                         modifier = if (destination.route != null) Modifier.testTag("more-${destination.route}") else Modifier,
