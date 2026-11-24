@@ -114,7 +114,10 @@ class RcVisualCapture {
         }
     }
 
+    /** `-e fluxaOnly analises` limita a captura às seções com esse prefixo. */
     private fun section(name: String, body: () -> Unit) {
+        val only = args.getString("fluxaOnly")
+        if (only != null && !name.startsWith(only)) return
         try {
             ActivityScenario.launch(MainActivity::class.java).use {
                 wait("tab-dashboard")
@@ -151,6 +154,19 @@ class RcVisualCapture {
         tx(EXPENSE, main, home, 18_640, today.minusDays(1), "Conta de luz")
         app.transactions.cancel(tx(EXPENSE, main, market, 9_900, today.minusDays(2), "Compra duplicada"))
         repeat(6) { tx(EXPENSE, main, market, 4_300L + it * 731, today.minusDays(3L + it), "Padaria") }
+        // Meses anteriores para a evolução das Análises.
+        for (i in 1L..5L) {
+            if (i == 3L) continue
+            tx(INCOME, main, salary, 560_000 + i * 12_300, today.minusMonths(i).withDayOfMonth(5), "Salário")
+            tx(EXPENSE, main, home, 210_000 + i * 47_000, today.minusMonths(i).withDayOfMonth(8), "Aluguel")
+            tx(EXPENSE, main, market, 90_000 + i * 31_000, today.minusMonths(i).withDayOfMonth(12), "Mercado do mês")
+        }
+        val leisure = app.categories.create(CategoryDetails("Lazer", EXPENSE, "gift", "#829B88"))
+        val health = app.categories.create(CategoryDetails("Saúde e bem-estar", EXPENSE, "health", "#B9684F"))
+        val car = app.categories.create(CategoryDetails("Transporte", EXPENSE, "transport", "#35695A"))
+        tx(EXPENSE, main, leisure, 18_900, today.minusDays(2), "Cinema")
+        tx(EXPENSE, main, health, 12_450, today.minusDays(5), "Farmácia")
+        tx(EXPENSE, main, car, 9_700, today.minusDays(6), "Combustível")
         fun goal(name: String, cents: Long, account: UUID, date: LocalDate? = null): UUID = runBlocking {
             (app.goals.createGoal(GoalDetails(name, Money(cents), account, date)) as GoalResult.Saved).value.id
         }
@@ -210,6 +226,7 @@ class RcVisualCapture {
         section("e-tabs") { page("e-inicio", 0); tap("tab-cash"); page("e-caixa", 0); tap("tab-cards"); page("e-cartoes", 0) }
         section("e-subs") { more("more-subscriptions", "screen-subscriptions"); page("e-assinaturas", 0); tap("action-agenda"); page("e-agenda", 0) }
         section("e-goals") { more("more-goals", "screen-goals"); page("e-metas", 0); tap("action-new-goal"); page("e-meta-form", 1) }
+        section("e-analises") { more("more-analytics", "screen-analytics"); wait("analytics-empty"); page("e-analises", 0) }
         section("e-cats") { more("more-categories", "screen-categories"); page("e-categorias", 0) }
         section("e-acc") { tap("tab-cash"); tap("action-create-account"); wait("screen-account-form"); tap("action-save"); page("e-conta-form", 1) }
         section("e-card") { tap("tab-cards"); tap("action-new-card"); wait("screen-card-form"); tap("action-save"); page("e-cartao-form", 1) }
@@ -219,6 +236,8 @@ class RcVisualCapture {
     private fun populated() {
         section("inicio") { page("inicio", 2) }
         section("limite") { tap("action-safe-details"); wait("safe-hero"); page("limite", 3) }
+        section("analises") { more("more-analytics", "screen-analytics"); wait("analytics-summary"); page("analises", 7) }
+        section("analises-mes") { more("more-analytics", "screen-analytics"); wait("analytics-summary"); tap("analytics-previous"); page("analises-mes", 1) }
         section("caixa") { tap("tab-cash"); page("caixa", 3) }
         section("contas") {
             tap("tab-cash"); tap("action-manage-accounts"); wait("screen-accounts"); page("contas", 1)

@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -102,6 +103,18 @@ class ReadModelsViewModelsTest {
             assertNull(errorMessage) // período vazio não é erro
             assertEquals(LocalDate.of(2026, 11, 1), monthStart)
         }
+    }
+
+    @Test
+    fun dashboardFollowsTheMonthWhenTheDayChanges() = runTest(dispatcher) {
+        val days = MutableStateFlow(today)
+        val vm = DashboardViewModel(source, accounts, categories, calendar, days = days)
+        collect(vm.uiState)
+        advanceUntilIdle()
+        days.value = LocalDate.of(2026, 12, 1)
+        advanceUntilIdle()
+        assertEquals(LocalDate.of(2026, 12, 1), vm.uiState.value.monthStart)
+        assertEquals(LocalDate.of(2026, 12, 1) to LocalDate.of(2027, 1, 1), source.summaryRequests.last())
     }
 
     @Test

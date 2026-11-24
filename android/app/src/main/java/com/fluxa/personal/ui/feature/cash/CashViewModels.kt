@@ -20,6 +20,7 @@ import com.fluxa.personal.domain.model.TransactionHistoryFilter
 import com.fluxa.personal.domain.model.TransactionHistoryPage
 import com.fluxa.personal.domain.rules.BalanceSnapshot
 import com.fluxa.personal.domain.rules.CalculatedBalance
+import com.fluxa.personal.ui.common.financialDays
 import com.fluxa.personal.ui.feature.transactions.TransactionSource
 import java.time.LocalDate
 import java.util.UUID
@@ -30,7 +31,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -214,6 +217,7 @@ private data class DashboardData(
     val summary: PeriodSummary?,
     val recent: List<FinancialTransaction>?,
     val reserves: ReserveBalanceSnapshot? = null,
+    val monthStart: LocalDate? = null,
 )
 
 /**
@@ -221,6 +225,7 @@ private data class DashboardData(
  * (`observePeriodSummary` em [primeiro dia do mês, primeiro dia do mês seguinte)) e recentes
  * (`observeRecentTransactions(5)`: até 5 efetivados, na ordem do repositório). Nenhuma soma ou recorte no ViewModel.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 internal class DashboardViewModel(
     transactions: TransactionSource,
     accounts: AccountRepository,
@@ -228,15 +233,17 @@ internal class DashboardViewModel(
     calendar: FinancialCalendar = FinancialCalendar(),
     /** Saldos com reservas de metas (Sprint 6-A). `availableBalance` já desconta as reservas elegíveis. */
     reserves: Flow<ReserveBalanceSnapshot>? = null,
+    /** Virada do dia: o mês do resumo acompanha o calendário, igual às Análises. */
+    days: Flow<LocalDate> = flowOf(calendar.today()),
 ) : ViewModel() {
-    private val monthStart: LocalDate = calendar.today().withDayOfMonth(1)
-    private val monthEnd: LocalDate = monthStart.plusMonths(1)
-
     private val data: Flow<DashboardData> = combine(
         transactions.observeBalances().map<BalanceSnapshot, BalanceSnapshot?> { it }.catch { emit(null) },
-        transactions.observePeriodSummary(monthStart, monthEnd).map<PeriodSummary, PeriodSummary?> { it }.catch { emit(null) },
+        days.map { it.withDayOfMonth(1) }.distinctUntilChanged().flatMapLatest { start ->
+            transactions.observePeriodSummary(start, start.plusMonths(1)).map<PeriodSummary, PeriodSummary?> { it }.catch { emit(null) }
+                .map { start to it }
+        },
         transactions.observeRecentTransactions(RECENT_LIMIT).map<List<FinancialTransaction>, List<FinancialTransaction>?> { it }.catch { emit(null) },
-    ) { snapshot, summary, recent -> DashboardData(snapshot, summary, recent) }
+    ) { snapshot, (start, summary), recent -> DashboardData(snapshot, summary, recent, monthStart = start) }
         .let { base ->
             if (reserves == null) base
             else combine(base, reserves.map<ReserveBalanceSnapshot, ReserveBalanceSnapshot?> { it }.catch { emit(null) }) { d, r -> d.copy(reserves = r) }
@@ -255,7 +262,7 @@ internal class DashboardViewModel(
             available = d.reserves?.availableBalance ?: d.snapshot?.available,
             reserveTotals = d.reserves?.let { com.fluxa.personal.ui.common.ReserveTotals(it.totalBalance, it.totalReserved, it.availableBalance) },
             activeAccounts = accountList.count { it.archivedAt == null },
-            monthStart = monthStart,
+            monthStart = d.monthStart,
             summary = d.summary,
             recent = d.recent.orEmpty().map { LedgerEntry(it, byAccount[it.details.accountId], byCategory[it.details.categoryId]) },
             errorMessage = if (d.snapshot == null || d.summary == null || d.recent == null) R.string.error_load else null,
@@ -273,7 +280,7 @@ internal class DashboardViewModel(
             categories: CategoryRepository,
             reserves: Flow<ReserveBalanceSnapshot>? = null,
         ): ViewModelProvider.Factory =
-            viewModelFactory { initializer { DashboardViewModel(transactions, accounts, categories, reserves = reserves) } }
+            viewModelFactory { initializer { DashboardViewModel(transactions, accounts, categories, reserves = reserves, days = financialDays()) } }
     }
 }
 

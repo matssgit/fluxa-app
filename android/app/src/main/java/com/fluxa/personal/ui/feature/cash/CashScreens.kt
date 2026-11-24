@@ -416,6 +416,7 @@ internal fun DashboardScreen(
     onOpenTransaction: (UUID) -> Unit,
     safeToSpend: SafeToSpendViewModel? = null,
     onOpenSafeToSpend: () -> Unit = {},
+    onOpenAnalytics: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     TabScreen(
@@ -458,7 +459,7 @@ internal fun DashboardScreen(
         // Limite seguro logo abaixo do disponível (hierarquia: disponível → limite seguro → mês → recentes).
         safeToSpend?.let { vm -> item { SafeToSpendCard(vm, onDetails = onOpenSafeToSpend) } }
         state.summary?.let { summary ->
-            item { MonthSummaryCard(summary, state.monthStart) }
+            item { MonthSummaryCard(summary, state.monthStart, onOpenAnalytics) }
         }
         item {
             FluxaSectionHeader(
@@ -491,7 +492,7 @@ internal fun DashboardScreen(
  * nenhuma soma na UI. Sinal e texto indicam entrada/saída/resultado (não só cor); valores passam pela ocultação.
  */
 @Composable
-private fun MonthSummaryCard(summary: PeriodSummary, monthStart: LocalDate?) {
+private fun MonthSummaryCard(summary: PeriodSummary, monthStart: LocalDate?, onOpenAnalytics: () -> Unit) {
     val colors = FluxaTheme.colors
     val monthLabel = monthStart?.format(MonthTitle)?.replaceFirstChar { it.titlecase(BrazilLocale) }.orEmpty()
     FluxaCard(modifier = Modifier.fillMaxWidth().testTag("month-summary")) {
@@ -504,6 +505,11 @@ private fun MonthSummaryCard(summary: PeriodSummary, monthStart: LocalDate?) {
         SummaryRow(stringResource(R.string.summary_net), summary.net, SummaryKind.Net, "summary-net")
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.summary_explain), style = FluxaTheme.typography.caption, color = colors.textMuted)
+        Spacer(Modifier.height(12.dp))
+        FluxaButton(
+            text = stringResource(R.string.summary_open_analytics), onClick = onOpenAnalytics, variant = FluxaButtonVariant.Secondary,
+            modifier = Modifier.fillMaxWidth().testTag("action-open-analytics"),
+        )
     }
 }
 

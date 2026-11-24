@@ -1,5 +1,9 @@
 package com.fluxa.personal.ui
 
+import com.fluxa.personal.ui.feature.analytics.AnalyticsRoutes
+import com.fluxa.personal.ui.feature.analytics.AnalyticsScreen
+import com.fluxa.personal.ui.feature.analytics.AnalyticsViewModel
+import com.fluxa.personal.ui.feature.analytics.RepositoryAnalyticsDataSource
 import java.util.UUID
 import java.io.IOException
 import android.widget.Toast
@@ -163,6 +167,7 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
     var feedbackText by rememberSaveable { mutableStateOf<String?>(null) }
     val goals = remember(app) { RepositoryGoalDataSource(app.goals) }
     val safeSource = remember(app) { RepositorySafeToSpendDataSource(app.safeToSpend) }
+    val analyticsSource = remember(app) { RepositoryAnalyticsDataSource(app.analytics, app.categories) }
     val cashLabels = remember(app) { RepositoryCashEventLabels(subscriptions, credit) }
     val backupGateway = remember(app) { RepositoryBackupGateway(app.backupDocuments, app.contentResolver) }
     val goToTab: (String) -> Unit = { route ->
@@ -202,6 +207,16 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
                         onOpenTransaction = { controller.navigate(TransactionRoutes.detail(it)) },
                         safeToSpend = viewModel(factory = SafeToSpendViewModel.factory(safeSource, cashLabels)),
                         onOpenSafeToSpend = { controller.navigate(SafeRoutes.DETAIL) },
+                        onOpenAnalytics = { controller.navigate(AnalyticsRoutes.HOME) },
+                    )
+                }
+                // Sprint 11-B: análises (Mais → Análises e Início → Ver análises)
+                composable(AnalyticsRoutes.HOME) {
+                    AnalyticsScreen(
+                        viewModel = viewModel(factory = AnalyticsViewModel.factory(analyticsSource)),
+                        onBack = { controller.popBackStack() },
+                        onOpenSafeToSpend = { controller.navigate(SafeRoutes.DETAIL) },
+                        onOpenSubscriptions = { controller.navigate(SubscriptionRoutes.LIST) },
                     )
                 }
                 composable(SafeRoutes.DETAIL) {
@@ -391,6 +406,7 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
                         onOpenGoals = { controller.navigate(GoalRoutes.LIST) },
                         onOpenBackup = { controller.navigate(BackupRoutes.HOME) },
                         onOpenSecurity = { controller.navigate(SecurityRoutes.SETTINGS) },
+                        onOpenAnalytics = { controller.navigate(AnalyticsRoutes.HOME) },
                     )
                 }
                 // Sprint 9-B: Mais → Segurança (bloqueio do app, bloqueio automático, proteção de tela)

@@ -207,11 +207,12 @@
     <!-- Sprint 3-D: resumo do mês e paginação -->
     <string name="summary_overline">Mês atual</string>
     <string name="summary_income">Entradas</string>
-    <string name="summary_expenses">Saídas</string>
+    <string name="summary_expenses">Despesas</string>
     <string name="summary_net">Resultado do mês</string>
     <string name="summary_net_positive">Positivo</string>
     <string name="summary_net_negative">Negativo</string>
     <string name="summary_net_zero">Neutro</string>
+    <string name="summary_open_analytics">Ver análises</string>
     <string name="summary_explain">Lançamentos efetivados do mês, de todas as contas. Cancelados não contam.</string>
     <string name="cash_load_more">Carregar mais</string>
     <plurals name="cash_entries_more">
@@ -755,4 +756,79 @@
     <string name="security_lock_on">Proteção ativada.</string>
     <string name="security_lock_off">Proteção desativada.</string>
     <string name="security_independent_note">Bloqueio do app, proteção de tela e ocultar valores são controles independentes.</string>
+
+    <!-- Sprint 11-B: Análises -->
+    <string name="analytics_title">Análises</string>
+    <string name="analytics_overline">Seu dinheiro</string>
+    <string name="analytics_intro">Entenda como seu dinheiro está se comportando.</string>
+    <string name="analytics_previous_month">Mês anterior</string>
+    <string name="analytics_next_month">Próximo mês</string>
+    <string name="analytics_income">Entradas</string>
+    <string name="analytics_expense">Despesas</string>
+    <string name="analytics_net">Resultado</string>
+    <string name="analytics_savings_rate">Taxa de economia</string>
+    <string name="analytics_no_income">Sem receita realizada no período</string>
+    <plurals name="analytics_transactions">
+        <item quantity="one">%1$d movimentação realizada.</item>
+        <item quantity="many">%1$d movimentações realizadas.</item>
+        <item quantity="other">%1$d movimentações realizadas.</item>
+    </plurals>
+    <string name="analytics_realized_note">Compras no cartão contam quando a parcela é paga.</string>
+    <string name="analytics_month_empty">Nenhuma movimentação neste mês.</string>
+    <string name="analytics_empty_title">Ainda não há movimentações suficientes para gerar análises.</string>
+    <string name="analytics_empty_body">Conforme você registrar receitas e despesas, seus dados aparecerão aqui.</string>
+    <string name="analytics_unavailable_overflow">Os valores registrados são grandes demais para calcular as análises.</string>
+    <string name="analytics_unavailable_conflict">Não foi possível calcular as análises com os dados atuais.</string>
+
+    <string name="analytics_insights">Insights</string>
+    <string name="analytics_insights_hidden">Alguns insights ficam ocultos enquanto os valores estão ocultos.</string>
+    <string name="insight_negative_current">Suas despesas estão acima das suas entradas neste mês.</string>
+    <string name="insight_negative_past">Suas despesas superaram suas entradas em %1$s.</string>
+    <string name="insight_positive_current">O mês está com resultado positivo até agora.</string>
+    <string name="insight_positive_past">Você terminou %1$s com resultado positivo.</string>
+    <string name="insight_expenses_increased">Suas despesas aumentaram em relação a %1$s.</string>
+    <string name="insight_top_category_current">%1$s é sua maior categoria de gasto neste mês.</string>
+    <string name="insight_top_category_past">%1$s foi sua maior categoria de gasto em %2$s.</string>
+    <string name="insight_no_expenses">Nenhuma despesa realizada em %1$s.</string>
+    <string name="insight_change">Variação de %1$s</string>
+
+    <string name="analytics_categories">Gastos por categoria</string>
+    <string name="analytics_no_expenses">Nenhuma despesa realizada neste mês.</string>
+    <string name="analytics_share_spoken">%1$s por cento das despesas</string>
+    <string name="analytics_less_than">menos de</string>
+    <plurals name="analytics_other_categories">
+        <item quantity="one">Mais %1$d categoria com gastos no mês.</item>
+        <item quantity="many">Mais %1$d categorias com gastos no mês.</item>
+        <item quantity="other">Mais %1$d categorias com gastos no mês.</item>
+    </plurals>
+
+    <string name="analytics_evolution">Últimos 6 meses</string>
+    <string name="analytics_evolution_empty">Sem movimentações nos últimos 6 meses.</string>
+    <string name="analytics_chart_top">Topo do gráfico:</string>
+    <string name="analytics_chart_hidden">Gráfico oculto enquanto os valores estão ocultos.</string>
+    <string name="analytics_chart_description">Gráfico de entradas e despesas de %1$s a %2$s. Os valores de cada mês estão na lista a seguir.</string>
+    <string name="analytics_evolution_spoken">%1$s. Entradas %2$s. Despesas %3$s. Resultado %4$s.</string>
+
+    <string name="analytics_projection">Próximos 30 dias</string>
+    <string name="analytics_from_today">A partir de hoje, %1$s</string>
+    <string name="analytics_available_now">Disponível agora</string>
+    <string name="analytics_obligations">Obrigações conhecidas</string>
+    <string name="analytics_no_obligations">Nenhuma obrigação conhecida no período.</string>
+    <string name="analytics_confirmed_income">Receitas confirmadas</string>
+    <string name="analytics_projected_on">Saldo projetado em %1$s</string>
+    <string name="analytics_lowest">Menor saldo projetado</string>
+    <string name="analytics_lowest_today">Hoje</string>
+    <string name="analytics_lowest_on">Em %1$s</string>
+    <string name="analytics_month_end">Saldo projetado no fim do mês, %1$s</string>
+    <string name="analytics_projection_note">Considera só o que está registrado no Fluxa. Não é uma previsão de gastos futuros.</string>
+    <string name="analytics_safe_note">O Limite seguro considera o menor ponto dessa projeção para estimar quanto você pode gastar hoje.</string>
+    <string name="analytics_open_safe">Ver Limite seguro</string>
+
+    <string name="analytics_subscriptions">Assinaturas</string>
+    <string name="analytics_no_subscriptions">Nenhuma assinatura ativa.</string>
+    <string name="analytics_active_subscriptions">Assinaturas ativas</string>
+    <string name="analytics_monthly_equivalent">Equivalente mensal</string>
+    <string name="analytics_annual_cost" tools:ignore="Typos">Custo anual projetado</string>
+    <string name="analytics_equivalent_note">Assinaturas anuais são distribuídas aqui apenas para comparação de orçamento. Equivalente mensal não é uma cobrança mensal.</string>
+    <string name="analytics_open_subscriptions">Ver assinaturas</string>
 </resources>
