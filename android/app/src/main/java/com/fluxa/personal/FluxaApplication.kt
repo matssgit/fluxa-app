@@ -50,4 +50,5 @@ internal class FluxaApplication : Application() {
     val subscriptions by lazy { SubscriptionRepository(database, credit) }
     val goals by lazy { GoalRepository(database) }
     val safeToSpend by lazy { SafeToSpendRepository(database, goals) }
+    val analytics by lazy { com.fluxa.personal.data.repository.FinancialAnalyticsRepository(database, safeToSpend) }
 }

@@ -49,6 +49,7 @@ internal abstract class FluxaDatabase : RoomDatabase() {
     abstract fun creditDao(): CreditDao
     abstract fun subscriptionDao(): SubscriptionDao
     abstract fun goalDao(): GoalDao
+    abstract fun analyticsDao(): com.fluxa.personal.data.database.dao.FinancialAnalyticsDao
     abstract fun safeToSpendDao(): SafeToSpendDao
 
     companion object {

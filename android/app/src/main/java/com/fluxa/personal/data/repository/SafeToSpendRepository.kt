@@ -42,7 +42,8 @@ internal class SafeToSpendRepository(
         ).map { read(calendar.today(), horizonDays) }.distinctUntilChanged()
     }
 
-    private suspend fun read(today: LocalDate, horizonDays: Int): SafeToSpendState = database.withTransaction {
+    // Shared transactional read contract: analytics must not rebuild the obligation/calendar algorithm.
+    internal suspend fun read(today: LocalDate, horizonDays: Int): SafeToSpendState = database.withTransaction {
         val end = today.plusDays(horizonDays.toLong())
         val balances = goals.readReserveBalances()
         val available = balances.availableBalance
