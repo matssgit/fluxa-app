@@ -3,6 +3,8 @@
 **/build/
 local.properties
 captures/
+# Generated RC1 APK, checksums and local QA reports.
+/artifacts/rc1/
 # Device-local signing material, credentials and real portable backups are never source artifacts.
 *.jks
 *.keystore
