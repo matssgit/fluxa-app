@@ -63,7 +63,7 @@ class RcFinancialSmokeTest {
         Unit
     }
 
-    private fun brl(cents: Long) = FluxaMoneyFormat.format(Money(cents))
+    private fun brl(cents: Long, signed: Boolean = false) = FluxaMoneyFormat.format(Money(cents), signed)
     private fun waitForTag(tag: String) = compose.waitUntilAtLeastOneExists(hasTestTag(tag), 10_000)
     private fun waitForNoTag(tag: String) = compose.waitUntilDoesNotExist(hasTestTag(tag), 10_000)
     private fun click(tag: String) { waitForTag(tag); compose.onNodeWithTag(tag).performClick() }
@@ -251,6 +251,19 @@ class RcFinancialSmokeTest {
             inList("list-dashboard", "available-balance")
             waitForText("reserve-total", brl(285_000))
             waitForText("reserve-reserved-total", brl(40_000))
+
+            // RC2: o mesmo histórico completo também chega às Análises, sem refresh.
+            toTab("more")
+            click("more-analytics")
+            waitForTag("screen-analytics")
+            inList("feature-list", "analytics-summary")
+            waitForText("analytics-income", brl(150_000))
+            waitForText("analytics-expense", brl(65_000))
+            waitForText("analytics-net", brl(85_000, signed = true))
+            inList("feature-list", "projection-available")
+            waitForText("projection-available", brl(245_000))
+            inList("feature-list", "subscriptions-monthly")
+            waitForText("subscriptions-monthly", brl(5_000))
         }
         val total = runBlocking { app.accounts.observeAll().first().single() }
             .let { runBlocking { app.transactions.observeAccountBalance(it.id).first() as CalculatedBalance.Exact } }

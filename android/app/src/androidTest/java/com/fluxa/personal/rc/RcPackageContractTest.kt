@@ -29,7 +29,7 @@ class RcPackageContractTest {
         val appInfo = requireNotNull(info.applicationInfo)
         assertEquals("Fluxa", pm.getApplicationLabel(appInfo).toString())
         assertEquals("1.0.0", info.versionName)
-        assertEquals(1L, info.longVersionCode)
+        assertEquals(2L, info.longVersionCode)
         assertEquals(30, appInfo.minSdkVersion)
         assertEquals(34, appInfo.targetSdkVersion)
         assertEquals(0, appInfo.flags and ApplicationInfo.FLAG_ALLOW_BACKUP)
