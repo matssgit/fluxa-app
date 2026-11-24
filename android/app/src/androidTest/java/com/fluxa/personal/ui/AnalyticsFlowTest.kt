@@ -297,6 +297,40 @@ class AnalyticsFlowTest {
     }
 
     @Test
+    fun monthWithoutMovementsDoesNotRepeatTheEmptyMessageOrLeaveAnOrphanHeading() {
+        tx(EXPENSE, food, 10_000, month.minusMonths(2).atDay(3), "Feira antiga")
+        ActivityScenario.launch(MainActivity::class.java).use {
+            openFromMore()
+            shows("analytics-summary", "Nenhuma movimentação neste mês")
+            shows("analytics-evolution", "Entradas")
+            compose.onNodeWithTag("analytics-categories").assertDoesNotExist()
+            compose.onNodeWithTag("analytics-no-expenses").assertDoesNotExist()
+            assertTrue(compose.onAllNodes(hasText("Gastos por categoria")).fetchSemanticsNodes().isEmpty())
+            // Com receita e nenhuma despesa a seção volta, com a frase própria.
+            tx(INCOME, salary, 1_000, today, "Pagamento")
+            shows("analytics-no-expenses", "Nenhuma despesa realizada neste mês")
+            tx(EXPENSE, food, 500, today, "Feira")
+            shows("category-share-Alimentação", "100%")
+        }
+    }
+
+    @Test
+    fun moreListsOnlyWorkingDestinations() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            waitForTag("tab-more")
+            compose.onNodeWithTag("tab-more").performClick()
+            val expected = listOf("subscriptions", "goals", "analytics", "categories", "backup", "security")
+            waitForTag("more-security")
+            val rows = expected.map { compose.onNodeWithTag("more-$it").fetchSemanticsNode() }
+            assertTrue(rows.all { SemanticsActions.OnClick in it.config })
+            assertEquals(rows, rows.sortedBy { it.positionInRoot.y }) // ordem lógica = ordem visual
+            for (text in listOf("Em breve", "Configurações")) {
+                assertTrue(compose.onAllNodes(hasText(text, substring = true), useUnmergedTree = true).fetchSemanticsNodes().isEmpty())
+            }
+        }
+    }
+
+    @Test
     fun emptyDatabaseShowsAnInvitation() {
         runBlocking { app.database.clearAllTables() }
         ActivityScenario.launch(MainActivity::class.java).use {

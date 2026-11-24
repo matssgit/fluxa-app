@@ -156,6 +156,8 @@ internal fun FluxaIconButton(
     variant: FluxaIconButtonVariant = FluxaIconButtonVariant.Standard,
     enabled: Boolean = true,
     tint: Color = Color.Unspecified,
+    /** Cor do ícone desabilitado, no lugar da transparência padrão (para quando ela o deixa quase invisível). */
+    disabledTint: Color = Color.Unspecified,
 ) {
     val colors = FluxaTheme.colors
     val shape = FluxaTheme.shapes.pill
@@ -166,7 +168,9 @@ internal fun FluxaIconButton(
         FluxaIconButtonVariant.Tonal -> Modifier.background(colors.brandTonal, shape)
         FluxaIconButtonVariant.Glass -> Modifier.fluxaGlass(shape, FluxaDepth.Depth2)
     }
+    val ownDisabledTint = !enabled && disabledTint != Color.Unspecified
     val iconTint = when {
+        ownDisabledTint -> disabledTint
         tint != Color.Unspecified -> tint
         variant == FluxaIconButtonVariant.Tonal -> colors.onBrandTonal
         else -> colors.textPrimary
@@ -186,7 +190,7 @@ internal fun FluxaIconButton(
                 onClickLabel = null,
                 onClick = onClick,
             )
-            .alpha(if (enabled) 1f else 0.45f),
+            .alpha(if (enabled || ownDisabledTint) 1f else 0.45f),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = contentDescription, tint = iconTint, modifier = Modifier.size(22.dp))

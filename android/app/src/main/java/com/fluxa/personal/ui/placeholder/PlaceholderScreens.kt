@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -77,7 +76,7 @@ private fun PlaceholderScreen(
 
 private val Gutter = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
 
-private data class MoreDestination(val label: Int, val icon: ImageVector, val route: String? = null)
+private data class MoreDestination(val label: Int, val icon: ImageVector, val route: String)
 
 @Composable
 internal fun MorePlaceholder(
@@ -96,7 +95,6 @@ internal fun MorePlaceholder(
         MoreDestination(R.string.more_categories, FluxaIcons.Tag, route = "categories"),
         MoreDestination(R.string.more_backup, FluxaIcons.Download, route = "backup"),
         MoreDestination(R.string.more_security, FluxaIcons.Lock, route = "security"),
-        MoreDestination(R.string.more_settings, FluxaIcons.Sliders),
     )
     PlaceholderScreen(
         route = "more",
@@ -120,15 +118,15 @@ internal fun MorePlaceholder(
                         label = stringResource(destination.label),
                         icon = destination.icon,
                         onClick = when (destination.route) {
-                            "categories" -> onOpenCategories
                             "subscriptions" -> onOpenSubscriptions
                             "goals" -> onOpenGoals
                             "backup" -> onOpenBackup
                             "security" -> onOpenSecurity
                             "analytics" -> onOpenAnalytics
-                            else -> null
+                            "categories" -> onOpenCategories
+                            else -> error("Destino sem tela: ${destination.route}")
                         },
-                        modifier = if (destination.route != null) Modifier.testTag("more-${destination.route}") else Modifier,
+                        modifier = Modifier.testTag("more-${destination.route}"),
                     )
                 }
             }
@@ -137,14 +135,12 @@ internal fun MorePlaceholder(
 }
 
 @Composable
-private fun MoreRow(label: String, icon: ImageVector, onClick: (() -> Unit)?, modifier: Modifier = Modifier) {
+private fun MoreRow(label: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = FluxaTheme.colors
-    val soon = stringResource(R.string.coming_soon)
-    val narrow = com.fluxa.personal.ui.common.isNarrowForText()
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .semantics(mergeDescendants = true) {},
@@ -157,27 +153,7 @@ private fun MoreRow(label: String, icon: ImageVector, onClick: (() -> Unit)?, mo
         ) {
             Icon(icon, contentDescription = null, tint = colors.onBrandTonal, modifier = Modifier.size(20.dp))
         }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary)
-            // Com fonte ampliada o selo vai para baixo do rótulo (ao lado, "Configurações" quebrava no meio).
-            if (onClick == null && narrow) SoonTag(soon, Modifier.padding(top = 4.dp))
-        }
-        if (onClick != null) {
-            Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
-        } else if (!narrow) {
-            SoonTag(soon)
-        }
+        Text(label, style = FluxaTheme.typography.bodyStrong, color = colors.textPrimary, modifier = Modifier.weight(1f))
+        Icon(FluxaIcons.ChevronRight, contentDescription = null, tint = colors.textMuted, modifier = Modifier.size(20.dp))
     }
-}
-
-@Composable
-private fun SoonTag(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        style = FluxaTheme.typography.caption,
-        color = FluxaTheme.colors.textMuted,
-        modifier = modifier
-            .background(FluxaTheme.colors.surfaceSunken, FluxaTheme.shapes.pill)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-    )
 }

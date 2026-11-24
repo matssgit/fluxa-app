@@ -11,7 +11,6 @@
     <string name="action_show_amounts">Mostrar valores</string>
     <string name="amount_hidden">Valor oculto</string>
     <string name="loading">Carregando</string>
-    <string name="coming_soon">Em breve</string>
 
     <string name="placeholder_dashboard_overline">Seu fluxo</string>
     <string name="filter_all">Tudo</string>
@@ -23,7 +22,6 @@
     <string name="more_goals">Metas</string>
     <string name="more_categories">Categorias</string>
     <string name="more_analytics">Análises</string>
-    <string name="more_settings">Configurações</string>
 
     <!-- Sprint 2-B: comuns -->
     <string name="action_back">Voltar</string>
@@ -819,6 +817,7 @@
     <string name="analytics_lowest">Menor saldo projetado</string>
     <string name="analytics_lowest_today">Hoje</string>
     <string name="analytics_lowest_on">Em %1$s</string>
+    <string name="analytics_month_end_label">Fim do mês</string>
     <string name="analytics_month_end">Saldo projetado no fim do mês, %1$s</string>
     <string name="analytics_projection_note">Considera só o que está registrado no Fluxa. Não é uma previsão de gastos futuros.</string>
     <string name="analytics_safe_note">O Limite seguro considera o menor ponto dessa projeção para estimar quanto você pode gastar hoje.</string>

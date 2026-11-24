@@ -211,7 +211,14 @@ class RcVisualCapture {
             app.preferences.writeSecuritySettings(SecuritySettings())
             app.preferences.apply(PortableSettingsV1(args.getString("fluxaTheme") ?: "SYSTEM", args.getString("fluxaHide") == "1"))
         }
-        if (args.getString("fluxaEmpty") == "1") {
+        if (args.getString("fluxaEmpty") == "2") {
+            // Conta com saldo e nenhuma movimentação: o mês vazio das Análises.
+            runBlocking {
+                app.database.clearAllTables()
+                app.accounts.create(AccountDetails("Conta Principal", AccountType.CHECKING, Money(420_000), LocalDate.of(2020, 1, 1)))
+            }
+            section("analises-vazio") { more("more-analytics", "screen-analytics"); wait("analytics-summary"); page("analises-vazio", 2) }
+        } else if (args.getString("fluxaEmpty") == "1") {
             runBlocking { app.database.clearAllTables() }
             empty()
         } else {

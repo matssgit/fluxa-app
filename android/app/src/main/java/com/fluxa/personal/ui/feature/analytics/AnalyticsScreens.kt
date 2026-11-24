@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.fluxa.personal.R
 import com.fluxa.personal.core.money.Money
@@ -133,7 +134,8 @@ internal fun AnalyticsScreen(
                 item(key = "month") { MonthSelector(s, viewModel::previousMonth, viewModel::nextMonth) }
                 item(key = "summary") { SummaryCard(s) }
                 if (s.insights.isNotEmpty()) item(key = "insights") { InsightsSection(s) }
-                item(key = "categories") { CategoriesSection(s) }
+                // Mês sem nenhuma movimentação já diz isso no resumo; uma segunda frase vazia só repetiria.
+                if (s.hasMovements) item(key = "categories") { CategoriesSection(s) }
                 item(key = "evolution") { EvolutionSection(s) }
                 // Bloco de hoje: não depende do mês escolhido acima.
                 item(key = "projection") { ProjectionSection(s, onOpenSafeToSpend) }
@@ -161,6 +163,8 @@ private fun MonthSelector(s: AnalyticsUiState.Content, onPrevious: () -> Unit, o
         )
         FluxaIconButton(
             FluxaIcons.ChevronRight, stringResource(R.string.analytics_next_month), onClick = onNext, enabled = !s.isCurrentMonth,
+            // Desabilitada, mas reconhecível: com a transparência padrão sumia em tela física.
+            disabledTint = FluxaTheme.colors.textMuted,
             modifier = Modifier.testTag("analytics-next"),
         )
     }
@@ -651,30 +655,40 @@ private fun ProjectionSection(s: AnalyticsUiState.Content, onOpenSafeToSpend: ()
                 )
             }
             ProjectionDivider()
-            Column(modifier = Modifier.semantics(mergeDescendants = true) {}.testTag("projection-lowest")) {
-                Text(stringResource(R.string.analytics_lowest), style = type.label, color = colors.textSecondary)
+            val lowest: @Composable (Modifier) -> Unit = { mod -> Column(modifier = mod.semantics(mergeDescendants = true) {}.testTag("projection-lowest"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.analytics_lowest), style = type.caption, color = colors.textSecondary)
                 FluxaAmount(amount = p.lowestProjectedBalance, style = type.amount, color = tone(p.lowestProjectedBalance))
                 if (p.lowestBalanceDate == s.today) Text(stringResource(R.string.analytics_lowest_today), style = type.caption, color = colors.textSecondary)
                 else Text(
                     stringResource(R.string.analytics_lowest_on, p.lowestBalanceDate.short()), style = type.caption, color = colors.textSecondary,
                     modifier = Modifier.spokenAs(stringResource(R.string.analytics_lowest_on, p.lowestBalanceDate.spoken())),
                 )
-            }
+            } }
             // Contexto do mês corrente, sem uma segunda tela de projeção.
-            if (monthEnd != endDate) {
-                ProjectionDivider()
-                Column(modifier = Modifier.semantics(mergeDescendants = true) {}.testTag("projection-month")) {
-                    Text(
-                        stringResource(R.string.analytics_month_end, monthEnd.short()), style = type.label, color = colors.textSecondary,
-                        modifier = Modifier.spokenAs(stringResource(R.string.analytics_month_end, monthEnd.spoken())),
-                    )
-                    FluxaAmount(amount = s.remainingMonth.projectedEndingBalance, style = type.amount, color = tone(s.remainingMonth.projectedEndingBalance))
-                }
+            val atMonthEnd: @Composable (Modifier) -> Unit = { mod -> Column(modifier = mod.semantics(mergeDescendants = true) {}.testTag("projection-month"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(R.string.analytics_month_end_label), style = type.caption, color = colors.textSecondary,
+                    modifier = Modifier.spokenAs(stringResource(R.string.analytics_month_end, monthEnd.spoken())),
+                )
+                FluxaAmount(amount = s.remainingMonth.projectedEndingBalance, style = type.amount, color = tone(s.remainingMonth.projectedEndingBalance))
+                Text(
+                    stringResource(R.string.analytics_lowest_on, monthEnd.short()), style = type.caption, color = colors.textSecondary,
+                    modifier = Modifier.clearAndSetSemantics {}, // a data já está no rótulo falado
+                )
+            } }
+            // Os dois pontos secundários dividem a linha quando cabem inteiros.
+            when {
+                monthEnd == endDate -> lowest(Modifier)
+                isNarrowForText(350) -> Column(verticalArrangement = Arrangement.spacedBy(14.dp)) { lowest(Modifier); atMonthEnd(Modifier) }
+                else -> Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) { lowest(Modifier.weight(1f)); atMonthEnd(Modifier.weight(1f)) }
             }
-            Spacer(Modifier.height(12.dp))
-            Text(stringResource(R.string.analytics_projection_note), style = type.caption, color = colors.textMuted)
-            Text(stringResource(R.string.analytics_safe_note), style = type.caption, color = colors.textMuted, modifier = Modifier.padding(top = 6.dp))
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
+            val note = type.caption.copy(fontSize = 11.sp, lineHeight = 15.sp, fontWeight = FontWeight.Normal)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.analytics_projection_note), style = note, color = colors.textMuted)
+                Text(stringResource(R.string.analytics_safe_note), style = note, color = colors.textMuted)
+            }
+            Spacer(Modifier.height(14.dp))
             FluxaButton(
                 text = stringResource(R.string.analytics_open_safe), onClick = onOpenSafeToSpend, variant = FluxaButtonVariant.Secondary,
                 modifier = Modifier.fillMaxWidth().testTag("action-analytics-safe"),
@@ -687,7 +701,7 @@ private fun Modifier.spokenAs(text: String): Modifier = semantics { contentDescr
 
 @Composable
 private fun ProjectionDivider() {
-    Spacer(Modifier.padding(vertical = 10.dp).fillMaxWidth().height(1.dp).background(FluxaTheme.colors.border))
+    Spacer(Modifier.padding(vertical = 14.dp).fillMaxWidth().height(1.dp).background(FluxaTheme.colors.border))
 }
 
 // endregion

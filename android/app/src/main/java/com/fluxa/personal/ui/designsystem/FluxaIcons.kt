@@ -116,16 +116,6 @@ internal object FluxaIcons {
             moveTo(20f, 20f); lineTo(20f, 4.5f)
         }
     }
-    val Sliders: ImageVector by lazy {
-        outline("Sliders") {
-            moveTo(4f, 7f); lineTo(13f, 7f)
-            moveTo(17f, 7f); lineTo(20f, 7f)
-            circle(15f, 7f, 2f)
-            moveTo(4f, 17f); lineTo(7f, 17f)
-            moveTo(11f, 17f); lineTo(20f, 17f)
-            circle(9f, 17f, 2f)
-        }
-    }
 
     // region Sprint 2-B: navegação, contas e categorias
 
