@@ -175,11 +175,13 @@ class LocalSecurityActivityTest {
         waitForTag("security-unlock")
         compose.onNodeWithTag("security-unlock").performClick()
         compose.waitUntil(10_000) { app.security.state.value.authentication != null }
-        // Wait until Android, rather than Fluxa, owns the credential window.
+        // The IME/launcher can briefly own the active window while SystemUI is still opening.
+        // Synchronize the real prompt, then its accessibility events, before sending Back.
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
         compose.waitUntil(10_000) {
-            val packageName = InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow?.packageName?.toString()
-            packageName != null && packageName != app.packageName
+            automation.rootInActiveWindow?.packageName?.toString() == "com.android.systemui"
         }
+        automation.waitForIdle(500, 5_000)
         shell("input keyevent 4")
         try {
             compose.waitUntil(2_000) { app.security.state.value.authentication == null }

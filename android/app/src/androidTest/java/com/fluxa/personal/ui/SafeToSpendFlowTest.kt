@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,9 +58,16 @@ class SafeToSpendFlowTest {
 
     @Before
     fun seed() = runBlocking {
+        // RC: the eye is persisted; each financial fixture explicitly starts with visible amounts.
+        app.preferences.apply(app.preferences.read().copy(hideAmounts = false))
         app.database.clearAllTables()
         streaming = app.categories.create(CategoryDetails("Streaming", EXPENSE, "bolt", "#B9684F"))
         main = app.accounts.create(AccountDetails("Conta Principal", AccountType.CHECKING, Money(100_000), LocalDate.of(2020, 1, 1)))
+    }
+
+    @After
+    fun resetPrivacy() = runBlocking {
+        app.preferences.apply(app.preferences.read().copy(hideAmounts = false))
     }
 
     /** Anual: uma única ocorrência no horizonte de 30 dias, independente da data do aparelho. */

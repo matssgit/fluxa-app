@@ -159,7 +159,12 @@ class SecurityUiFlowTest {
 
     /** Cancela pelo Back real e espera o Android devolver o callback e fechar a janela do sistema. */
     private fun cancelSystemPrompt() {
-        compose.waitUntil(10_000) { systemOwnsWindow() }
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        compose.waitUntil(10_000) {
+            automation.rootInActiveWindow?.packageName?.toString() == "com.android.systemui"
+        }
+        // Wait for the native dialog/IME to settle; do not send Back during their opening transition.
+        automation.waitForIdle(500, 5_000)
         shell("input keyevent 4")
         try {
             compose.waitUntil(2_000) { app.security.state.value.authentication == null }

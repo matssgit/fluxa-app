@@ -51,6 +51,11 @@ internal class LocalPreferences(context: Context) : BackupSettingsStore, Securit
         }
     }
 
+    /** Atomic toggle: rapid taps cannot lose an update and the choice survives process death. */
+    suspend fun toggleHideAmounts() {
+        store.edit { values -> values[HIDE_AMOUNTS] = !(values[HIDE_AMOUNTS] ?: false) }
+    }
+
     // Portable v1 deliberately excludes device-local security preferences.
     override suspend fun read(): PortableSettingsV1 {
         val current = settings.first()

@@ -17,11 +17,11 @@ import kotlinx.coroutines.withContext
 /**
  * Raiz do app. Tema e privacidade vêm do DataStore e mudam sem recriar a Activity (inclusive após uma restauração).
  * [shellGeneration] recria o shell de navegação inteiro depois de um restore: NavController, back stack,
- * ViewModels das telas e a ocultação de valores da sessão começam do zero, refletindo só o banco restaurado.
+ * ViewModels das telas começam do zero; tema e privacidade refletem as preferências restauradas.
  */
 @Composable
-internal fun FluxaApp(fluxa: FluxaApplication) {
-    val settings by fluxa.preferences.settings.collectAsState(LocalSettings())
+internal fun FluxaApp(fluxa: FluxaApplication, initialSettings: LocalSettings) {
+    val settings by fluxa.preferences.settings.collectAsState(initialSettings)
     LaunchedEffect(fluxa) {
         withContext(Dispatchers.IO) {
             fluxa.database.openHelper.writableDatabase

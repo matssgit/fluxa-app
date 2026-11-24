@@ -115,7 +115,8 @@ class BackupRestoreFlowTest {
         waitFor("input-backup-restore-password")
         compose.onNodeWithTag("input-backup-restore-password").performTextInput(secret)
         val start = System.nanoTime()
-        compose.onNodeWithTag("action-backup-restore-submit").performClick()
+        // The IME can still be resizing the sheet after password focus; use its actual accessibility action.
+        tap("action-backup-restore-submit")
         if (slow) {
             // Feedback imediato com texto, sem porcentagem, e o botão some (sem duplo envio).
             waitForText("Abrindo backup protegido…", 5_000)

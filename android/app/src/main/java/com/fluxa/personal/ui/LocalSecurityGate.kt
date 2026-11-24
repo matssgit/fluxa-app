@@ -60,12 +60,6 @@ internal val LocalAuthenticationLauncher = staticCompositionLocalOf<Authenticati
     error("Authentication host is not installed")
 }
 
-/** Somente para testes instrumentados que conduzem o callback do manager sem o prompt real. Produção: sempre true. */
-internal object SecurityGateTestHook {
-    @Volatile
-    var autoPrompt: Boolean = true
-}
-
 /**
  * Raiz de segurança: `FluxaTheme → SecurityGate → (Initializing | Locked | AppContent)`.
  * [content] (navegação, Dashboard, consultas) só compõe com `canShowContent`; bloqueado ou inicializando, não existe
@@ -114,7 +108,7 @@ private fun AutoUnlockRequest(state: AppLockState, manager: LocalSecurityManager
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val eligible = state.wantsAutoPrompt()
     LaunchedEffect(eligible) {
-        if (!eligible || !SecurityGateTestHook.autoPrompt) return@LaunchedEffect
+        if (!eligible || !autoPromptEnabled()) return@LaunchedEffect
         lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
         if (manager.state.value.wantsAutoPrompt()) onAuthenticate()
     }

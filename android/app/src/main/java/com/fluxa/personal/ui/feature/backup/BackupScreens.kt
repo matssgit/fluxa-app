@@ -147,15 +147,6 @@ private fun rememberTrustedBackupActivity(): TrustedExternalActivity {
     )
 }
 
-/**
- * Ponto de troca do seletor só para testes instrumentados, que rodam sobre o `MainActivity` real
- * (mesma janela edge-to-edge e mesmo comportamento do teclado). Em produção é sempre `null`.
- */
-internal object BackupPickerTestHook {
-    @Volatile
-    var override: BackupPicker? = null
-}
-
 // endregion
 
 @Composable
@@ -165,7 +156,7 @@ internal fun BackupScreen(
     onGoHome: () -> Unit,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val picker = remember { BackupPickerTestHook.override ?: SystemBackupPicker }
+    val picker = remember { backupPicker() }
     val createExport = picker.rememberCreate(viewModel::onExportDestination)
     val createPreventive = picker.rememberCreate(viewModel::onPreventiveDestination)
     val openFile = picker.rememberOpen(viewModel::onRestoreFile)

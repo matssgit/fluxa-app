@@ -1,6 +1,8 @@
 package com.fluxa.personal.ui
 
 import java.util.UUID
+import java.io.IOException
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -9,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -137,14 +141,20 @@ internal fun FluxaNavigation(onRestartShell: () -> Unit = {}) {
     val entry by controller.currentBackStackEntryAsState()
     var showNewEntry by rememberSaveable { mutableStateOf(false) }
 
-    // Ocultação de valores: parte da preferência persistida e pode ser alternada na sessão.
-    // A gravação da preferência fica com a camada de dados (LocalPreferences ainda não expõe escrita).
-    var amountsOverride by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    val amountsHidden = amountsOverride ?: LocalAmountsHidden.current
-    val toggleAmounts = { amountsOverride = !amountsHidden }
+    // One persisted source of truth; no session override can hide a restored preference.
+    val app = LocalContext.current.applicationContext as FluxaApplication
+    val preferencesScope = rememberCoroutineScope()
+    val amountsHidden = LocalAmountsHidden.current
+    val toggleAmounts: () -> Unit = {
+        preferencesScope.launch {
+            try { app.preferences.toggleHideAmounts() }
+            catch (_: IOException) {
+                Toast.makeText(app, R.string.security_error_save, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val reducedMotion = LocalReducedMotion.current
-    val app = LocalContext.current.applicationContext as FluxaApplication
     val transactions = remember(app) { RepositoryTransactionSource(app.transactions) }
     val credit = remember(app) { RepositoryCreditSource(app.credit) }
     val subscriptions = remember(app) { RepositorySubscriptionDataSource(app.subscriptions) }
