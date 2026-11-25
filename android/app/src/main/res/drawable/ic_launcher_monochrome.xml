@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Camada monocromatica (icones tematicos): so a silhueta; o sistema aplica a cor. Gerado por marketing/branding/final/tools/mark.py. Raio maximo de 27.5dp a partir do centro, dentro da safe zone de 33dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF000000"
+        android:pathData="M38.174 75.32L38.174 48.992C38.174 39.262 44.756 32.68 55.631 32.68C61.354 32.68 64.502 35.141 71.37 32.68C70.339 39.033 65.99 42.353 59.694 42.353C50.194 42.353 44.699 48.706 44.699 62.156L44.699 75.32Z" />
+    <path android:fillColor="#FF000000"
+        android:pathData="M47.79 75.32L47.79 62.442C47.79 55.059 51.796 50.366 58.435 50.366C62.212 50.366 64.158 52.026 68.508 50.366C67.821 55.974 64.387 59.065 59.465 59.065C56.145 59.065 54.314 61.126 54.314 64.56L54.314 75.32Z" />
+</vector>
