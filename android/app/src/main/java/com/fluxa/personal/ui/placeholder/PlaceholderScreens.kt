@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.selection.selectableGroup
@@ -26,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.fluxa.personal.R
@@ -57,6 +61,8 @@ private fun PlaceholderScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(FluxaTheme.colors.background)
+            // Como nas outras abas: o conteúdo rolado não passa sob a barra de status.
+            .windowInsetsPadding(WindowInsets.statusBars)
             .testTag("screen-$route"),
     ) {
         LazyColumn(
@@ -147,7 +153,7 @@ internal fun MorePlaceholder(
 @Composable
 private fun AppearanceCard(theme: ThemePreference, onThemeChange: (ThemePreference) -> Unit) {
     FluxaCard(modifier = Gutter.testTag("more-appearance")) {
-        Text(stringResource(R.string.more_appearance), style = FluxaTheme.typography.titleSmall, color = FluxaTheme.colors.textPrimary)
+        Text(stringResource(R.string.more_appearance), style = FluxaTheme.typography.titleSmall, color = FluxaTheme.colors.textPrimary, modifier = Modifier.semantics { heading() })
         FlowRow(modifier = Modifier.padding(top = 8.dp).selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(
                 ThemePreference.SYSTEM to R.string.theme_system,

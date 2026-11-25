@@ -125,6 +125,7 @@ internal fun CreditCardVisual(summary: CreditCardSummary, modifier: Modifier = M
             .testTag("card-${details.name}"),
         tone = FluxaSurfaceTone.Inverse,
         featured = true,
+        organic = false, // o cartão já desenha os anéis na cor dele
         onClick = onClick,
         contentPadding = PaddingValues(0.dp),
     ) {

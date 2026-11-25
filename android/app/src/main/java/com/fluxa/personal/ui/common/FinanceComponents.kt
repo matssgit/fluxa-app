@@ -248,7 +248,7 @@ internal fun DateField(
             modifier = modifier
                 .fillMaxWidth()
                 .heightIn(min = 56.dp)
-                .background(colors.surfaceSunken, shape)
+                .background(if (colors.isDark) colors.surfaceSunken else colors.surface, shape)
                 .border(if (errorText != null) 2.dp else 1.dp, if (errorText != null) colors.expense else colors.borderStrong, shape)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 14.dp),

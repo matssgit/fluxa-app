@@ -29,10 +29,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.fluxa.personal.ui.designsystem.FluxaDepth
 import com.fluxa.personal.ui.designsystem.FluxaIcons
 import com.fluxa.personal.ui.designsystem.FluxaTheme
-import com.fluxa.personal.ui.designsystem.fluxaGlass
 import com.fluxa.personal.ui.designsystem.fluxaPressScale
 import com.fluxa.personal.ui.designsystem.fluxaTween
 
@@ -58,8 +56,7 @@ internal fun FluxaChip(
 
     val surface = if (selected) {
         Modifier
-            .fluxaGlass(shape, FluxaDepth.Depth1)
-            .border(1.dp, colors.brand.copy(alpha = 0.35f), shape)
+            .background(colors.surfaceInverse, shape)
     } else {
         Modifier
             .background(colors.surfaceSunken, shape)
@@ -91,7 +88,7 @@ internal fun FluxaChip(
             enter = fadeIn(fluxaTween()) + scaleIn(fluxaTween(), initialScale = 0.6f),
             exit = fadeOut(fluxaTween()) + scaleOut(fluxaTween(), targetScale = 0.6f),
         ) {
-            Icon(FluxaIcons.Check, contentDescription = null, tint = colors.brand, modifier = Modifier.size(16.dp))
+            Icon(FluxaIcons.Check, contentDescription = null, tint = colors.onSurfaceInverse, modifier = Modifier.size(16.dp))
         }
         if (leadingIcon != null && !selected) {
             Icon(leadingIcon, contentDescription = null, tint = colors.textSecondary, modifier = Modifier.size(16.dp))
@@ -101,7 +98,7 @@ internal fun FluxaChip(
             style = FluxaTheme.typography.label.copy(
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
             ),
-            color = if (selected) colors.textPrimary else colors.textSecondary,
+            color = if (selected) colors.onSurfaceInverse else colors.textSecondary,
             maxLines = 1,
         )
     }

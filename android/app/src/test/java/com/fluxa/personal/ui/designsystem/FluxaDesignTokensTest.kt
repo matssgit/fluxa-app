@@ -40,6 +40,8 @@ class FluxaDesignTokensTest {
             add("onSurfaceInverse/surfaceInverse" to (theme.onSurfaceInverse to theme.surfaceInverse))
             add("onSurfaceInverseMuted/surfaceInverse" to (theme.onSurfaceInverseMuted to theme.surfaceInverse))
             add("onBrand/brand" to (theme.onBrand to theme.brand))
+            add("onAction/action" to (theme.onAction to theme.action))
+            add("onSelected/selected" to (theme.onSelected to theme.selected))
             add("onBrandTonal/brandTonal" to (theme.onBrandTonal to theme.brandTonal))
             add("income/incomeContainer" to (theme.income to theme.incomeContainer))
             add("expense/expenseContainer" to (theme.expense to theme.expenseContainer))

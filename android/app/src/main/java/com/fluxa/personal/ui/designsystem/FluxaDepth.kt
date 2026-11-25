@@ -60,7 +60,7 @@ internal fun Modifier.fluxaDepth(
 /** Sombra interna discreta para superfícies afundadas (Depth0): 8dp de sombreamento no topo. */
 internal fun Modifier.fluxaInnerShade(shape: Shape): Modifier = composed {
     val shadow = FluxaTheme.colors.shadow
-    val alpha = if (FluxaTheme.colors.isDark) 0.18f else 0.05f
+    val alpha = if (FluxaTheme.colors.isDark) 0.18f else 0.025f
     this.background(
         brush = Brush.verticalGradient(
             0f to shadow.copy(alpha = alpha),

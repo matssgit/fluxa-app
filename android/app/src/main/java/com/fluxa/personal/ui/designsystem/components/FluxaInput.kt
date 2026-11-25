@@ -92,8 +92,9 @@ internal fun FluxaInput(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .background(colors.surfaceSunken, shape)
-                        .fluxaInnerShade(shape)
+                        // No claro o campo é creme limpo, separado pela borda; no escuro, afundado.
+                        .background(if (colors.isDark) colors.surfaceSunken else colors.surface, shape)
+                        .then(if (colors.isDark) Modifier.fluxaInnerShade(shape) else Modifier)
                         .border(borderWidth, borderColor, shape)
                         // Com ícone clicável (48dp) à direita o campo continua com 56dp, igual aos demais.
                         .padding(horizontal = 16.dp, vertical = if (trailing != null) 4.dp else 14.dp),

@@ -204,8 +204,8 @@ internal fun SwitchRow(
             onCheckedChange = null,
             enabled = enabled,
             colors = SwitchDefaults.colors(
-                checkedTrackColor = colors.brand,
-                checkedThumbColor = colors.onBrand,
+                checkedTrackColor = colors.action,
+                checkedThumbColor = colors.onAction,
                 uncheckedTrackColor = colors.surfaceSunken,
                 uncheckedBorderColor = colors.borderStrong,
                 uncheckedThumbColor = colors.textMuted,

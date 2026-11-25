@@ -127,7 +127,7 @@ private fun RowScope.NavItem(item: FluxaNavItem, selected: Boolean, onSelect: (F
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val indicator by animateColorAsState(
-        targetValue = if (selected) colors.brandTonal else Color.Transparent,
+        targetValue = if (selected) colors.selected else Color.Transparent,
         animationSpec = fluxaTween(),
         label = "nav-indicator",
     )
@@ -167,7 +167,7 @@ private fun RowScope.NavItem(item: FluxaNavItem, selected: Boolean, onSelect: (F
             Icon(
                 imageVector = if (selected) item.selectedIcon else item.icon,
                 contentDescription = null,
-                tint = if (selected) colors.onBrandTonal else colors.textMuted,
+                tint = if (selected) colors.onSelected else colors.textMuted,
                 modifier = Modifier.size(24.dp),
             )
         }
@@ -193,7 +193,7 @@ private fun PrimaryAction(action: FluxaNavAction, modifier: Modifier) {
                 .size(56.dp)
                 .fluxaPressScale(interaction)
                 .fluxaDepth(FluxaDepth.Depth2, shape, bordered = false, highlight = Color.White.copy(alpha = 0.22f))
-                .background(colors.brand, shape)
+                .background(colors.action, shape)
                 .then(if (focused) Modifier.border(2.dp, colors.accent, shape) else Modifier)
                 .clip(shape)
                 .clickable(
@@ -206,7 +206,7 @@ private fun PrimaryAction(action: FluxaNavAction, modifier: Modifier) {
                 .then(if (action.testTag != null) Modifier.testTag(action.testTag) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(action.icon, contentDescription = null, tint = colors.onBrand, modifier = Modifier.size(26.dp))
+            Icon(action.icon, contentDescription = null, tint = colors.onAction, modifier = Modifier.size(26.dp))
         }
     }
 }

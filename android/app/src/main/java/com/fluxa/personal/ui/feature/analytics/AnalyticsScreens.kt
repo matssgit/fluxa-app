@@ -96,7 +96,7 @@ private fun YearMonth.shortLabel(): String = format(MonthShort).removeSuffix("."
 
 /**
  * Cores do gráfico. O par receita/despesa do texto se confunde em deuteranopia (ΔE 5); petróleo × terracota da própria
- * paleta se separa por luminosidade nos dois temas (ΔE ≥ 14, conferido com validador). Posição e legenda reforçam.
+ * paleta se separa por luminosidade nos dois temas (ΔE ≥ 18, conferido com validador). Posição e legenda reforçam.
  */
 private val expenseBar: Color get() = FluxaPalette.Terracotta500
 

@@ -16,8 +16,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.fluxa.personal.ui.designsystem.FluxaDepth
@@ -78,6 +81,8 @@ internal fun FluxaCard(
     onClick: (() -> Unit)? = null,
     onClickLabel: String? = null,
     contentPadding: PaddingValues = PaddingValues(20.dp),
+    /** Formas orgânicas discretas nos destaques escuros, a assinatura do Fluxa na web. */
+    organic: Boolean = featured && tone == FluxaSurfaceTone.Inverse,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     require(tone != FluxaSurfaceTone.Glass) { "Cards de conteúdo não usam glass." }
@@ -102,6 +107,13 @@ internal fun FluxaCard(
         shape = if (featured) shapes.leaf else shapes.large,
         depth = if (featured) FluxaDepth.Depth2 else tone.defaultDepth(),
     ) {
-        Column(modifier = clickModifier.padding(contentPadding), content = content)
+        Column(modifier = clickModifier.then(if (organic) Modifier.fluxaOrganic() else Modifier).padding(contentPadding), content = content)
     }
+}
+
+/** Anel e curva em creme quase transparente, fora da área de texto. Só desenho: sem custo de composição. */
+private fun Modifier.fluxaOrganic(): Modifier = drawBehind {
+    val r = size.width * 0.27f
+    drawCircle(Color.White.copy(alpha = 0.05f), radius = r, center = Offset(size.width - r * 0.45f, r * 0.15f), style = Stroke(width = r * 0.30f))
+    drawCircle(Color.White.copy(alpha = 0.035f), radius = size.width * 0.42f, center = Offset(size.width * 0.80f, size.height + size.width * 0.20f))
 }

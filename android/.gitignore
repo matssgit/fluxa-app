@@ -7,6 +7,7 @@ captures/
 /artifacts/rc1/
 /artifacts/rc2/
 /artifacts/final/
+/artifacts/v1.0.1/
 # Device-local signing material, credentials and real portable backups are never source artifacts.
 *.jks
 *.keystore

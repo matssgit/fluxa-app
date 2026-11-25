@@ -39,6 +39,7 @@ internal val CategoryIcons: List<CategoryIconOption> by lazy {
 }
 
 internal val CategoryColors: List<CategoryColorOption> = listOf(
+    CategoryColorOption("#2C6270", R.string.color_petrol),
     CategoryColorOption("#35695A", R.string.color_pine),
     CategoryColorOption("#829B88", R.string.color_sage),
     CategoryColorOption("#B9684F", R.string.color_terracotta),

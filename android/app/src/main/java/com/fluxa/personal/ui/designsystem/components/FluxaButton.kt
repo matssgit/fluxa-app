@@ -56,7 +56,7 @@ private data class ButtonStyle(val container: Color, val content: Color, val bor
 private fun FluxaButtonVariant.style(): ButtonStyle {
     val c = FluxaTheme.colors
     return when (this) {
-        FluxaButtonVariant.Primary -> ButtonStyle(c.brand, c.onBrand, null, FluxaDepth.Depth1)
+        FluxaButtonVariant.Primary -> ButtonStyle(c.action, c.onAction, null, FluxaDepth.Depth1)
         FluxaButtonVariant.Secondary -> ButtonStyle(c.surface, c.textPrimary, c.borderStrong, FluxaDepth.Depth1)
         FluxaButtonVariant.Glass -> ButtonStyle(Color.Transparent, c.textPrimary, null, FluxaDepth.Depth2)
         FluxaButtonVariant.Destructive -> ButtonStyle(c.expenseContainer, c.expense, null, FluxaDepth.Depth0)
