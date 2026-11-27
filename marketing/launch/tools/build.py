@@ -31,7 +31,7 @@ SAGE, NIGHT, NIGHT_CARD, MIST, TERRA = "#E6EAE2", "#0E171B", "#162227", "#A3C4CB
 INK, INK2, ON_PETROL = "#1E2A2E", "#505A5C", "#D5E1E3"
 
 # Disponibilidade: só mencionar código aberto depois de a licença e a publicação serem aprovadas.
-OPEN_SOURCE = False
+OPEN_SOURCE = True
 
 PATHS = M.mark()
 _pts = [p for d in PATHS for p in C.S.sample(d)]
@@ -225,9 +225,9 @@ def pages():
         + at(72, 1080, f'<p style="font-size:24px;color:{INK2};width:930px">Regras financeiras como funções puras, migrations explícitas da versão 1 à 7 e backup com formato versionado.</p>'),
         INK2))
     # 8 — disponibilidade
-    avail = (["Gratuito, sem anúncios e sem conta", "Código aberto no GitHub", "Download do APK nas releases", "Sugestões e relatos de bugs são bem-vindos"]
+    avail = (["Gratuito, sem anúncios e sem conta", "Código aberto no GitHub", "Download do APK nas releases", "Aberto a sugestões e relatos de bugs"]
              if OPEN_SOURCE else
-             ["Gratuito, sem anúncios e sem conta", "Download do APK pelo GitHub", "Sugestões e relatos de bugs são bem-vindos", "Melhorias publicadas aos poucos, conforme o uso"])
+             ["Gratuito, sem anúncios e sem conta", "Download do APK pelo GitHub", "Aberto a sugestões e relatos de bugs", "Melhorias publicadas aos poucos, conforme o uso"])
     p.append(frame(8, PETROL, CREAM,
         organic(DEEP, 1300, 470, 260)
         + at(72, 190, title("Disponível", "Feito para ser<br>usado e melhorado.", CREAM, MIST))

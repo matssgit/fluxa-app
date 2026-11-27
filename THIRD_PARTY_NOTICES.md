@@ -1,6 +1,17 @@
 # Componentes de terceiros
 
-O APK do Fluxa para Android inclui as bibliotecas abaixo. Todas são distribuídas sob a **Apache License 2.0**: <https://www.apache.org/licenses/LICENSE-2.0>.
+O código deste repositório é distribuído sob a [licença MIT](LICENSE), © 2026 Matheus Santana. Os itens abaixo **não** são cobertos por ela e mantêm as próprias licenças.
+
+## No repositório
+
+| Arquivo | Origem | Licença |
+| --- | --- | --- |
+| `android/gradlew`, `android/gradlew.bat`, `android/gradle/wrapper/gradle-wrapper.jar` | Gradle Wrapper, © the original authors | Apache-2.0 (aviso mantido nos arquivos) |
+| `frontend/public/*.png`, `frontend/public/favicon/*` | Ícones da versão web. **Origem não confirmada** | Não relicenciados. Excluídos da licença MIT até a origem ser confirmada |
+
+## No APK
+
+O APK do Fluxa para Android inclui as bibliotecas abaixo, sem modificações. Todas são distribuídas sob a **Apache License 2.0**: <https://www.apache.org/licenses/LICENSE-2.0>.
 
 Lista gerada a partir de `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` na versão 1.0.2 (115 artefatos).
 

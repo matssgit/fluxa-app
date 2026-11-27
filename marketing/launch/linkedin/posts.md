@@ -1,12 +1,14 @@
 # LinkedIn: textos de lançamento
 
-Três versões. A **principal** é a recomendada. Os links entram só quando existirem; até lá, ficam marcados como `[link …]`.
+Três versões. A **principal** é a recomendada.
+
+**Só publique depois** do push do código, da release `v1.0.2` no GitHub e de conferir que os links abaixo abrem. Os links seguem o [LINKS.md](../LINKS.md).
 
 Antes de publicar:
 - A abertura da versão principal ("Há alguns meses eu queria…") é uma sugestão de narrativa. Ajuste-a ao que de fato motivou você.
-- Se o código ainda não estiver público com licença aprovada, use as frases marcadas com **(sem código aberto)**.
-- Anexe o PDF `carrossel/fluxa-carrossel.pdf` como documento.
+- Anexe `carrossel/fluxa-carrossel.pdf` como documento.
 - O LinkedIn corta o texto depois de cerca de 210 caracteres. A primeira frase precisa funcionar sozinha.
+- Sobre as quatro pessoas: elas **receberam o app e demonstraram interesse**. Não descreva como usuários ativos.
 
 ---
 
@@ -22,26 +24,26 @@ Hoje ele organiza contas, receitas e despesas, cartões com compras parceladas, 
 
 A parte mais difícil não foi a interface, foi a consistência. Uma compra no cartão não pode virar despesa duas vezes. Uma reserva para uma meta precisa sair do disponível sem sumir da conta. Um toque duplo não pode pagar a mesma parcela duas vezes. Restaurar um backup não pode deixar o app pela metade. Por isso tudo é calculado em centavos inteiros, as operações são atômicas e o app tem 326 testes automatizados de JVM, além dos testes instrumentados e de atualização entre versões.
 
-Eu uso o Fluxa no dia a dia. Também mandei o app para quatro pessoas próximas, que pediram para começar a usar. Agora decidi deixar o app gratuito e aberto para quem quiser testar.
+Eu uso o Fluxa no dia a dia. Também mandei o app para quatro pessoas próximas, que demonstraram interesse em começar a usar. Agora ele está disponível para qualquer pessoa: gratuito, sem anúncios e com o código aberto sob a licença MIT.
 
 Ele vai continuar recebendo melhorias aos poucos, conforme o uso e o que as pessoas sugerirem.
 
-Se você usa Android e quer testar, o download está aqui: [link da release]
-O código-fonte está no GitHub: [link do repositório] **(sem código aberto: trocar por "Em breve, o código-fonte também estará no GitHub.")**
+Se você usa Android e quer testar: https://github.com/matssgit/fluxa-app/releases/latest
+O código e a documentação: https://github.com/matssgit/fluxa-app
 
-Sugestões e relatos de problemas são muito bem-vindos, pelos comentários ou pelas issues do repositório.
+Sugestões e relatos de problemas são muito bem-vindos, aqui nos comentários ou pelas issues do repositório.
 
-#Android #Kotlin #JetpackCompose #DesenvolvimentoDeSoftware #FinançasPessoais
+#Android #Kotlin #JetpackCompose #OpenSource #FinançasPessoais
 
 ---
 
 ## 2. Técnica
 
-Publiquei o Fluxa, um app Android de finanças pessoais que fiz do zero e que roda 100% offline. Algumas decisões de engenharia que valem compartilhar:
+Publiquei o Fluxa, um app Android de finanças pessoais que fiz do zero, roda 100% offline e agora tem o código aberto. Algumas decisões de engenharia que valem compartilhar:
 
 **Arquitetura.** Kotlin, Jetpack Compose, Room e DataStore, sem servidor e sem permissão de internet. As regras financeiras são funções puras em Kotlin, separadas dos repositórios. Os repositórios abrem a transação no banco, chamam a regra e gravam o resultado. As telas observam `Flow`s que recalculam quando as tabelas mudam.
 
-**Dinheiro.** Todo valor é um `Long` em centavos, com soma exata. Totais grandes são acumulados em `BigInteger`, e um estouro aparece como estouro, não como um número errado. Parcelas dividem os centavos restantes nas últimas para que a soma feche exatamente.
+**Dinheiro.** Todo valor é um `Long` em centavos, com soma exata. Totais grandes são acumulados em `BigInteger`, e um estouro aparece como estouro, não como um número errado. Parcelas distribuem os centavos restantes nas últimas para que a soma feche exatamente.
 
 **Consistência.** Saldo, limite usado do cartão, valor reservado e projeções nunca ficam armazenados; são derivados dos fatos. Índices únicos impedem duas despesas para a mesma parcela ou cobrança. Triggers no SQLite são uma segunda barreira contra estados inválidos.
 
@@ -51,16 +53,18 @@ Publiquei o Fluxa, um app Android de finanças pessoais que fiz do zero e que ro
 
 **Testes.** 326 testes JVM, 200 casos instrumentados executados offline em cinco combinações de tela e fonte, e testes de atualização entre versões que comparam o banco inteiro antes e depois.
 
+**Distribuição.** APK assinado, publicado só no GitHub Releases com SHA-256, e uma estratégia de assinatura escolhida para não quebrar a atualização de quem já tinha o app.
+
 O Fluxa começou como aplicação web (React, Fastify e PostgreSQL) e virou Android nativo quando ficou claro que, para dados financeiros pessoais, menos infraestrutura era mais segurança.
 
-Eu uso no dia a dia, e quatro pessoas próximas receberam o app e querem começar a usar. Agora ele está disponível de graça.
+Eu uso no dia a dia, e quatro pessoas próximas receberam o app e demonstraram interesse em usar. Ele é gratuito e o código está sob licença MIT.
 
-APK: [link da release]
-Código: [link do repositório] **(sem código aberto: remover esta linha)**
+APK: https://github.com/matssgit/fluxa-app/releases/latest
+Código e documentação: https://github.com/matssgit/fluxa-app
 
 Feedback técnico é bem-vindo, principalmente sobre o domínio financeiro e a estratégia de testes.
 
-#Android #Kotlin #JetpackCompose #EngenhariaDeSoftware #OpenSource **(sem código aberto: trocar #OpenSource por #DesenvolvimentoMobile)**
+#Android #Kotlin #JetpackCompose #EngenhariaDeSoftware #OpenSource
 
 ---
 
@@ -70,17 +74,17 @@ Fiz um app de finanças pessoais para Android que funciona sem internet, sem con
 
 Ele organiza contas, cartões, parcelas, assinaturas e metas, e mostra quanto dá para gastar sem comprometer o que vence nos próximos 30 dias. Os dados ficam no celular, com backup criptografado.
 
-Comecei usando sozinho, mandei para algumas pessoas próximas e agora ele está disponível de graça. Ainda vou continuar melhorando.
+Comecei usando sozinho, mandei para algumas pessoas próximas e agora ele está disponível de graça, com o código aberto. Vou continuar melhorando conforme o uso.
 
-Download: [link da release]
-Código: [link do repositório] **(sem código aberto: remover esta linha)**
+Download: https://github.com/matssgit/fluxa-app/releases/latest
+Código: https://github.com/matssgit/fluxa-app
 
 Testou? Me conta o que achou.
 
-#Android #Kotlin #FinançasPessoais
+#Android #Kotlin #OpenSource
 
 ---
 
 ## Comentário fixado (opcional)
 
-Para quem for testar: o Fluxa precisa de Android 11 ou superior e ainda não está na Google Play, então a instalação é pelo APK. Antes de trocar de celular ou desinstalar, faça um backup em Mais → Backup e restauração; desinstalar apaga os dados.
+Para quem for testar: o Fluxa precisa de Android 11 ou superior e não está na Google Play. A instalação é pelo APK, baixado só da página oficial de Releases do GitHub. Antes de trocar de celular ou desinstalar, faça um backup em Mais → Backup e restauração; desinstalar apaga os dados.

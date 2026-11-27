@@ -15,7 +15,7 @@ O Fluxa é mantido por uma pessoa, conforme o tempo disponível, o uso real e o 
 
 ## Necessário para a distribuição pública
 
-- Assinatura definitiva, sem perder a atualização para quem já tem o app instalado (veja [RELEASE_PROCESS.md](RELEASE_PROCESS.md#assinatura)).
+- Isolar a chave de distribuição num keystore exclusivo, com cópias de segurança (veja [RELEASE_PROCESS.md](RELEASE_PROCESS.md#chave-de-distribuição)).
 - Validação da 1.0.2 no aparelho físico de referência.
 
 ## Em consideração
@@ -26,7 +26,9 @@ Possibilidades que surgem das limitações atuais. Podem ou não ser feitas, dep
 - Lançamentos futuros e receitas previstas no Limite seguro.
 - Exportação dos dados para planilha (CSV).
 - Lembretes de cobranças.
-- `targetSdk` mais recente.
+- `targetSdk` mais recente e validação em aparelhos com páginas de memória de 16 KB.
+- Rotação para uma chave de assinatura nova, quando o `minSdk` chegar à API 33.
+- Tela de licenças de terceiros dentro do app.
 - Avaliação de uma publicação na Google Play, que tem requisitos próprios de `targetSdk`, assinatura e política.
 
 Sugestões novas entram por [issues](https://github.com/matssgit/fluxa-app/issues/new/choose).

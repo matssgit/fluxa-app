@@ -4,7 +4,11 @@ Mudanças relevantes para quem usa o Fluxa para Android. O formato segue o [Keep
 
 As versões 1.0.0 a 1.0.2 foram distribuídas apenas de forma privada. A primeira versão pública será anunciada em [Releases](https://github.com/matssgit/fluxa-app/releases).
 
-## [1.0.2] — candidata à primeira versão pública
+## [1.0.2] — primeira versão pública (data a definir na publicação)
+
+### Projeto
+- Código-fonte aberto sob a licença MIT.
+- Documentação, política de privacidade e modelos para relatos de bugs e sugestões.
 
 ### Alterado
 - Novo ícone e nova marca: o monograma fluido do Fluxa, em petróleo e creme.

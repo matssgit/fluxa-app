@@ -1,19 +1,24 @@
 # Fluxa: case para o portfólio
 
-Conteúdo pronto para integrar ao portfólio. Os links ficam como `[…]` até existirem.
+Conteúdo pronto para integrar ao portfólio. Links oficiais em [../LINKS.md](../LINKS.md). Os de download, documentação e issues só funcionam depois da publicação.
 
 ## Card do projeto
 
 **Fluxa**
-Controle financeiro pessoal para Android, gratuito e offline. Kotlin, Jetpack Compose e Room, com 326 testes automatizados.
+Controle financeiro pessoal para Android, gratuito, offline e de código aberto. Kotlin, Jetpack Compose e Room, com 326 testes automatizados.
 
 Imagem: `card-800x500.png` · Tags: Android · Kotlin · Jetpack Compose · Room · Offline-first
 
 ## Chamadas para ação
 
-1. **Baixar o aplicativo** → `[link do asset da release]`
-2. **Ver o código-fonte** → `[link do repositório]` (só depois da publicação open source aprovada)
+1. **Baixar o aplicativo** → `https://github.com/matssgit/fluxa-app/releases/latest`
+2. **Ver o código-fonte** → `https://github.com/matssgit/fluxa-app`
 3. **Conhecer o projeto** → página do case
+
+Links secundários:
+- Documentação → `https://github.com/matssgit/fluxa-app/tree/main/docs`
+- Sugestões → `https://github.com/matssgit/fluxa-app/issues/new?template=feature_request.yml`
+- Histórico de versões → `https://github.com/matssgit/fluxa-app/releases`
 
 ---
 
@@ -87,8 +92,9 @@ Limitação declarada: o banco local não tem criptografia própria e conta com 
 
 ### Status
 
-Em uso pelo autor. Quatro pessoas próximas receberam o app e demonstraram interesse em usar. Gratuito, com melhorias publicadas conforme o uso e o feedback.
+Em uso pelo autor. Quatro pessoas próximas receberam o app e demonstraram interesse em usar. Gratuito e de código aberto (licença MIT), com melhorias publicadas conforme o uso e o feedback.
 
 ### Feedback
 
-Sugestões e relatos de problemas: `[link das issues]`.
+Sugestões: `https://github.com/matssgit/fluxa-app/issues/new?template=feature_request.yml`
+Bugs: `https://github.com/matssgit/fluxa-app/issues/new?template=bug_report.yml`

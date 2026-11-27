@@ -51,4 +51,4 @@ Ao participar, você concorda com o [Código de Conduta](CODE_OF_CONDUCT.md).
 
 ## Licença das contribuições
 
-A licença do projeto ainda está sendo definida (veja o [README](README.md#licença)). Pull requests de código serão aceitos depois que ela for publicada. Contribuições enviadas a partir daí ficam sob a mesma licença do projeto.
+O projeto usa a [licença MIT](LICENSE). Ao enviar uma contribuição, você concorda que ela seja distribuída sob a mesma licença e confirma que tem o direito de enviá-la. Não inclua código, imagens ou textos de terceiros sem licença compatível e sem indicar a origem.

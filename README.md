@@ -38,6 +38,7 @@ Por isso ele foi reconstruído como um aplicativo Android nativo e offline. Tudo
 > **Ainda não há versão pública publicada.** O APK será disponibilizado na página de [Releases](https://github.com/matssgit/fluxa-app/releases) deste repositório, com o checksum SHA-256. O Fluxa não está na Google Play.
 
 - Requer **Android 11 ou superior**.
+- **Baixe somente da página oficial de [Releases](https://github.com/matssgit/fluxa-app/releases).** Cópias de outros sites podem ter sido modificadas.
 - Instalação, atualização e backup: veja [Instalação](#instalação).
 
 ## Telas
@@ -149,7 +150,7 @@ Como rodar os testes e o que cada suíte cobre: [docs/TESTING.md](docs/TESTING.m
 
 ## Instalação
 
-1. Baixe o arquivo `.apk` na página de [Releases](https://github.com/matssgit/fluxa-app/releases). Se quiser, confira o SHA-256 publicado junto.
+1. Baixe o arquivo `.apk` na página oficial de [Releases](https://github.com/matssgit/fluxa-app/releases). Se quiser, confira o SHA-256 publicado junto.
 2. Abra o arquivo no Android. Se pedir, permita a instalação de apps desconhecidos para o aplicativo que abriu o APK, como o navegador ou o gerenciador de arquivos.
 3. Toque em **Instalar**.
 
@@ -196,11 +197,13 @@ Para relatar uma vulnerabilidade, siga [SECURITY.md](SECURITY.md) em vez de abri
 
 ## Documentação
 
-[Funcionalidades](docs/FEATURES.md) · [Arquitetura](docs/ARCHITECTURE.md) · [Domínio financeiro](docs/FINANCIAL_DOMAIN.md) · [Modelo de dados](docs/DATA_MODEL.md) · [Backup e segurança](docs/BACKUP_AND_SECURITY.md) · [Desenvolvimento](docs/DEVELOPMENT.md) · [Testes](docs/TESTING.md) · [Processo de release](docs/RELEASE_PROCESS.md) · [Privacidade](PRIVACY.md) · [Aviso](DISCLAIMER.md) · [Changelog](CHANGELOG.md)
+[Funcionalidades](docs/FEATURES.md) · [Arquitetura](docs/ARCHITECTURE.md) · [Domínio financeiro](docs/FINANCIAL_DOMAIN.md) · [Modelo de dados](docs/DATA_MODEL.md) · [Backup e segurança](docs/BACKUP_AND_SECURITY.md) · [Desenvolvimento](docs/DEVELOPMENT.md) · [Testes](docs/TESTING.md) · [Processo de release](docs/RELEASE_PROCESS.md) · [Privacidade](PRIVACY.md) · [Aviso](DISCLAIMER.md) · [Changelog](CHANGELOG.md) · [Licença](LICENSE)
 
 ## Licença
 
-A licença ainda não foi definida. Enquanto não houver um arquivo `LICENSE`, o código pode ser lido, mas não há permissão formal para reutilizá-lo nem redistribuí-lo.
+[MIT](LICENSE), © 2026 Matheus Santana. Você pode usar, estudar, modificar e redistribuir o código, mantendo o aviso de copyright.
+
+A licença cobre o código do Android e da versão web. Ficam de fora os componentes de terceiros e os ícones da versão web (`frontend/public`), cuja origem não foi confirmada. Veja [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Autor
 

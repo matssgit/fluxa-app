@@ -40,6 +40,7 @@ It is an independent, free project maintained by one developer. It is not a bank
 > **No public version has been published yet.** The APK will be available on this repository's [Releases](https://github.com/matssgit/fluxa-app/releases) page, together with its SHA-256 checksum. Fluxa is not on Google Play.
 
 - Requires **Android 11 or later**.
+- **Download only from the official [Releases](https://github.com/matssgit/fluxa-app/releases) page.** Copies from other sites may have been modified.
 - Installing, updating and backing up: see [Installation](#installation).
 
 ## Screens
@@ -198,7 +199,9 @@ To report a vulnerability, follow [SECURITY.md](SECURITY.md) instead of opening 
 
 ## License
 
-No license has been chosen yet. Until a `LICENSE` file is published, the code can be read, but there is no formal permission to reuse or redistribute it.
+[MIT](LICENSE), © 2026 Matheus Santana. You may use, study, modify and redistribute the code, keeping the copyright notice.
+
+The license covers the Android and web code. Third-party components and the web version's icons (`frontend/public`), whose origin has not been confirmed, are excluded. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Author
 

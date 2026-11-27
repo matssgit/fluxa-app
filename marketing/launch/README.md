@@ -6,6 +6,8 @@ Materiais de divulgação. Todas as telas são capturas reais do app, feitas em 
 | --- | --- |
 | `github/` | `banner-claro.png` e `banner-escuro.png` (topo do README) e `social-preview-1280x640.png` (Settings → Social preview do repositório) |
 | `linkedin/` | `posts.md` (três versões do texto) e `carrossel/` (9 páginas 1080×1350 e `fluxa-carrossel.pdf`) |
+| `LINKS.md` | Links oficiais de download, código, documentação e feedback |
+| `github/CONFIGURACAO.md` | Configurações recomendadas do repositório |
 | `portfolio/` | `case.md`, `capa-1600x1000.png` e `card-800x500.png` |
 | `screenshots/` | 16 telas, nos temas claro e escuro, em 720 px de largura |
 | `tools/build.py` | Gera tudo acima a partir das capturas e da marca |
@@ -21,7 +23,7 @@ python marketing/launch/tools/build.py carrossel       # só o carrossel e o PDF
 
 Requer o Google Chrome instalado (o script usa o modo headless para renderizar HTML/SVG em PNG e PDF). Tipografia: Sitka (títulos) e Segoe UI (texto), fontes do Windows usadas só para gerar as imagens.
 
-`OPEN_SOURCE = False` no início do script controla a página 8 do carrossel. Mude para `True` só depois de a licença e a publicação do código serem aprovadas.
+`OPEN_SOURCE = True` no início do script faz a página 8 do carrossel citar o código aberto (licença MIT). Publique o carrossel só depois do push do código e da release.
 
 ## Capturas
 
