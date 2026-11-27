@@ -1,0 +1,36 @@
+name: Sugestão
+description: Uma ideia para melhorar o Fluxa.
+title: "[Sugestão] "
+labels: ["sugestão"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado pela ideia. O Fluxa continua gratuito, offline e sem conta, então sugestões que dependem de internet ou servidor ficam fora do escopo.
+
+        **Esta issue é pública.** Não inclua dados financeiros reais ou informações pessoais.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qual problema você quer resolver?
+      description: Conte a situação do dia a dia em que sentiu falta disso.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Como você imagina a solução?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: Como você resolve isso hoje?
+      description: Outro app, planilha, anotação...
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacidade
+      options:
+        - label: Confirmo que não incluí dados financeiros reais ou informações pessoais.
+          required: true

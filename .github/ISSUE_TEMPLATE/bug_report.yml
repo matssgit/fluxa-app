@@ -1,0 +1,86 @@
+name: Relato de bug
+description: Algo não funciona como deveria.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar.
+
+        **Esta issue é pública.** Não inclua dados financeiros reais, senhas, arquivos de backup ou informações pessoais. Use valores fictícios. Se enviar uma captura, ative a opção de ocultar valores (ícone de olho) ou troque os números.
+
+        Problemas de segurança devem ser relatados pela aba **Security**, não aqui.
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Fluxa
+      description: Em Configurações do Android → Apps → Fluxa.
+      placeholder: "1.0.2"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Versão do Android
+      placeholder: "Android 14"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Modelo do aparelho
+      placeholder: "Samsung Galaxy S23"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: O que aconteceu
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Abrir Cartões
+        2. Criar uma compra de R$ 100,00 em 3 vezes
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: O que aconteceu de fato
+      description: Mensagens de erro, valores calculados de forma diferente etc. (com dados fictícios).
+    validations:
+      required: true
+  - type: dropdown
+    id: data
+    attributes:
+      label: Houve perda ou alteração de dados?
+      options:
+        - Não
+        - Sim
+        - Não sei
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Mais alguma coisa?
+      description: Tema claro ou escuro, bloqueio ligado, se acontece sempre etc.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacidade
+      options:
+        - label: Confirmo que não incluí dados financeiros reais, senhas, backups ou informações pessoais.
+          required: true

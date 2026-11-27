@@ -1,280 +1,209 @@
-<h1 align="center">Fluxa 💸</h1>
-
 <p align="center">
-  <strong>Gestão financeira pessoal com visão clara do seu dinheiro, segurança e controle em um só lugar.</strong>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="marketing/launch/github/banner-escuro.png">
+    <img src="marketing/launch/github/banner-claro.png" alt="Fluxa — controle financeiro pessoal para Android, gratuito e offline" width="100%">
+  </picture>
 </p>
 
 <p align="center">
-  Fluxo de caixa, cartões, assinaturas e metas reunidos em uma experiência simples para o dia a dia.
+  <strong>Português</strong> · <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-estável-173f36?style=flat-square" alt="Status estável" />
-  <img src="https://img.shields.io/badge/testes-65%20passando-548c78?style=flat-square" alt="65 testes passando" />
-  <img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=20232a" alt="React 19" />
-  <img src="https://img.shields.io/badge/PostgreSQL-oficial-4169e1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/vers%C3%A3o-1.0.2-14414D?style=flat-square" alt="Versão 1.0.2">
+  <img src="https://img.shields.io/badge/Android-11%2B-14414D?style=flat-square" alt="Android 11 ou superior">
+  <img src="https://img.shields.io/badge/internet-n%C3%A3o%20usa-14414D?style=flat-square" alt="Não usa internet">
+  <img src="https://img.shields.io/badge/testes%20JVM-326-14414D?style=flat-square" alt="326 testes JVM">
 </p>
 
-<p align="center">
-  <a href="https://fluxa-core-app-five.vercel.app/"><strong>Aplicação online</strong></a>
-  &nbsp;·&nbsp;
-  <a href="https://matheusantanadev.vercel.app/">Portfólio</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/matssgit/fluxa-app">GitHub</a>
-</p>
+# Fluxa
 
-## 📸 Preview
+**Controle financeiro pessoal para Android. Gratuito, sem conta e sem internet.**
 
-### Dashboard
+O Fluxa organiza contas, receitas, despesas, cartões de crédito, compras parceladas, assinaturas e metas. Com esses dados, ele responde a uma pergunta prática: *quanto posso gastar sem comprometer o que já está combinado para os próximos 30 dias?*
 
-<p align="center">
-  <img src="./docs/assets/2-Dashboard.png" alt="Dashboard do Fluxa" width="760" />
-</p>
+Os dados ficam no seu aparelho. O aplicativo não tem servidor, não pede login e não tem permissão de acesso à internet.
+
+## Por que existe
+
+O Fluxa começou como uma aplicação web com servidor, banco de dados e login. Para controlar as finanças de uma pessoa, isso trazia mais custo e risco do que valor: dados financeiros em um servidor, sessão para manter e dependência de conexão.
+
+Por isso ele foi reconstruído como um aplicativo Android nativo e offline. Tudo é calculado no aparelho, e o backup é um arquivo criptografado que você guarda onde quiser.
+
+É um projeto independente e gratuito, mantido por um desenvolvedor. Não é um banco, não é um serviço por assinatura e não dá recomendação financeira.
+
+## Download
+
+> [!NOTE]
+> **Ainda não há versão pública publicada.** O APK será disponibilizado na página de [Releases](https://github.com/matssgit/fluxa-app/releases) deste repositório, com o checksum SHA-256. O Fluxa não está na Google Play.
+
+- Requer **Android 11 ou superior**.
+- Instalação, atualização e backup: veja [Instalação](#instalação).
+
+## Telas
 
 <table>
   <tr>
-    <td align="center"><strong>Caixa Central</strong></td>
-    <td align="center"><strong>Cartões</strong></td>
+    <td align="center"><img src="marketing/launch/screenshots/claro-inicio.png" width="200" alt="Início com saldo disponível e Limite seguro"><br><sub>Início</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/claro-caixa.png" width="200" alt="Caixa com movimentações"><br><sub>Caixa</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/claro-compra.png" width="200" alt="Compra parcelada no cartão"><br><sub>Compras parceladas</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/claro-limite.png" width="200" alt="Limite seguro dos próximos 30 dias"><br><sub>Limite seguro</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="./docs/assets/3-Caixa%20Central.png" alt="Caixa Central" width="100%" /></td>
-    <td width="50%"><img src="./docs/assets/4-Cart%C3%B5es.png" alt="Cartões de crédito" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Assinaturas</strong></td>
-    <td align="center"><strong>Metas</strong></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="./docs/assets/5-Assinaturas.png" alt="Assinaturas" width="100%" /></td>
-    <td width="50%"><img src="./docs/assets/6-Metas%20e%20Objetivos.png" alt="Metas e objetivos" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Categorias</strong></td>
-    <td align="center"><strong>Segurança e 2FA</strong></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="./docs/assets/7-Categorias.png" alt="Categorias" width="100%" /></td>
-    <td width="50%"><img src="./docs/assets/8-Seguranca%20%202FA.png" alt="Segurança e autenticação em duas etapas" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center"><strong>Login</strong></td>
-    <td align="center"><strong>Cadastro e verificação</strong></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="./docs/assets/1-Login.png" alt="Login" width="100%" /></td>
-    <td width="50%"><img src="./docs/assets/9-Cadastro%20%2B%20verificacao%20por%20e-mail.png" alt="Cadastro e verificação por e-mail" width="100%" /></td>
+    <td align="center"><img src="marketing/launch/screenshots/escuro-assinaturas.png" width="200" alt="Assinaturas ativas"><br><sub>Assinaturas</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/escuro-meta.png" width="200" alt="Meta com reserva"><br><sub>Metas e reservas</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/escuro-analises.png" width="200" alt="Análises do mês"><br><sub>Análises</sub></td>
+    <td align="center"><img src="marketing/launch/screenshots/escuro-seguranca.png" width="200" alt="Configurações de segurança"><br><sub>Segurança</sub></td>
   </tr>
 </table>
 
-## 🌱 Sobre o Fluxa
+<sub>Capturas do aplicativo real, feitas em emulador com dados fictícios.</sub>
 
-O Fluxa começou como um estudo de CRUD financeiro. Conforme novos domínios foram adicionados, o projeto evoluiu para uma aplicação full stack voltada a problemas que aparecem no uso real: consistência de saldos, operações simultâneas, sessões seguras e uma interface que continue clara com o crescimento dos dados.
+## Funcionalidades
 
-Caixa, crédito, recorrência e objetivos têm regras próprias, mas convergem em uma leitura única no dashboard. Essa evolução tornou o Fluxa um exercício prático de engenharia de produto, além do CRUD que deu origem ao projeto.
+**Dia a dia**
+- Contas corrente, carteira e poupança, com saldo inicial e a opção de deixá-las fora do saldo disponível.
+- Receitas e despesas por categoria, com histórico filtrável no Caixa.
+- Categorias próprias de entrada e de saída.
 
-## ✨ Funcionalidades
+**Cartões e compromissos**
+- Cartões com limite, dia de fechamento e dia de vencimento. O limite disponível é calculado a partir do que está comprometido.
+- Compras à vista ou parceladas, com o cronograma das parcelas.
+- Pagamento de parcela a partir de uma conta, com opção de desfazer.
+- Assinaturas mensais ou anuais, pagas por uma conta ou cobradas no cartão, com agenda de cobranças.
 
-### 💰 Finanças
+**Planejamento**
+- Metas com reservas vinculadas a uma conta. O dinheiro reservado sai do saldo disponível sem ser contado duas vezes.
+- **Limite seguro**: quanto pode ser gasto hoje sem faltar dinheiro para as parcelas e assinaturas dos próximos 30 dias. Também mostra o dia de menor folga.
+- **Análises**: resumo do mês, gastos por categoria, últimos seis meses, projeção de 30 dias, custo das assinaturas e observações automáticas.
 
-- receitas, despesas, contas e saldos;
-- histórico centralizado no Caixa Central;
-- categorias e lançamentos pendentes;
-- dashboard com visão consolidada e projeções.
+**Privacidade**
+- Funciona sem internet, sem conta e sem servidor.
+- Bloqueio pelo próprio desbloqueio do Android (biometria, PIN, padrão ou senha), com bloqueio automático.
+- Proteção opcional contra capturas de tela e contra a prévia em Recentes.
+- Opção de ocultar os valores na tela.
+- Backup manual criptografado com senha (arquivo `.fluxa`). Ao restaurar, o app guarda antes uma cópia preventiva dos dados atuais.
+- Tema claro, escuro ou automático.
 
-### 💳 Cartões
+Detalhes e limitações de cada uma: [docs/FEATURES.md](docs/FEATURES.md).
 
-- limite total e disponível;
-- compras à vista ou parceladas;
-- vencimentos e pagamentos;
-- cancelamentos com recomposição do limite.
+## O que o diferencia
 
-### 🔄 Assinaturas
+- **Nada sai do aparelho.** Não há servidor, conta nem permissão de internet, e o APK é auditado a cada versão.
+- **Dinheiro em centavos inteiros.** Nenhum cálculo financeiro usa ponto flutuante, e estouros são detectados em vez de arredondados em silêncio.
+- **Sem contagem dupla.** Uma compra no cartão vira despesa quando a parcela é paga, uma única vez. A reserva de uma meta reduz o disponível sem sumir do saldo da conta.
+- **Projeção a partir do que você registrou.** O Limite seguro considera apenas as parcelas e assinaturas cadastradas. Ele não estima gastos nem usa dados externos.
+- **Operações atômicas.** Pagar uma parcela, cobrar uma assinatura ou restaurar um backup acontece por inteiro ou não acontece.
+- **Testado.** 326 testes JVM e uma suíte instrumentada executada offline em cinco combinações de tela e tamanho de fonte.
 
-- gastos recorrentes e próximos vencimentos;
-- pagamentos por competência mensal;
-- proteção contra pagamentos duplicados.
+## Tecnologia
 
-### 🎯 Metas
+Kotlin 1.9.24 · Jetpack Compose (BOM 2024.06.00) com Material 3 · Navigation Compose · Room 2.6.1 sobre SQLite · DataStore Preferences · Coroutines e Flow · AndroidX Biometric · Gson (formato do backup) · Gradle 8.9 com Android Gradle Plugin 8.5.2 · JDK 17.
 
-- metas e objetivos em wallets;
-- depósitos e retiradas;
-- histórico e acompanhamento de progresso.
+Sem bibliotecas de rede, analytics, anúncios ou rastreamento.
 
-### 🔐 Segurança
+## Arquitetura
 
-- autenticação JWT e confirmação de e-mail;
-- recuperação de senha com token de uso único;
-- revogação de sessão por versão do token;
-- 2FA via TOTP e recovery codes;
-- isolamento de dados e cache entre usuários.
+```mermaid
+flowchart TD
+    UI["Telas Compose<br/>ui/feature/*"] --> VM["ViewModels"]
+    VM --> SRC["Fontes por funcionalidade<br/>(interfaces finas)"]
+    SRC --> REPO["Repositórios<br/>data/repository"]
+    REPO --> RULES["Regras de domínio<br/>domain/rules · Kotlin puro"]
+    REPO --> ROOM[("Room v7 · SQLite")]
+    VM --> PREFS[("DataStore<br/>tema, ocultar valores, segurança")]
+    BACKUP["Backup<br/>codec · criptografia · validação"] --> ROOM
+    BACKUP --> PREFS
+    SEC["Segurança local<br/>LocalSecurityManager"] --> PREFS
+    SEC --> BIO["BiometricPrompt<br/>do Android"]
+```
 
-### 📱 Experiência
+Os repositórios abrem as transações no banco e chamam as regras de domínio, que são funções puras, testadas sem Android. As telas observam `Flow`s que se atualizam quando as tabelas mudam. Explicação completa: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-- interface responsiva e temas claro/escuro;
-- modo de privacidade;
-- PWA instalável;
-- navegação própria para mobile e desktop.
+## Decisões de engenharia
 
-## 🧠 Destaques técnicos
-
-- **Integridade financeira:** valores usam magnitude não negativa e <code>type</code> define entrada ou saída, evitando semântica ambígua pelo sinal.
-- **Compatibilidade legada:** o fallback pelo sinal fica restrito a registros antigos sem tipo; novos lançamentos sempre seguem o modelo canônico.
-- **Concorrência financeira:** cartões, parcelas, cancelamentos e wallets usam transações e locks para impedir lost updates, cobrança dupla e restauração duplicada de limite.
-- **Assinaturas idempotentes:** a competência mensal identifica o pagamento e impede duplicidade.
-- **Sessões revogáveis:** <code>token_version</code> invalida JWTs anteriores depois de alterações sensíveis.
-- **Reset e 2FA:** tokens de redefinição são armazenados como hash SHA-256 e consumidos uma vez; TOTP e recovery codes adicionam uma segunda camada de acesso.
-- **Ownership:** toda consulta protegida considera o usuário autenticado, reduzindo risco de acesso cruzado por ID.
-- **Isolamento de cache:** QueryClient e dados locais são limpos na troca ou invalidação de sessão.
-- **Defesa HTTP:** Zod valida entradas, rate limiting reduz abuso e Helmet aplica headers de segurança.
-- **Schema versionado:** PostgreSQL é o banco oficial e o Knex mantém migrations ordenadas e reversíveis.
-- **Regressão automatizada:** testes exercitam autenticação, concorrência e cálculos contra um PostgreSQL dedicado.
-
-## 🏗️ Arquitetura
-
-~~~text
-React + TypeScript + Vite       Vercel
-             │
-             │ HTTPS / JSON
-             ▼
-Fastify + TypeScript + Zod      Render
-             │
-             │ Knex
-             ▼
-         PostgreSQL
-~~~
-
-## 🧰 Stack
-
-| Camada | Tecnologias principais |
+| Decisão | Por quê |
 | --- | --- |
-| Frontend | React, TypeScript, Vite, Tailwind CSS, TanStack Query |
-| Backend | Node.js, Fastify, TypeScript, Zod, Knex |
-| Banco | PostgreSQL |
-| Autenticação | JWT, bcrypt, TOTP |
-| Testes | Vitest e test runner nativo do Node.js |
-| Infraestrutura | Vercel, Render, Docker Compose, Brevo SMTP |
+| Valores em centavos (`Long`) com somas exatas | Evitar erro de arredondamento e detectar estouro |
+| Datas financeiras em `LocalDate`, no fuso do aparelho | O dia de uma compra é o dia em que você a fez, não um instante em UTC |
+| Limite do cartão derivado das parcelas em aberto | Não existe um "limite usado" armazenado que possa divergir |
+| Reservas como movimentos de uma meta ligada a uma conta | O disponível desconta a reserva, e o saldo da conta continua real |
+| Pagamento de parcela com vínculo único à transação | Impede pagar duas vezes e permite desfazer com segurança |
+| Limite seguro como o menor saldo projetado no horizonte | Mostra o pior dia, não só o saldo final |
+| Migrations explícitas de 1 a 7, com schema exportado | Atualizar o app não apaga dados |
+| Backup com formato versionado e validação antes de gravar | Um arquivo inválido é recusado antes de tocar no banco |
 
-## ✅ Qualidade e testes
+Regras financeiras com exemplos: [docs/FINANCIAL_DOMAIN.md](docs/FINANCIAL_DOMAIN.md).
 
-O projeto possui **65 testes automatizados passando**:
+## Qualidade
 
-- **64 testes backend** com Vitest;
-- **1 teste frontend** para a atualização consistente do histórico financeiro.
+- **326 testes JVM** cobrindo domínio, repositórios, ViewModels, backup e formatação.
+- **Suíte instrumentada com 200 casos.** 173 rodam por padrão e 27 só sob demanda, como os de atualização e de processo encerrado. Ela foi executada sem rede e sem falhas em cinco combinações: 320×640, 360, 390 no tema escuro, 412 e 320 com fonte em 130%.
+- **Atualização testada** de cada versão para a seguinte, sem desinstalar, comparando o banco inteiro antes e depois.
+- **Migrations** verificadas de 1 a 7 sobre os schemas exportados.
+- **Backup** testado de ponta a ponta, inclusive com arquivo corrompido, senha errada e restauração real pelo seletor de arquivos do Android.
+- **Lint** sem avisos em debug e release.
+- Testado em emulador e no Samsung Galaxy S23 do desenvolvedor.
 
-A cobertura inclui autenticação, 2FA, revogação de sessão, ownership, hardening, integridade financeira, concorrência, cartões, assinaturas, wallets e histórico do caixa.
+Como rodar os testes e o que cada suíte cobre: [docs/TESTING.md](docs/TESTING.md).
 
-Comandos principais:
+## Instalação
 
-~~~bash
-# Backend
-cd backend
-npm test -- --run
+1. Baixe o arquivo `.apk` na página de [Releases](https://github.com/matssgit/fluxa-app/releases). Se quiser, confira o SHA-256 publicado junto.
+2. Abra o arquivo no Android. Se pedir, permita a instalação de apps desconhecidos para o aplicativo que abriu o APK, como o navegador ou o gerenciador de arquivos.
+3. Toque em **Instalar**.
 
-# Frontend
-cd frontend
-npm test
-npm run lint
-npm run build
-~~~
+**Para atualizar**, instale a versão nova por cima e aceite **Atualizar**. Não desinstale antes.
 
-## 📲 PWA
+> [!IMPORTANT]
+> Os dados ficam só no aparelho. **Desinstalar o Fluxa apaga tudo.** Antes de atualizar ou trocar de celular, faça um backup em **Mais → Backup e restauração** e guarde o arquivo e a senha em um lugar seguro. Sem a senha, o backup não pode ser aberto.
 
-O Fluxa pode ser instalado como Progressive Web App. O frontend gera manifest e service worker durante o build, inclui ícones dedicados e oferece uma experiência adequada para dispositivos móveis.
+## Para desenvolvedores
 
-Dados financeiros autenticados não usam runtime caching no service worker, evitando que respostas privadas sejam reutilizadas indevidamente.
+Requisitos: JDK 17 e Android SDK com a plataforma 34 e as build-tools 34. O Gradle Wrapper baixa o Gradle 8.9, e o Android Studio é opcional.
 
-## 🚀 Rodando localmente
-
-### Requisitos
-
-- Node.js 18 ou superior;
-- npm;
-- PostgreSQL 16 ou compatível;
-- Docker e Docker Compose, caso prefira usar o banco disponibilizado pelo projeto.
-
-### Instalação
-
-~~~bash
+```bash
 git clone https://github.com/matssgit/fluxa-app.git
-cd fluxa-app
+cd fluxa-app/android
+./gradlew testDebugUnitTest          # testes JVM
+./gradlew assembleDebug              # APK de desenvolvimento
+./gradlew connectedDebugAndroidTest  # testes instrumentados (emulador ou aparelho)
+```
 
-cd backend
-npm install
+No Windows, use `gradlew.bat`. Guia completo: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-cd ../frontend
-npm install
-~~~
+> [!NOTE]
+> Este repositório também guarda a versão web original do Fluxa (`frontend/` e `backend/`). Ela está documentada em [docs/web/README.md](docs/web/README.md) e não é o foco atual do projeto.
 
-### Backend
+## Roadmap
 
-1. Inicie uma instância PostgreSQL. O projeto inclui [docker-compose.yml](./backend/docker-compose.yml).
-2. Crie <code>backend/.env</code> com as variáveis necessárias e uma <code>DATABASE_URL</code> apontando para o banco local.
-3. Aplique as migrations e inicie a API:
+O Fluxa evolui conforme o uso real e o feedback recebido, sem datas fixas.
 
-~~~bash
-cd backend
-docker compose up -d
-npm run migrate:latest
-npm run dev
-~~~
+- **Agora:** versão 1.0.2, a primeira distribuída publicamente.
+- **Manutenção:** correções relatadas por quem usa, compatibilidade com novas versões do Android e assinatura definitiva para distribuição pública.
+- **Em consideração:** ideias que chegarem pelas issues, avaliadas uma a uma.
 
-A API utiliza a porta <code>3333</code> por padrão.
+Mais em [docs/ROADMAP.md](docs/ROADMAP.md).
 
-### Frontend
+## Contribuir
 
-Crie <code>frontend/.env.local</code> com <code>VITE_API_URL</code> apontando para a API local e execute:
+Relatos de bugs, sugestões, dúvidas de uso, melhorias na documentação e contribuições de código são bem-vindos. Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
-~~~bash
-cd frontend
-npm run dev
-~~~
+> [!WARNING]
+> Não publique dados financeiros reais, senhas, backups ou informações pessoais em issues. Use valores fictícios.
 
-O Vite utiliza a porta <code>5173</code> por padrão.
+Para relatar uma vulnerabilidade, siga [SECURITY.md](SECURITY.md) em vez de abrir uma issue pública.
 
-### Variáveis de ambiente
+## Documentação
 
-Backend:
+[Funcionalidades](docs/FEATURES.md) · [Arquitetura](docs/ARCHITECTURE.md) · [Domínio financeiro](docs/FINANCIAL_DOMAIN.md) · [Modelo de dados](docs/DATA_MODEL.md) · [Backup e segurança](docs/BACKUP_AND_SECURITY.md) · [Desenvolvimento](docs/DEVELOPMENT.md) · [Testes](docs/TESTING.md) · [Processo de release](docs/RELEASE_PROCESS.md) · [Privacidade](PRIVACY.md) · [Aviso](DISCLAIMER.md) · [Changelog](CHANGELOG.md)
 
-~~~text
-DATABASE_URL
-DATABASE_CLIENT
-JWT_SECRET
-FRONTEND_URL
-CORS_ORIGIN
-SMTP_HOST
-SMTP_PORT
-SMTP_USER
-SMTP_PASSWORD
-EMAIL_FROM
-DEMO_CLEANUP_ENABLED
-DEMO_DATA_RETENTION_DAYS
-~~~
+## Licença
 
-Frontend:
+A licença ainda não foi definida. Enquanto não houver um arquivo `LICENSE`, o código pode ser lido, mas não há permissão formal para reutilizá-lo nem redistribuí-lo.
 
-~~~text
-VITE_API_URL
-~~~
+## Autor
 
-Nenhum secret deve ser versionado. A limpeza automática de contas demo permanece desativada por padrão e deve ser habilitada somente de forma deliberada.
+Feito por **Matheus Santana**, desenvolvedor de software.
 
-## 📚 Documentação
-
-- [Arquitetura do sistema](./docs/architecture/SYSTEM_ARCHITECTURE.md)
-- [Design system](./docs/architecture/DESIGN_SYSTEM.md)
-- [Checklist de QA](./docs/development/QA_CHECKLIST.md)
-- [Histórico de sprints](./docs/development/SPRINTS.md)
-
-## 📌 Status
-
-**Projeto ativo — versão estável de portfólio.**
-
-Uma versão demo pública está disponível em [fluxa-core-app-five.vercel.app](https://fluxa-core-app-five.vercel.app/).
-
-## 👤 Autor
-
-**Matheus Santana**
-
-- [Portfólio](https://matheusantanadev.vercel.app/)
-- [GitHub](https://github.com/matssgit)
-- [LinkedIn](https://linkedin.com/in/matheussantanadev)
+[Portfólio](https://matheusantanadev.vercel.app/) · [GitHub](https://github.com/matssgit)

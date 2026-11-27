@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Relatar uma vulnerabilidade
+    url: https://github.com/matssgit/fluxa-app/security/advisories/new
+    about: Problemas de segurança são relatados de forma privada, nunca em issues públicas.
+  - name: Documentação
+    url: https://github.com/matssgit/fluxa-app/tree/main/docs
+    about: Funcionalidades, regras financeiras, backup e segurança.
