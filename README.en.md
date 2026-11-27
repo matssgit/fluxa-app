@@ -36,8 +36,12 @@ It is an independent, free project maintained by one developer. It is not a bank
 
 ## Download
 
-> [!NOTE]
-> **No public version has been published yet.** The APK will be available on this repository's [Releases](https://github.com/matssgit/fluxa-app/releases) page, together with its SHA-256 checksum. Fluxa is not on Google Play.
+<p>
+  <a href="https://github.com/matssgit/fluxa-app/releases/latest"><strong>⬇ Download the latest version</strong></a>
+  &nbsp;·&nbsp; current version: <a href="https://github.com/matssgit/fluxa-app/releases/tag/v1.0.2">1.0.2</a> (<code>Fluxa-1.0.2.apk</code>, 22.6 MB)
+</p>
+
+The APK is free, and its SHA-256 checksum is on the release page. Fluxa is distributed only through GitHub and is not on Google Play.
 
 - Requires **Android 11 or later**.
 - **Download only from the official [Releases](https://github.com/matssgit/fluxa-app/releases) page.** Copies from other sites may have been modified.

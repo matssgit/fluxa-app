@@ -1,6 +1,8 @@
 # Fluxa: case para o portfólio
 
-Conteúdo pronto para integrar ao portfólio. Links oficiais em [../LINKS.md](../LINKS.md). Os de download, documentação e issues só funcionam depois da publicação.
+Conteúdo pronto para integrar ao portfólio. Links oficiais e verificados em [../LINKS.md](../LINKS.md). Prompt para o agente do portfólio em [PROMPT-INTEGRACAO.md](PROMPT-INTEGRACAO.md).
+
+**Logo:** `marketing/branding/final/svg/logo-petroleo.svg` (fundo claro) e `logo-creme.svg` (fundo escuro) · **Banner:** `capa-1600x1000.png` · **Telas:** `../screenshots/`
 
 ## Card do projeto
 
@@ -13,7 +15,7 @@ Imagem: `card-800x500.png` · Tags: Android · Kotlin · Jetpack Compose · Room
 
 1. **Baixar o aplicativo** → `https://github.com/matssgit/fluxa-app/releases/latest`
 2. **Ver o código-fonte** → `https://github.com/matssgit/fluxa-app`
-3. **Conhecer o projeto** → página do case
+3. **Conhecer o projeto** → página do case no portfólio (ou `https://github.com/matssgit/fluxa-app#readme`)
 
 Links secundários:
 - Documentação → `https://github.com/matssgit/fluxa-app/tree/main/docs`
@@ -30,7 +32,7 @@ Links secundários:
 
 Controle financeiro pessoal para Android. Gratuito, sem conta e sem internet.
 
-**Papel:** produto, design e desenvolvimento · **Plataforma:** Android 11+ · **Status:** versão 1.0.2, em uso pelo autor e distribuída para as primeiras pessoas
+**Papel:** produto, design e desenvolvimento · **Plataforma:** Android 11+ · **Status:** versão 1.0.2 publicada no GitHub Releases, de código aberto (MIT) e mantida publicamente
 
 ### O problema
 

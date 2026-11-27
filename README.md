@@ -34,8 +34,12 @@ Por isso ele foi reconstruído como um aplicativo Android nativo e offline. Tudo
 
 ## Download
 
-> [!NOTE]
-> **Ainda não há versão pública publicada.** O APK será disponibilizado na página de [Releases](https://github.com/matssgit/fluxa-app/releases) deste repositório, com o checksum SHA-256. O Fluxa não está na Google Play.
+<p>
+  <a href="https://github.com/matssgit/fluxa-app/releases/latest"><strong>⬇ Baixar a versão mais recente</strong></a>
+  &nbsp;·&nbsp; versão atual: <a href="https://github.com/matssgit/fluxa-app/releases/tag/v1.0.2">1.0.2</a> (<code>Fluxa-1.0.2.apk</code>, 22,6 MB)
+</p>
+
+O APK é gratuito e vem acompanhado do checksum SHA-256 na própria página da release. O Fluxa é distribuído só pelo GitHub e não está na Google Play.
 
 - Requer **Android 11 ou superior**.
 - **Baixe somente da página oficial de [Releases](https://github.com/matssgit/fluxa-app/releases).** Cópias de outros sites podem ter sido modificadas.
@@ -180,7 +184,7 @@ No Windows, use `gradlew.bat`. Guia completo: [docs/DEVELOPMENT.md](docs/DEVELOP
 
 O Fluxa evolui conforme o uso real e o feedback recebido, sem datas fixas.
 
-- **Agora:** versão 1.0.2, a primeira distribuída publicamente.
+- **Agora:** versão 1.0.2, a primeira versão pública.
 - **Manutenção:** correções relatadas por quem usa, compatibilidade com novas versões do Android e assinatura definitiva para distribuição pública.
 - **Em consideração:** ideias que chegarem pelas issues, avaliadas uma a uma.
 

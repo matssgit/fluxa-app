@@ -2,9 +2,9 @@
 
 Mudanças relevantes para quem usa o Fluxa para Android. O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e as versões seguem o [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-As versões 1.0.0 a 1.0.2 foram distribuídas apenas de forma privada. A primeira versão pública será anunciada em [Releases](https://github.com/matssgit/fluxa-app/releases).
+As versões 1.0.0 e 1.0.1 foram distribuídas apenas de forma privada. A 1.0.2 é a primeira versão pública, disponível em [Releases](https://github.com/matssgit/fluxa-app/releases).
 
-## [1.0.2] — primeira versão pública (data a definir na publicação)
+## [1.0.2] — 2026-11-26 — primeira versão pública
 
 ### Projeto
 - Código-fonte aberto sob a licença MIT.
@@ -43,6 +43,6 @@ Primeira versão completa, para uso pessoal.
 - Bloqueio do app com biometria ou bloqueio de tela, bloqueio automático e proteção contra capturas.
 - Opção de ocultar valores.
 
-[1.0.2]: https://github.com/matssgit/fluxa-app/releases
+[1.0.2]: https://github.com/matssgit/fluxa-app/releases/tag/v1.0.2
 [1.0.1]: https://github.com/matssgit/fluxa-app/releases
 [1.0.0]: https://github.com/matssgit/fluxa-app/releases

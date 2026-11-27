@@ -1,27 +1,28 @@
 # Links oficiais
 
-Usar sempre estes endereços no portfólio, no LinkedIn e em qualquer divulgação. Só **uma** fonte de download: o GitHub Releases.
+Use sempre estes endereços no portfólio, no LinkedIn e em qualquer divulgação. A **única** fonte de download é o GitHub Releases.
 
-| Uso | Link | Válido |
-| --- | --- | --- |
-| Download (botão principal) | `https://github.com/matssgit/fluxa-app/releases/latest` | depois da publicação da release |
-| Download direto do APK 1.0.2 | `https://github.com/matssgit/fluxa-app/releases/download/v1.0.2/Fluxa-1.0.2.apk` | depois da publicação da release |
-| Código-fonte | `https://github.com/matssgit/fluxa-app` | já existe (hoje mostra só a versão web) |
-| Documentação | `https://github.com/matssgit/fluxa-app/tree/main/docs` | depois do push da documentação |
-| Funcionalidades | `https://github.com/matssgit/fluxa-app/blob/main/docs/FEATURES.md` | depois do push |
-| Sugestões | `https://github.com/matssgit/fluxa-app/issues/new?template=feature_request.yml` | depois do push dos modelos |
-| Relatar bug | `https://github.com/matssgit/fluxa-app/issues/new?template=bug_report.yml` | depois do push dos modelos |
-| Histórico de releases | `https://github.com/matssgit/fluxa-app/releases` | já existe (vazio) |
-| Changelog | `https://github.com/matssgit/fluxa-app/blob/main/CHANGELOG.md` | depois do push |
-| Portfólio | `https://matheusantanadev.vercel.app/` | já existe |
-| Perfil no GitHub | `https://github.com/matssgit` | já existe |
+| Uso | Link |
+| --- | --- |
+| Repositório | https://github.com/matssgit/fluxa-app |
+| Release v1.0.2 | https://github.com/matssgit/fluxa-app/releases/tag/v1.0.2 |
+| Última release (**botão de download do portfólio**) | https://github.com/matssgit/fluxa-app/releases/latest |
+| Download direto do APK 1.0.2 | https://github.com/matssgit/fluxa-app/releases/download/v1.0.2/Fluxa-1.0.2.apk |
+| Checksum SHA-256 | https://github.com/matssgit/fluxa-app/releases/download/v1.0.2/Fluxa-1.0.2.apk.sha256 |
+| Histórico de releases | https://github.com/matssgit/fluxa-app/releases |
+| Documentação | https://github.com/matssgit/fluxa-app/tree/main/docs |
+| Funcionalidades | https://github.com/matssgit/fluxa-app/blob/main/docs/FEATURES.md |
+| Changelog | https://github.com/matssgit/fluxa-app/blob/main/CHANGELOG.md |
+| Licença | https://github.com/matssgit/fluxa-app/blob/main/LICENSE |
+| Issues | https://github.com/matssgit/fluxa-app/issues |
+| Sugestões | https://github.com/matssgit/fluxa-app/issues/new?template=feature_request.yml |
+| Relatar bug | https://github.com/matssgit/fluxa-app/issues/new?template=bug_report.yml |
+| Relato privado de vulnerabilidade | https://github.com/matssgit/fluxa-app/security/advisories/new |
+| Portfólio | https://matheusantanadev.vercel.app/ |
+| Perfil no GitHub | https://github.com/matssgit |
 
-## Portfólio
+## Por que o botão aponta para a última release
 
-- **Baixar o aplicativo** → `releases/latest`. Use o link da página, não o do arquivo: ele continua certo quando sair uma versão nova.
-- **Ver o código-fonte** → repositório.
-- **Conhecer o projeto** → página do case no portfólio.
-- **Enviar sugestão** → link de sugestões.
-- **Histórico de versões** → `releases`.
+O nome do APK leva a versão (`Fluxa-1.0.2.apk`). Por isso um link direto para o arquivo deixa de apontar para a versão nova quando ela sair. A página `releases/latest` sempre mostra a versão mais recente, com o APK e o checksum.
 
-O link do LinkedIn não foi incluído porque não foi informado nem verificado.
+O link direto acima serve para quem quer especificamente a 1.0.2.

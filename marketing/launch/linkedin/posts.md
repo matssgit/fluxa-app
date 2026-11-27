@@ -1,14 +1,11 @@
 # LinkedIn: textos de lançamento
 
-Três versões. A **principal** é a recomendada.
+Três versões. A **principal** (1) é a definitiva: pronta para copiar e publicar.
 
-**Só publique depois** do push do código, da release `v1.0.2` no GitHub e de conferir que os links abaixo abrem. Os links seguem o [LINKS.md](../LINKS.md).
-
-Antes de publicar:
-- A abertura da versão principal ("Há alguns meses eu queria…") é uma sugestão de narrativa. Ajuste-a ao que de fato motivou você.
-- Anexe `carrossel/fluxa-carrossel.pdf` como documento.
-- O LinkedIn corta o texto depois de cerca de 210 caracteres. A primeira frase precisa funcionar sozinha.
-- Sobre as quatro pessoas: elas **receberam o app e demonstraram interesse**. Não descreva como usuários ativos.
+- Release publicada: https://github.com/matssgit/fluxa-app/releases/tag/v1.0.2
+- Anexe `carrossel/fluxa-carrossel.pdf` como documento (9 páginas).
+- A primeira frase aparece antes do "ver mais": ela precisa funcionar sozinha.
+- As quatro pessoas **receberam o app e demonstraram interesse**. Não as descreva como usuários ativos.
 
 ---
 
