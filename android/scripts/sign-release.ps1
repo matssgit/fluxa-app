@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Assina e empacota uma release pública do Fluxa a partir de app-release-unsigned.apk.
 
@@ -21,12 +21,22 @@ param(
     [string]$SdkRoot = $env:ANDROID_HOME,
     [string]$BuildToolsVersion = '34.0.0',
     [string]$Alias = 'fluxa',
-    [string]$ExpectedCertificate = 'aa912c9e0650533c9ebe5a86c0fb780aa7af03cbc9a39eba5c9090aec1098aa9'
+    [string]$ExpectedCertificate = 'aa912c9e0650533c9ebe5a86c0fb780aa7af03cbc9a39eba5c9090aec1098aa9',
+    # Para builds de teste de atualização; a release usa os valores padrão.
+    [string]$UnsignedApk,
+    [string]$OutputDir
 )
 $ErrorActionPreference = 'Stop'
+# Ferramentas nativas: stderr não deve virar erro fatal; o código de saída decide.
+function Invoke-Tool([string]$Exe, [string[]]$ToolArgs) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { $out = & $Exe @ToolArgs 2>&1 | ForEach-Object { "$_" } | Out-String; return @{ Code = $LASTEXITCODE; Out = $out } }
+    finally { $ErrorActionPreference = $previous }
+}
 $androidRoot = Split-Path $PSScriptRoot -Parent
-$unsigned = Join-Path $androidRoot 'app/build/outputs/apk/release/app-release-unsigned.apk'
-$outDir = Join-Path $androidRoot 'artifacts/release'
+$unsigned = if ($UnsignedApk) { $UnsignedApk } else { Join-Path $androidRoot 'app/build/outputs/apk/release/app-release-unsigned.apk' }
+$outDir = if ($OutputDir) { $OutputDir } else { Join-Path $androidRoot 'artifacts/release' }
 $apk = Join-Path $outDir "Fluxa-$Version.apk"
 $signer = Join-Path $SdkRoot "build-tools/$BuildToolsVersion/apksigner.bat"
 $aapt = Join-Path $SdkRoot "build-tools/$BuildToolsVersion/aapt.exe"
@@ -42,25 +52,26 @@ New-Item -ItemType Directory -Force $outDir | Out-Null
 $sourceHash = (Get-FileHash -LiteralPath $unsigned -Algorithm SHA256).Hash
 
 # Assina uma cópia. Sem v4 (.idsig) porque a distribuição é por download direto.
-& $signer sign --ks $env:FLUXA_KS --ks-type PKCS12 --ks-key-alias $Alias --ks-pass env:FLUXA_KS_PASS --key-pass env:FLUXA_KS_PASS `
-    --v4-signing-enabled false --out $apk $unsigned
-if ($LASTEXITCODE -ne 0) { throw 'Falha ao assinar.' }
+$r = Invoke-Tool $signer @('sign', '--ks', $env:FLUXA_KS, '--ks-type', 'PKCS12', '--ks-key-alias', $Alias,
+    '--ks-pass', 'env:FLUXA_KS_PASS', '--key-pass', 'env:FLUXA_KS_PASS', '--v4-signing-enabled', 'false', '--out', $apk, $unsigned)
+if ($r.Code -ne 0 -or !(Test-Path -LiteralPath $apk)) { throw 'Falha ao assinar.' }
 
-$signature = (& $signer verify --verbose --print-certs $apk 2>&1) -join "`n"
-if ($LASTEXITCODE -ne 0) { Remove-Item $apk; throw 'Assinatura inválida.' }
+$r = Invoke-Tool $signer @('verify', '--verbose', '--print-certs', $apk)
+$signature = $r.Out
+if ($r.Code -ne 0) { Remove-Item $apk; throw 'Assinatura inválida.' }
 $cert = [regex]::Match($signature, 'certificate SHA-256 digest:\s*([0-9a-fA-F]+)').Groups[1].Value.ToLowerInvariant()
 if ($cert -ne $ExpectedCertificate) { Remove-Item $apk; throw 'Certificado diferente do esperado. APK removido.' }
 $signature | Set-Content (Join-Path $outDir "Fluxa-$Version.signature.txt") -Encoding utf8
 
-$badging = (& $aapt dump badging $apk) -join "`n"
+$badging = (Invoke-Tool $aapt @('dump', 'badging', $apk)).Out
 if ($badging -notlike "*name='com.fluxa.personal' versionCode='$VersionCode' versionName='$Version'*" -or $badging -match 'application-debuggable') {
     Remove-Item $apk; throw 'Pacote, versão ou modo de depuração inesperados. APK removido.'
 }
 $badging | Set-Content (Join-Path $outDir "Fluxa-$Version.badging.txt") -Encoding utf8
 if ((Get-FileHash -LiteralPath $unsigned -Algorithm SHA256).Hash -ne $sourceHash) { throw 'O APK sem assinatura mudou durante o processo.' }
 
-& python (Join-Path $PSScriptRoot 'audit-release-apk.py') $apk | Out-Null
-if ($LASTEXITCODE -ne 0) { Remove-Item $apk; throw 'A auditoria de conteúdo falhou. APK removido.' }
+$r = Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'audit-release-apk.py'), $apk)
+if ($r.Code -ne 0) { Remove-Item $apk; throw 'A auditoria de conteúdo falhou. APK removido.' }
 
 $hash = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
 "$hash  Fluxa-$Version.apk" | Set-Content (Join-Path $outDir "Fluxa-$Version.apk.sha256") -Encoding ascii -NoNewline

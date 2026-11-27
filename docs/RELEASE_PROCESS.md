@@ -51,6 +51,8 @@ O Android só atualiza um app se o APK novo for assinado pela **mesma chave**, o
 
 As versões 1.0.0 a 1.0.2 foram assinadas com uma chave RSA 2048 criada no ambiente de desenvolvimento (certificado `CN=Android Debug`, SHA-256 `aa912c9e…c1098aa9`, válido até 2056). Quem já tem o Fluxa instalado tem essa chave registrada no aparelho.
 
+**Estado:** chave isolada em 26/11/2026, em um keystore PKCS#12 exclusivo com o mesmo certificado e duas cópias que foram lidas de volta com a senha. O `debug.keystore` padrão continua existindo até as cópias irem para mídias offline. Enquanto ele existir, um APK de debug compilado nesta máquina **consegue** substituir o app instalado (comprovado em emulador). Por isso ele deve ser aposentado.
+
 **Estratégia adotada:** essa mesma chave passa a ser a chave de distribuição, **isolada** num keystore exclusivo do Fluxa, com senha forte e cópias de segurança offline. O script [`scripts/signing/isolate-distribution-key.ps1`](../android/scripts/signing/isolate-distribution-key.ps1) faz a cópia. O keystore padrão de debug do SDK é aposentado, e o SDK gera outro só para desenvolvimento.
 
 Por que não uma chave nova com rotação:
@@ -65,7 +67,7 @@ A rotação pode ser reavaliada quando o `minSdk` chegar à API 33. Fontes: [apk
 
 - Keystore PKCS#12 fora do repositório e fora da pasta `.android` do SDK.
 - Senha de pelo menos 16 caracteres, gerada e guardada num gerenciador de senhas.
-- **Duas cópias offline** do keystore, em lugares físicos diferentes, e um teste de restauração depois de copiar.
+- **Duas cópias offline** do keystore, em lugares físicos diferentes, e um teste de restauração depois de copiar (`scripts/signing/verify-keystore-copy.ps1`, que pede a senha mascarada).
 - **Recuperação**, por exemplo se a máquina for perdida: instalar JDK 17 e Android SDK, restaurar o keystore a partir de uma cópia, definir `FLUXA_KS` e `FLUXA_KS_PASS` e rodar `scripts/sign-release.ps1`.
 - Se o keystore **e** todas as cópias se perderem, não há como atualizar o app instalado. A saída é o plano de contingência abaixo.
 
@@ -80,7 +82,7 @@ $env:FLUXA_KS_PASS = "<lido do gerenciador de senhas, nunca digitado em arquivo>
 Remove-Item Env:FLUXA_KS_PASS
 ```
 
-O script assina uma cópia do APK, confere o certificado esperado, o pacote, a versão e o estado não depurável, roda a auditoria de conteúdo e gera `Fluxa-<versão>.apk` e `Fluxa-<versão>.apk.sha256` em `android/artifacts/release/`, pasta ignorada pelo Git. A senha nunca aparece na linha de comando nem em relatórios.
+O mesmo APK sem assinatura gera sempre o mesmo APK assinado: o build e a assinatura são reproduzíveis. O script assina uma cópia do APK, confere o certificado esperado, o pacote, a versão e o estado não depurável, roda a auditoria de conteúdo e gera `Fluxa-<versão>.apk` e `Fluxa-<versão>.apk.sha256` em `android/artifacts/release/`, pasta ignorada pelo Git. A senha nunca aparece na linha de comando nem em relatórios.
 
 ### Regras
 

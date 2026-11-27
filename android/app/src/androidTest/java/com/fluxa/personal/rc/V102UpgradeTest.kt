@@ -28,6 +28,8 @@ internal object V102Evidence {
     fun file(name: String) = File(app.filesDir, "v102-qa-$name.txt")
     fun phase(expected: String) { assumeTrue("Explicit v1.0.2 upgrade protocol only", InstrumentationRegistry.getArguments().getString("v102Phase") == expected) }
     fun version() = app.packageManager.getPackageInfo(app.packageName, 0).longVersionCode
+    /** `-e v102ExpectedCode N`: builds de teste de atualização com versionCode acima da release (padrão 5). */
+    fun expectedCode() = InstrumentationRegistry.getArguments().getString("v102ExpectedCode")?.toLong() ?: 5L
     fun database(): String {
         val db = app.database.openHelper.writableDatabase
         val tables = mutableListOf<String>()
@@ -108,7 +110,7 @@ class V102UpgradeSeedTest {
 class V102UpgradeVerifyTest {
     @Test fun verifyExactV102AndOldDataAnalytics() = runBlocking {
         V102Evidence.phase("upgrade")
-        assertEquals(5L,V102Evidence.version())
+        assertEquals(V102Evidence.expectedCode(),V102Evidence.version())
         V102Evidence.assertPreserved()
         verifyAnalytics()
         println("V102_UPGRADE_PRESERVED " + V102Evidence.database())
@@ -116,7 +118,7 @@ class V102UpgradeVerifyTest {
     /** After switching to [v102Theme] in the release UI and force-stopping: only the theme may differ from the v1.0.1 baseline. */
     @Test fun verifyThemeChosenInTheUi() = runBlocking {
         V102Evidence.phase("theme")
-        assertEquals(5L,V102Evidence.version())
+        assertEquals(V102Evidence.expectedCode(),V102Evidence.version())
         V102Evidence.assertPreserved(settings=false)
         val theme = requireNotNull(InstrumentationRegistry.getArguments().getString("v102Theme"))
         assertEquals(V102Evidence.file("settings").readText().replace("theme=DARK","theme=$theme"),V102Evidence.settings())

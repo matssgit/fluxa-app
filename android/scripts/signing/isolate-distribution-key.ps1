@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Copia a chave que assinou as versões 1.0.0 a 1.0.2 para um keystore de distribuição exclusivo do Fluxa,
   protegido por senha forte. Opcionalmente, aposenta o debug.keystore padrão do SDK.
@@ -34,6 +34,14 @@ $expected = 'AA:91:2C:9E:06:50:53:3C:9E:BE:5A:86:C0:FB:78:0A:A7:AF:03:CB:C9:A3:9
 $alias = 'fluxa'
 $target = Join-Path $Destination 'fluxa-distribution.p12'
 
+# Executa o keytool sem que avisos em stderr virem erro fatal e devolve só a saída padrão.
+function Invoke-Keytool([string[]]$KeytoolArgs) {
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try { $out = & $KeytoolPath @KeytoolArgs 2>$null | Out-String; return @{ Code = $LASTEXITCODE; Out = $out } }
+    finally { $ErrorActionPreference = $previous }
+}
+
 if ([string]::IsNullOrEmpty($env:FLUXA_KS_PASS) -or $env:FLUXA_KS_PASS.Length -lt 16) {
     throw 'Defina FLUXA_KS_PASS com uma senha de pelo menos 16 caracteres (gerada por um gerenciador de senhas).'
 }
@@ -44,21 +52,21 @@ if ($destFull.StartsWith($repo, [StringComparison]::OrdinalIgnoreCase)) { throw 
 if (Test-Path -LiteralPath $target) { throw "Já existe $target. Nada foi alterado." }
 
 # 1. Confere que a chave de origem é a que assinou as versões distribuídas.
-$list = & $KeytoolPath -J-Duser.language=en -list -v -keystore $DebugKeystore -storepass android -alias androiddebugkey 2>&1 | Out-String
-if ($LASTEXITCODE -ne 0) { throw 'Não foi possível ler o keystore de origem.' }
-if ($list -notmatch [regex]::Escape("SHA256: $expected")) { throw 'A chave de origem NÃO é a que assinou o Fluxa 1.0.x. Nada foi alterado.' }
+$r = Invoke-Keytool @('-J-Duser.language=en', '-list', '-v', '-keystore', $DebugKeystore, '-storepass', 'android', '-alias', 'androiddebugkey')
+if ($r.Code -ne 0) { throw 'Não foi possível ler o keystore de origem.' }
+if ($r.Out -notmatch [regex]::Escape("SHA256: $expected")) { throw 'A chave de origem NÃO é a que assinou o Fluxa 1.0.x. Nada foi alterado.' }
 
 # 2. Copia para o PKCS#12 de distribuição. A senha vem do ambiente e não aparece na linha de comando.
 New-Item -ItemType Directory -Force $Destination | Out-Null
-& $KeytoolPath -importkeystore -noprompt `
-    -srckeystore $DebugKeystore -srcstoretype JKS -srcstorepass android -srcalias androiddebugkey -srckeypass android `
-    -destkeystore $target -deststoretype PKCS12 -destalias $alias `
-    -deststorepass:env FLUXA_KS_PASS -destkeypass:env FLUXA_KS_PASS | Out-Null
-if ($LASTEXITCODE -ne 0) { throw 'Falha ao criar o keystore de distribuição.' }
+$r = Invoke-Keytool @('-importkeystore', '-noprompt',
+    '-srckeystore', $DebugKeystore, '-srcstorepass', 'android', '-srcalias', 'androiddebugkey', '-srckeypass', 'android',
+    '-destkeystore', $target, '-deststoretype', 'PKCS12', '-destalias', $alias,
+    '-deststorepass:env', 'FLUXA_KS_PASS', '-destkeypass:env', 'FLUXA_KS_PASS')
+if ($r.Code -ne 0 -or !(Test-Path -LiteralPath $target)) { throw 'Falha ao criar o keystore de distribuição.' }
 
 # 3. Confere a cópia.
-$check = & $KeytoolPath -J-Duser.language=en -list -v -keystore $target -storetype PKCS12 -storepass:env FLUXA_KS_PASS -alias $alias 2>&1 | Out-String
-if ($LASTEXITCODE -ne 0 -or $check -notmatch [regex]::Escape("SHA256: $expected")) { throw 'A cópia não confere com a chave original.' }
+$r = Invoke-Keytool @('-J-Duser.language=en', '-list', '-v', '-keystore', $target, '-storetype', 'PKCS12', '-storepass:env', 'FLUXA_KS_PASS', '-alias', $alias)
+if ($r.Code -ne 0 -or $r.Out -notmatch [regex]::Escape("SHA256: $expected")) { throw 'A cópia não confere com a chave original.' }
 Write-Host "Keystore de distribuição criado: $target"
 Write-Host "Certificado SHA-256 conferido. Alias: $alias"
 
