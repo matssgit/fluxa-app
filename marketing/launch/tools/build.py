@@ -133,9 +133,11 @@ W, H = 1080, 1350
 TOTAL = 9
 
 
-def frame(n, bg, fg, inner, muted):
+def frame(n, bg, fg, inner, muted, demo=True):
     head = (at(72, 64, logo(fg, 132))
             + at(W - 72 - 120, 70, f'<p class="k" style="color:{muted};text-align:right;width:120px">{n:02d} / {TOTAL:02d}</p>'))
+    if demo:
+        head += at(W - 72 - 420, 100, f'<p style="font-size:16px;color:{muted};text-align:right;width:420px;opacity:.85">Telas reais · dados fictícios de demonstração</p>', "z-index:5")
     return f'<div class="c" style="width:{W}px;height:{H}px;background:{bg};color:{fg}">{inner}{head}</div>'
 
 
@@ -165,30 +167,31 @@ def pages():
         + at(72, 250, f'<h1 class="serif" style="font-size:104px;color:{CREAM}">Conheça<br>o Fluxa.</h1>'
              f'<p style="font-size:31px;color:{ON_PETROL};margin-top:34px;width:430px">Controle financeiro pessoal, gratuito e offline.</p>'
              f'<div class="rule" style="margin-top:44px"></div>'
-             f'<p style="font-size:21px;color:{ON_PETROL};margin-top:22px">Para Android</p>')
+             f'<p style="font-size:21px;color:{ON_PETROL};margin-top:22px">Para Android</p>'
+             f'<p style="font-size:19px;color:{ON_PETROL};margin-top:10px;opacity:.85">Open source · Licença MIT</p>')
         + place(phone("claro-inicio", 420, "perspective(2200px) rotateY(-14deg) rotateX(5deg) rotateZ(-3deg)"), 580, 300),
         ON_PETROL))
     # 2 — organização
     p.append(frame(2, PAPER, INK,
         at(72, 190, title("Organização", "Cada real no<br>seu lugar.", PETROL, TERRA)
-           + f'<div style="width:470px;margin-top:40px">' + bullets(["Contas corrente, carteira e poupança", "Receitas e despesas por categoria", "Histórico filtrável por período e tipo"], INK2, PETROL) + "</div>")
-        + place(phone("escuro-novo-lancamento", 330, T_LEFT), 110, 820)
+           + f'<div style="width:470px;margin-top:40px">' + bullets(["Contas correntes, carteiras e poupanças", "Receitas e despesas por categoria", "Histórico filtrável por período e tipo"], INK2, PETROL) + "</div>")
+        + place(phone("escuro-novo-lancamento", 262, T_LEFT), 96, 742)
         + place(phone("claro-caixa", 360, T_RIGHT), 640, 170, ).replace("z-index:0", "z-index:2"),
         INK2))
     # 3 — cartões e compromissos
     p.append(frame(3, NIGHT, CREAM,
         at(72, 190, title("Cartões e compromissos", "Parcelas e<br>assinaturas<br>sob controle.", CREAM, MIST, 70))
         + at(72, 520, '<div style="width:470px">' + bullets(["Limite calculado pelo que já está comprometido", "Compras parceladas, com pagamento de cada parcela", "Assinaturas em conta ou cartão, com agenda"], "#C9D5D8", MIST) + "</div>")
-        + place(phone("escuro-compra", 300, T_LEFT), 150, 1010)
+        + place(phone("escuro-agenda", 290, T_LEFT), 120, 860)
         + place(phone("claro-cartao", 360, T_RIGHT), 610, 200),
         "#8FA3A8"))
     # 4 — planejamento
     p.append(frame(4, PAPER, INK,
         organic(SAGE, 1100, 520, 420)
         + at(72, 190, title("Planejamento", "Quanto dá para<br>gastar hoje?", PETROL, TERRA))
-        + at(72, 470, f'<p style="font-size:29px;color:{INK2};width:470px">O <b style="color:{PETROL}">Limite seguro</b> mostra quanto pode ser gasto sem faltar dinheiro para as parcelas e assinaturas dos próximos 30 dias.</p>'
+        + at(72, 470, f'<p style="font-size:29px;color:{INK2};width:470px">O <b style="color:{PETROL}">Limite Seguro</b> estima quanto você pode gastar hoje, considerando suas reservas e os compromissos registrados para os próximos 30 dias.</p>'
              f'<p style="font-size:29px;color:{INK2};width:470px;margin-top:26px">Metas reservam dinheiro em uma conta sem contar duas vezes.</p>'
-             f'<p style="font-size:21px;color:#6F7779;width:450px;margin-top:36px">Os cálculos consideram apenas as informações e os compromissos registrados no app.</p>')
+             f'<p style="font-size:21px;color:#6F7779;width:450px;margin-top:36px">Os cálculos consideram apenas as informações e os compromissos registrados no app. É uma estimativa, não uma garantia.</p>')
         + place(phone("claro-meta", 300, T_LEFT), 640, 1010)
         + place(phone("claro-limite", 340, T_RIGHT), 640, 190),
         INK2))
@@ -204,7 +207,7 @@ def pages():
     p.append(frame(6, NIGHT, CREAM,
         at(72, 190, title("Privacidade e segurança", "Seus dados<br>ficam no<br>seu celular.", CREAM, MIST))
         + at(72, 540, '<div style="width:500px">' + bullets([
-            "Sem internet, sem conta, sem servidor",
+            "Sem internet, sem cadastro, sem servidor remoto",
             "Desbloqueio com biometria ou com o bloqueio do Android",
             "Bloqueio automático e proteção contra capturas",
             "Backup criptografado com a sua senha"], "#C9D5D8", MIST) + "</div>")
@@ -212,26 +215,28 @@ def pages():
         "#8FA3A8"))
     # 7 — engenharia
     cards = [
-        ("Offline-first", "Kotlin, Jetpack Compose, Room e DataStore. Tudo é calculado no aparelho."),
-        ("Dinheiro exato", "Valores em centavos inteiros. Estouros são detectados, nunca arredondados em silêncio."),
-        ("Consistência", "Operações atômicas, índices únicos contra pagamentos duplicados e triggers no banco."),
-        ("Testado", "326 testes JVM, 200 casos instrumentados e testes de atualização entre versões."),
+        ("Arquitetura nativa", "Kotlin, Jetpack Compose, Room e arquitetura offline-first."),
+        ("Precisão financeira", "Valores em centavos inteiros e regras de domínio consistentes."),
+        ("Segurança e integridade", "Operações atômicas, backup criptografado e prevenção de duplicidades."),
+        ("Qualidade de software", "326 testes JVM e 200 casos instrumentados."),
     ]
     grid = "".join(f'<div style="background:{SURFACE};border:1px solid rgba(58,47,36,.1);border-radius:30px 8px 30px 8px;padding:34px 32px;height:262px">'
                    f'<p class="k" style="color:{TERRA}">{k}</p><p style="font-size:27px;line-height:1.35;color:{INK};margin-top:20px">{t}</p></div>' for k, t in cards)
     p.append(frame(7, PAPER, INK,
-        at(72, 190, title("Engenharia", "Um app pequeno,<br>feito com cuidado.", PETROL, TERRA))
+        at(72, 190, title("Engenharia", "Engenharia além<br>da interface.", PETROL, TERRA))
         + at(72, 470, f'<div style="width:936px;display:grid;grid-template-columns:1fr 1fr;gap:24px">{grid}</div>')
-        + at(72, 1080, f'<p style="font-size:24px;color:{INK2};width:930px">Regras financeiras como funções puras, migrations explícitas da versão 1 à 7 e backup com formato versionado.</p>'),
-        INK2))
+        + at(72, 1080, f'<p style="font-size:24px;color:{INK2};width:930px">Migrações de banco versionadas, testes de atualização e validação em dispositivo físico.</p>'),
+        INK2, demo=False))
     # 8 — disponibilidade
-    avail = (["Gratuito, sem anúncios e sem conta", "Código aberto no GitHub", "Download do APK nas releases", "Aberto a sugestões e relatos de bugs"]
+    avail = (["Gratuito, sem anúncios e sem cadastro", "Código aberto sob licença MIT", "Download pelo GitHub Releases", "Aberto a sugestões e relatos de bugs"]
              if OPEN_SOURCE else
              ["Gratuito, sem anúncios e sem conta", "Download do APK pelo GitHub", "Aberto a sugestões e relatos de bugs", "Melhorias publicadas aos poucos, conforme o uso"])
     p.append(frame(8, PETROL, CREAM,
         organic(DEEP, 1300, 470, 260)
         + at(72, 190, title("Disponível", "Feito para ser<br>usado e melhorado.", CREAM, MIST))
-        + at(72, 470, '<div style="width:560px">' + bullets(avail, ON_PETROL, MIST, 31) + "</div>")
+        + at(72, 470, '<div style="width:560px">' + bullets(avail, ON_PETROL, MIST, 31) + "</div>"
+             + f'<div class="rule" style="margin-top:46px"></div>'
+             + f'<p style="font-size:30px;color:{CREAM};font-weight:600;margin-top:24px">github.com/matssgit/fluxa-app</p>')
         + place(phone("claro-assinaturas", 320, T_RIGHT), 650, 760),
         ON_PETROL))
     # 9 — encerramento
@@ -239,11 +244,12 @@ def pages():
         organic(SAGE, 1400, 380, 200)
         + at(72, 330, symbol(PETROL, 120))
         + at(72, 520, f'<h2 class="serif" style="font-size:66px;color:{PETROL}">Baixe, teste e me<br>conte o que achou.</h2>'
-             f'<p style="font-size:26px;color:{INK2};margin-top:36px">Fluxa é um projeto independente de</p>'
-             f'<p style="font-size:34px;color:{INK};font-weight:600;margin-top:6px">Matheus Santana</p>'
+             f'<p style="font-size:24px;color:{INK2};margin-top:40px">Desenvolvido por</p>'
+             f'<p style="font-size:36px;color:{INK};font-weight:600;margin-top:6px">Matheus Santana</p>'
+             f'<p style="font-size:24px;color:{INK2};margin-top:4px">Software Developer</p>'
              f'<div class="rule" style="margin-top:40px"></div>'
-             f'<p style="font-size:24px;color:{INK2};margin-top:28px;line-height:1.7">matheusantanadev.vercel.app<br>github.com/matssgit</p>'),
-        INK2))
+             f'<p style="font-size:24px;color:{INK2};margin-top:28px;line-height:1.7">matheusantanadev.vercel.app<br>github.com/matssgit/fluxa-app</p>'),
+        INK2, demo=False))
     return p
 
 
