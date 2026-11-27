@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/vers%C3%A3o-1.0.2-14414D?style=flat-square" alt="Versão 1.0.2">
-  <img src="https://img.shields.io/badge/Android-11%2B-14414D?style=flat-square" alt="Android 11 ou superior">
-  <img src="https://img.shields.io/badge/internet-n%C3%A3o%20usa-14414D?style=flat-square" alt="Não usa internet">
-  <img src="https://img.shields.io/badge/testes%20JVM-326-14414D?style=flat-square" alt="326 testes JVM">
+  <img src="marketing/launch/github/badges/versao.svg" alt="Versão 1.0.2">
+  <img src="marketing/launch/github/badges/android.svg" alt="Android 11 ou superior">
+  <img src="marketing/launch/github/badges/internet.svg" alt="Não usa internet">
+  <img src="marketing/launch/github/badges/testes.svg" alt="326 testes JVM">
 </p>
 
 # Fluxa
@@ -67,7 +67,7 @@ O APK é gratuito e vem acompanhado do checksum SHA-256 na própria página da r
 ## Funcionalidades
 
 **Dia a dia**
-- Contas corrente, carteira e poupança, com saldo inicial e a opção de deixá-las fora do saldo disponível.
+- Contas correntes, carteiras e poupanças, com saldo inicial e a opção de deixá-las fora do saldo disponível.
 - Receitas e despesas por categoria, com histórico filtrável no Caixa.
 - Categorias próprias de entrada e de saída.
 

@@ -10,10 +10,10 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.2-14414D?style=flat-square" alt="Version 1.0.2">
-  <img src="https://img.shields.io/badge/Android-11%2B-14414D?style=flat-square" alt="Android 11 or later">
-  <img src="https://img.shields.io/badge/internet-not%20used-14414D?style=flat-square" alt="No internet access">
-  <img src="https://img.shields.io/badge/JVM%20tests-326-14414D?style=flat-square" alt="326 JVM tests">
+  <img src="marketing/launch/github/badges/version.svg" alt="Version 1.0.2">
+  <img src="marketing/launch/github/badges/android.svg" alt="Android 11 or later">
+  <img src="marketing/launch/github/badges/internet-en.svg" alt="No internet access">
+  <img src="marketing/launch/github/badges/tests.svg" alt="326 JVM tests">
 </p>
 
 # Fluxa
